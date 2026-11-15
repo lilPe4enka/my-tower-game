@@ -4,21 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>3D Tower Stacker: MEGA HYPE</title>
-    
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
     </script>
 </head>
 <body>
 
-<!-- ==== UI LAYER ==== -->
 <div id="ui-layer">
     <div id="quests"></div>
     <div id="top-right-controls">
@@ -33,6 +29,7 @@
         <div id="timer">⏱ 60</div>
         <div id="mode-label">КЛАССИКА</div>
     </div>
+    <div id="active-powerups"></div>
     <div id="next-block-ui">
         <div class="label">Следующий</div>
         <div id="next-block-emoji">🍕</div>
@@ -49,7 +46,6 @@
 
 <div id="screen-flash"></div>
 
-<!-- ==== GAME OVER ==== -->
 <div id="game-over" class="screen modal">
     <h1>БАШНЯ РУХНУЛА</h1>
     <div id="new-record">🏆 НОВЫЙ РЕКОРД!</div>
@@ -66,7 +62,6 @@
     </div>
 </div>
 
-<!-- ==== PAUSE ==== -->
 <div id="pause-screen" class="screen modal">
     <h1>ПАУЗА</h1>
     <p>Отдохни немного</p>
@@ -76,7 +71,6 @@
     </div>
 </div>
 
-<!-- ==== SHOP ==== -->
 <div id="shop-screen" class="screen modal">
     <div class="shop-header">
         <h2>🛍️ Магазин</h2>
@@ -87,7 +81,6 @@
     <button id="close-shop" class="close-modal-btn">ЗАКРЫТЬ</button>
 </div>
 
-<!-- ==== RULES ==== -->
 <div id="rules-screen" class="screen modal">
     <h1>📖 ПРАВИЛА</h1>
     <div class="rules-content">
@@ -97,18 +90,27 @@
         <p><strong>🪙 Монеты:</strong> +1 за блок, +1 за идеал, бонус за спецблоки и майлстоуны.</p>
         <p style="margin-top: 15px;"><strong>🧱 Типы блоков:</strong></p>
         <div class="rule-block"><span class="emoji">🍕</span><span><b>Обычный.</b> +1 очко.</span></div>
-        <div class="rule-block"><span class="emoji">👑</span><span><b>Золотой.</b> +3 очка за идеал. Ярко светится!</span></div>
-        <div class="rule-block"><span class="emoji">💣</span><span><b>Бомба.</b> Идеал: +2. Обрезка: -1. Красное свечение!</span></div>
-        <div class="rule-block"><span class="emoji">❄️</span><span><b>Лед.</b> x2 скорость. +2 за идеал. Голубое гало.</span></div>
-        <div class="rule-block"><span class="emoji">🧱</span><span><b>Хрупкий.</b> НЕ ставь идеально — разобьётся!</span></div>
-        <p style="margin-top: 15px;"><strong>🔥 Ярость:</strong> 5 идеалов подряд → x2 очки на 3 хода.</p>
+        <div class="rule-block"><span class="emoji">👑</span><span><b>Золотой.</b> +3 очка. Светится.</span></div>
+        <div class="rule-block"><span class="emoji">💣</span><span><b>Бомба.</b> Идеал: +2. Обрезка: -1.</span></div>
+        <div class="rule-block"><span class="emoji">❄️</span><span><b>Лед.</b> x2 скорость. +2.</span></div>
+        <div class="rule-block"><span class="emoji">🧱</span><span><b>Хрупкий.</b> НЕ ставь идеально!</span></div>
+        <p style="margin-top: 15px;"><strong>🌟 Секретные блоки (редкие):</strong></p>
+        <div class="rule-block"><span class="emoji">🌈</span><span><b>Радужный.</b> +10 очков.</span></div>
+        <div class="rule-block"><span class="emoji">🐉</span><span><b>Дракон.</b> +10 очков и огонь!</span></div>
+        <div class="rule-block"><span class="emoji">💎</span><span><b>Алмаз.</b> Прощает любую неточность. +5.</span></div>
+        <p style="margin-top: 15px;"><strong>⚡ Способности:</strong></p>
+        <div class="rule-block"><span class="emoji">🧲</span><span><b>Магнит</b> — 1 блок встанет идеально.</span></div>
+        <div class="rule-block"><span class="emoji">❄️</span><span><b>Заморозка</b> — медленная скорость 10 сек.</span></div>
+        <div class="rule-block"><span class="emoji">👻</span><span><b>Призрак</b> — прощает 1 промах.</span></div>
+        <div class="rule-block"><span class="emoji">💰</span><span><b>Множитель</b> — x2 монет за игру.</span></div>
+        <p style="margin-top: 15px;"><strong>🔥 Ярость:</strong> 5 идеалов → x2 очки.</p>
         <p><strong>📐 Диагональ:</strong> После 30 очков блоки летают по диагонали.</p>
-        <p><strong>🏅 Уровни:</strong> За каждую игру получаешь XP. Новый уровень = +50 🪙.</p>
+        <p><strong>🏅 Уровни:</strong> XP за игру. Каждые 10 уровней — сундук!</p>
+        <p><strong>📦 Сундуки:</strong> За ежедневный вход и уровни. Открывай и получай монеты/скины/бустеры.</p>
     </div>
     <button id="close-rules" class="close-modal-btn">ПОНЯТНО</button>
 </div>
 
-<!-- ==== ACHIEVEMENTS ==== -->
 <div id="achievements-screen" class="screen modal">
     <div class="shop-header">
         <h2>🏆 Ачивки</h2>
@@ -118,7 +120,6 @@
     <button id="close-achievements" class="close-modal-btn">ЗАКРЫТЬ</button>
 </div>
 
-<!-- ==== LEADERBOARD ==== -->
 <div id="leaderboard-screen" class="screen modal">
     <h1>👑 Зал Славы</h1>
     <p class="lb-sub">Твои лучшие результаты</p>
@@ -126,7 +127,6 @@
     <button id="close-leaderboard" class="close-modal-btn">ЗАКРЫТЬ</button>
 </div>
 
-<!-- ==== SETTINGS ==== -->
 <div id="settings-screen" class="screen modal">
     <h1>⚙️ Настройки</h1>
     <div class="settings-list">
@@ -146,7 +146,6 @@
     <button id="close-settings" class="close-modal-btn">ЗАКРЫТЬ</button>
 </div>
 
-<!-- ==== DAILY REWARD ==== -->
 <div id="daily-screen" class="screen modal">
     <h1>🎁 Ежедневный вход!</h1>
     <p id="daily-streak-text">День 1</p>
@@ -155,7 +154,32 @@
     <button id="claim-daily" class="claim-btn">ЗАБРАТЬ</button>
 </div>
 
-<!-- ==== START SCREEN ==== -->
+<!-- ==== POWERUPS SELECTION ==== -->
+<div id="powerups-screen" class="screen modal">
+    <h1>⚡ Способности</h1>
+    <p class="lb-sub">Выбери бустеры на эту игру</p>
+    <div class="powerup-list" id="powerup-list"></div>
+    <div class="btn-group">
+        <button id="start-with-powerups" class="start-pw-btn">🚀 НАЧАТЬ ИГРУ</button>
+        <button id="close-powerups" class="close-modal-btn">ОТМЕНА</button>
+    </div>
+</div>
+
+<!-- ==== CHEST OPENING ==== -->
+<div id="chest-screen" class="screen modal">
+    <h1 id="chest-title">🎁 Сундук!</h1>
+    <p class="lb-sub" id="chest-sub">Что же внутри?</p>
+    <div class="chest-container">
+        <div class="chest-icon" id="chest-icon">📦</div>
+        <div class="chest-rays" id="chest-rays"></div>
+        <div class="chest-reward" id="chest-reward"></div>
+    </div>
+    <div class="btn-group">
+        <button id="open-chest-btn" class="claim-btn">ОТКРЫТЬ</button>
+        <button id="close-chest" class="close-modal-btn" style="display:none">ЗАБРАТЬ</button>
+    </div>
+</div>
+
 <div id="start-screen" class="screen">
     <h1>🏗️ БАШНЯ<br>ХАЙПА</h1>
     <div id="start-top-info">
@@ -166,6 +190,9 @@
         <div class="level-badge">🏅 LVL <span id="menu-level-num">1</span></div>
         <div class="xp-bar"><div class="xp-fill" id="menu-xp-fill"></div></div>
         <div class="xp-text" id="menu-xp-text">0 / 100 XP</div>
+    </div>
+    <div id="chest-btn-container" style="display:none;">
+        <button id="chest-btn" class="chest-open-btn">📦 Открыть сундуки <span id="chest-count-badge" class="chest-badge">0</span></button>
     </div>
     <div class="mode-buttons">
         <button class="mode-btn" data-mode="classic" id="btn-classic">
