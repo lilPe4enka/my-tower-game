@@ -119,6 +119,8 @@ body.in-game #menu-toggle-btn, body.in-game #pause-btn { display: flex; }
 #combo-text { color: #EF476F; font-size: clamp(36px, 10vw, 58px); top: 12%; }
 #milestone-text { color: #118AB2; font-size: clamp(28px, 8vw, 48px); top: 35%; }
 #bonus-text { color: #FF9F1C; font-size: clamp(20px, 6vw, 34px); top: 40%; }
+#levelup-popup { color: #FFD700; font-size: clamp(28px, 8vw, 48px); top: 20%; text-shadow: 0 4px 20px rgba(255,215,0,0.5); }
+#achievement-popup { color: #9C27B0; font-size: clamp(22px, 6vw, 36px); top: 30%; }
 .show-popup { opacity: 1 !important; transform: translateX(-50%) translateY(0) scale(1.1) !important; }
 
 /* ==== SCREENS & MODALS ==== */
@@ -144,15 +146,40 @@ body.in-game #menu-toggle-btn, body.in-game #pause-btn { display: flex; }
 
 /* ==== START SCREEN ==== */
 #start-screen h1 { font-size: clamp(26px, 8vw, 42px); margin: 0 0 8px 0; font-weight: 900; line-height: 1.1; }
-#start-screen p { font-size: clamp(13px, 3.5vw, 16px); color: #8A84A0; margin: 0 0 15px 0; }
+#start-top-info { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
 #menu-coins {
     background: #FFF3E0; color: #F57C00;
     padding: clamp(6px, 1.6vw, 9px) clamp(14px, 4vw, 22px);
     border-radius: 20px; font-weight: 900;
-    font-size: clamp(16px, 4.5vw, 21px); margin-bottom: 15px;
+    font-size: clamp(16px, 4.5vw, 21px);
     box-shadow: 0 4px 15px rgba(245,124,0,0.2);
     border: 2px solid #FFE0B2;
 }
+#menu-streak {
+    background: #FFEBEE; color: #E53935;
+    padding: clamp(6px, 1.6vw, 9px) clamp(12px, 3vw, 18px);
+    border-radius: 20px; font-weight: 900;
+    font-size: clamp(14px, 4vw, 19px);
+    border: 2px solid #FFCDD2;
+    box-shadow: 0 4px 15px rgba(229,57,53,0.15);
+}
+#menu-streak.hidden { display: none; }
+
+/* Level box */
+#menu-level-box {
+    width: 100%; max-width: min(320px, 88vw);
+    background: rgba(255,255,255,0.7);
+    border-radius: 14px;
+    padding: 8px 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid rgba(255,255,255,0.8);
+}
+.level-badge { font-size: clamp(12px, 3.2vw, 15px); font-weight: 900; color: #7B1FA2; margin-bottom: 4px; }
+.xp-bar { height: 8px; background: rgba(0,0,0,0.08); border-radius: 4px; overflow: hidden; }
+.xp-fill { height: 100%; background: linear-gradient(90deg, #9C27B0, #E91E63); width: 0%; transition: width 0.5s ease; border-radius: 4px; }
+.xp-text { font-size: clamp(9px, 2.4vw, 11px); color: #8A84A0; font-weight: 700; margin-top: 3px; text-align: right; }
+
 .mode-buttons {
     display: flex; flex-direction: column; gap: clamp(7px, 1.8vw, 10px);
     width: 100%; max-width: min(320px, 88vw); pointer-events: auto;
@@ -172,24 +199,29 @@ body.in-game #menu-toggle-btn, body.in-game #pause-btn { display: flex; }
 .mode-btn .mode-name { font-size: clamp(14px, 4vw, 18px); font-weight: 900; display: block; }
 .mode-btn .mode-desc { font-size: clamp(10px, 2.8vw, 12px); color: #8A84A0; display: block; }
 .menu-footer {
-    display: flex; gap: clamp(7px, 2vw, 10px); margin-top: 15px;
+    display: flex; gap: clamp(7px, 2vw, 10px); margin-top: 12px;
     width: 100%; max-width: min(320px, 88vw);
 }
+.menu-footer.secondary { margin-top: 8px; }
 .menu-footer button {
     flex: 1; background: white; border: none;
     padding: clamp(10px, 2.5vw, 12px); border-radius: 15px;
-    font-weight: 900; font-size: clamp(12px, 3.2vw, 14px);
+    font-weight: 900; font-size: clamp(11px, 3vw, 13px);
     box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    display: flex; align-items: center; justify-content: center; gap: 5px;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
 }
 #shop-btn { background: #FFD740 !important; color: #5D576B; }
 #rules-btn { background: #B2EBF2 !important; color: #00838F; }
+#ach-btn { background: #F8BBD0 !important; color: #880E4F; }
+#lb-btn { background: #B3E5FC !important; color: #01579B; }
+#settings-btn { background: #E0E0E0 !important; color: #424242; flex: 0 0 auto !important; padding: 10px 14px !important; }
 
 /* ==== GAME OVER / PAUSE / RULES ==== */
-#game-over h1, #pause-screen h1, #rules-screen h1 { margin: 0 0 6px 0; font-size: clamp(20px, 5.5vw, 28px); color: #EF476F; font-weight: 900; }
+#game-over h1, #pause-screen h1, #rules-screen h1, #achievements-screen h1, #leaderboard-screen h1, #settings-screen h1, #daily-screen h1 { margin: 0 0 6px 0; font-size: clamp(20px, 5.5vw, 28px); color: #EF476F; font-weight: 900; }
 #game-over p, #pause-screen p { margin: 0; font-size: clamp(13px, 3.5vw, 15px); color: #8A84A0; }
 .final-score { font-size: clamp(44px, 12vw, 64px); color: var(--text); font-weight: 900; margin: 6px 0; }
-#game-coins-earned { color: #F57C00; font-weight: 900; font-size: clamp(13px, 3.5vw, 16px); margin: 4px 0 8px 0; }
+#game-coins-earned { color: #F57C00; font-weight: 900; font-size: clamp(13px, 3.5vw, 16px); margin: 4px 0 2px 0; }
+#game-xp-earned { color: #9C27B0; font-weight: 900; font-size: clamp(13px, 3.5vw, 16px); margin: 2px 0 8px 0; }
 #new-record { color: var(--accent); font-size: 16px; font-weight: 900; display: none; margin-bottom: 6px; text-transform: uppercase; }
 .btn-group { display: flex; flex-direction: column; gap: clamp(7px, 2vw, 10px); margin-top: 20px; width: 100%; }
 .btn-row { display: flex; gap: clamp(7px, 2vw, 10px); }
@@ -221,6 +253,41 @@ body.in-game #menu-toggle-btn, body.in-game #pause-btn { display: flex; }
 .skin-item button.buy.locked { background: #BDBDBD; cursor: not-allowed; }
 .skin-item button.equip { background: #FF9F1C; color: white; }
 .skin-item button.equipped { background: #CBF3F0; color: #2EC4B6; }
+
+/* ==== ACHIEVEMENTS ==== */
+.ach-list { display: flex; flex-direction: column; gap: clamp(6px, 1.5vw, 8px); margin-top: 10px; }
+.ach-item { display: flex; align-items: center; gap: 10px; background: #F5F5F5; padding: clamp(8px, 2vw, 10px) clamp(10px, 2.5vw, 14px); border-radius: 14px; text-align: left; opacity: 0.55; transition: opacity 0.3s; }
+.ach-item.unlocked { opacity: 1; background: linear-gradient(135deg, #FFF8E1, #FFECB3); border: 1px solid #FFD54F; }
+.ach-item .ach-icon { font-size: clamp(22px, 6vw, 28px); flex-shrink: 0; filter: grayscale(1); }
+.ach-item.unlocked .ach-icon { filter: none; }
+.ach-item .ach-info { flex: 1; min-width: 0; }
+.ach-item .ach-name { font-weight: 900; font-size: clamp(12px, 3.3vw, 14px); display: block; }
+.ach-item .ach-desc { font-size: clamp(10px, 2.7vw, 12px); color: #8A84A0; font-weight: 500; display: block; }
+
+/* ==== LEADERBOARD ==== */
+.lb-sub { margin: 0 0 15px 0; font-size: 13px; color: #8A84A0; }
+.lb-list { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.lb-item { display: flex; align-items: center; justify-content: space-between; background: #F5F5F5; padding: 10px 14px; border-radius: 12px; font-weight: 700; font-size: 14px; }
+.lb-item.top1 { background: linear-gradient(135deg, #FFE082, #FFD54F); }
+.lb-item.top2 { background: linear-gradient(135deg, #E0E0E0, #BDBDBD); }
+.lb-item.top3 { background: linear-gradient(135deg, #FFCCBC, #FFAB91); }
+.lb-item .lb-rank { color: #FF9F1C; font-weight: 900; margin-right: 10px; }
+.lb-item .lb-date { color: #8A84A0; font-size: 11px; font-weight: 500; }
+.lb-empty { text-align: center; color: #8A84A0; padding: 20px; font-style: italic; }
+
+/* ==== SETTINGS ==== */
+.settings-list { width: 100%; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+.setting-row { display: flex; justify-content: space-between; align-items: center; background: #F5F5F5; padding: 14px 16px; border-radius: 14px; }
+.setting-label { font-weight: 700; font-size: clamp(13px, 3.5vw, 15px); }
+.toggle-btn { padding: 8px 18px; border-radius: 20px; border: none; font-weight: 900; font-size: 13px; min-width: 60px; transition: all 0.2s; background: #BDBDBD; color: white; }
+.toggle-btn[data-on="true"] { background: #06D6A0; color: white; }
+
+/* ==== DAILY ==== */
+#daily-streak-text { font-size: clamp(15px, 4vw, 18px); color: #E53935; font-weight: 900; margin: 8px 0 4px 0; }
+.daily-coins { font-size: clamp(36px, 10vw, 52px); color: #F57C00; font-weight: 900; margin: 6px 0; }
+.daily-sub { font-size: clamp(11px, 3vw, 13px); color: #8A84A0; margin: 4px 0 20px 0; }
+.claim-btn { background: #06D6A0; color: white; border: none; padding: 16px 44px; border-radius: 18px; font-family: 'Rubik', sans-serif; font-weight: 900; font-size: clamp(15px, 4vw, 18px); box-shadow: 0 6px 20px rgba(6,214,160,0.35); }
+.claim-btn:active { transform: scale(0.96); }
 
 /* ==== CLOSE MODAL BUTTON ==== */
 .close-modal-btn {
@@ -278,6 +345,7 @@ body.in-game #menu-toggle-btn, body.in-game #pause-btn { display: flex; }
     #score { font-size: 42px; }
     .btn-group button { font-size: 11px; padding: 10px 6px; }
     .skin-item button { font-size: 10px; padding: 4px 7px; }
+    .menu-footer button { font-size: 10px; padding: 8px 4px; }
 }
 @media (orientation: landscape) and (max-height: 520px) {
     #ui-layer { padding-top: max(calc(var(--safe-top) + 42px), 50px); padding-bottom: calc(var(--safe-bottom) + 10px); }
@@ -291,25 +359,25 @@ body.in-game #menu-toggle-btn, body.in-game #pause-btn { display: flex; }
     #top-right-controls { top: max(calc(var(--safe-top) + 46px), 54px); gap: 5px; }
     #top-right-controls button { width: 36px; height: 36px; font-size: 15px; }
     #start-screen h1 { font-size: clamp(22px, 5.5vh, 32px); margin-bottom: 4px; }
-    #menu-coins { font-size: 14px; padding: 4px 14px; margin-bottom: 8px; }
-    #start-screen p { font-size: 12px; margin-bottom: 8px; }
+    #menu-coins, #menu-streak { font-size: 13px; padding: 4px 12px; }
+    #menu-level-box { padding: 5px 12px; margin-bottom: 8px; }
     .mode-buttons { gap: 6px; max-width: min(340px, 60vw); }
     .mode-btn { padding: 8px 12px; }
     .mode-btn .mode-icon { font-size: 22px; }
     .mode-btn .mode-name { font-size: 14px; }
     .mode-btn .mode-desc { font-size: 10px; }
-    .menu-footer { margin-top: 8px; max-width: min(340px, 60vw); }
-    .menu-footer button { padding: 8px; font-size: 12px; }
+    .menu-footer { margin-top: 6px; max-width: min(340px, 60vw); }
+    .menu-footer button { padding: 7px; font-size: 11px; }
     .modal { max-height: 94dvh; padding: 12px 16px; width: min(94vw, 480px); }
     #game-over h1 { font-size: 18px; margin-bottom: 3px; }
     .final-score { font-size: 36px; margin: 3px 0; }
-    #game-coins-earned { font-size: 12px; margin: 2px 0 4px 0; }
+    #game-coins-earned, #game-xp-earned { font-size: 12px; margin: 1px 0; }
     .btn-group { flex-direction: row; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
     .btn-row { flex: 1 1 100%; gap: 6px; }
     .btn-group > button:last-child { flex: 1 1 100%; }
     .btn-group button { padding: 8px 6px; font-size: 11px; }
     .shop-header h2 { font-size: 16px; }
-    .skin-item { padding: 5px 8px; }
+    .skin-item, .ach-item { padding: 5px 8px; }
     .skin-item .skin-preview { font-size: 20px; }
     .skin-item .skin-name { font-size: 11px; }
     .skin-item button { font-size: 10px; padding: 4px 6px; }
@@ -337,7 +405,7 @@ body.in-game #menu-toggle-btn, body.in-game #pause-btn { display: flex; }
 }
 @media (max-height: 500px) and (orientation: portrait) {
     #start-screen h1 { font-size: 24px; }
-    #menu-coins { font-size: 14px; margin-bottom: 8px; }
+    #menu-coins, #menu-streak { font-size: 14px; margin-bottom: 8px; }
     .mode-btn { padding: 8px 12px; }
     .mode-btn .mode-icon { font-size: 22px; }
     .mode-btn .mode-name { font-size: 14px; }
