@@ -11,9 +11,16 @@ if (tg) {
 }
 
 function triggerHaptic(type = 'light') {
+    if (!settings.hapticsEnabled) return;
     try {
-        if (tg?.HapticFeedback) { if (type === 'error') tg.HapticFeedback.notificationOccurred('error'); else if (type === 'success') tg.HapticFeedback.notificationOccurred('success'); else tg.HapticFeedback.impactOccurred(type); }
-        else if (navigator.vibrate) { if (type === 'error') navigator.vibrate([100, 50, 100]); else navigator.vibrate(50); }
+        if (tg?.HapticFeedback) {
+            if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+            else if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+            else tg.HapticFeedback.impactOccurred(type);
+        } else if (navigator.vibrate) {
+            if (type === 'error') navigator.vibrate([100, 50, 100]);
+            else navigator.vibrate(50);
+        }
     } catch (err) {}
 }
 
@@ -40,15 +47,42 @@ const SKINS = {
     neon: { name: 'Неон', price: 500, emojis: ['💎','🔮','🎆','🎇','✨','💫','🌟','⚡','🌈','🎊'], colors: ['#E91E63','#9C27B0','#3F51B5','#00BCD4','#8BC34A','#FFEB3B','#FF4081','#00E5FF'], texts: ['НЕОН','СВЕТ','ЛАЗЕР','РАДУГА','БЛЕСК','СИЯНИЕ','ФЛЭШ','ИМПУЛЬС','ЭНЕРГИЯ','ВСПЫШКА'] }
 };
 
+// ============ АЧИВКИ ============
+const ACHIEVEMENTS = [
+    { id: 'first_tower', name: 'Первая башня', desc: 'Построй 5 этажей', icon: '🏗️', check: () => stats.maxScore >= 5 },
+    { id: 'score_10', name: 'Новичок', desc: '10 очков в одной игре', icon: '🌱', check: () => stats.maxScore >= 10 },
+    { id: 'score_25', name: 'Строитель', desc: '25 очков в одной игре', icon: '🏠', check: () => stats.maxScore >= 25 },
+    { id: 'score_50', name: 'Мастер', desc: '50 очков в одной игре', icon: '🏰', check: () => stats.maxScore >= 50 },
+    { id: 'score_100', name: 'Легенда', desc: '100 очков в одной игре', icon: '👑', check: () => stats.maxScore >= 100 },
+    { id: 'combo_3', name: 'Комбо-мастер', desc: 'Комбо x3', icon: '🔥', check: () => stats.maxCombo >= 3 },
+    { id: 'combo_5', name: 'Огненный', desc: 'Комбо x5', icon: '💥', check: () => stats.maxCombo >= 5 },
+    { id: 'perfect_50', name: 'Снайпер', desc: '50 идеалов всего', icon: '🎯', check: () => stats.totalPerfect >= 50 },
+    { id: 'perfect_200', name: 'Точность', desc: '200 идеалов всего', icon: '🎪', check: () => stats.totalPerfect >= 200 },
+    { id: 'games_10', name: 'Игрок', desc: '10 игр сыграно', icon: '🎮', check: () => stats.totalGames >= 10 },
+    { id: 'games_50', name: 'Заядлый', desc: '50 игр сыграно', icon: '🎲', check: () => stats.totalGames >= 50 },
+    { id: 'fury_1', name: 'В ярости', desc: 'Активируй ярость', icon: '😡', check: () => stats.totalFury >= 1 },
+    { id: 'fury_10', name: 'Берсерк', desc: '10 яростей', icon: '👹', check: () => stats.totalFury >= 10 },
+    { id: 'golden_5', name: 'Король золота', desc: '5 идеальных золотых', icon: '💎', check: () => stats.totalGolden >= 5 },
+    { id: 'bomb_5', name: 'Сапёр', desc: '5 идеальных бомб', icon: '💣', check: () => stats.totalBomb >= 5 },
+    { id: 'ice_5', name: 'Ледокол', desc: '5 идеальных льдов', icon: '❄️', check: () => stats.totalIce >= 5 },
+    { id: 'skins_3', name: 'Коллекционер', desc: 'Купи 3 скина', icon: '🎨', check: () => unlockedSkins.length >= 3 },
+    { id: 'skins_all', name: 'Все скины', desc: 'Купи все скины', icon: '🏆', check: () => unlockedSkins.length >= Object.keys(SKINS).length },
+    { id: 'rich_500', name: 'Богач', desc: '500 монет накоплено', icon: '💰', check: () => coins >= 500 },
+    { id: 'level_5', name: 'Опытный', desc: 'Достигни 5 уровня', icon: '⭐', check: () => level >= 5 },
+    { id: 'level_10', name: 'Ветеран', desc: 'Достигни 10 уровня', icon: '🌟', check: () => level >= 10 },
+    { id: 'time_30', name: 'Скоростной', desc: '30 очков в режиме "на время"', icon: '⏱️', check: () => stats.maxTimeScore >= 30 },
+];
+
 const BIOMES = [{ bg: '#FDE2E4' }, { bg: '#E2ECE9' }, { bg: '#D0E6F9' }, { bg: '#F9E2D0' }, { bg: '#2B2D42' }];
 
+// ============ STATE ============
 const BLOCK_SIZE = 4, BLOCK_HEIGHT = 1, BASE_SPEED = 0.16, MAX_SPEED = 0.45;
 let scene, camera, renderer, musicGain, windGain;
 let blocks = [], debris = [], confetti = [];
 let currentBlock, nextBlockData, direction = 1;
 let score = 0, combo = 0;
 let coins = parseInt(localStorage.getItem('towerCoins')) || 0;
-let sessionCoins = 0;
+let sessionCoins = 0, sessionXP = 0;
 let highScore = parseInt(localStorage.getItem('towerHighScore')) || 0;
 let currentSkin = localStorage.getItem('towerSkin') || 'default';
 let unlockedSkins = JSON.parse(localStorage.getItem('towerSkins') || '["default"]');
@@ -57,11 +91,55 @@ let movingAxis = 'x', currentSpeed = BASE_SPEED;
 let currentBiomeIndex = 0, targetBgColor = new THREE.Color(BIOMES[0].bg), shakeIntensity = 0;
 let timeLeft = 60, timeAttackTimer = null;
 let showTutorialHint = !localStorage.getItem('towerTutorialShown');
-let isMuted = localStorage.getItem('towerMuted') === 'true';
 let clock = new THREE.Clock();
 let newQuestsTimeout = null, quests = [];
 let isFury = false, furyBlocksLeft = 0;
 let glowTexture = null;
+
+// === Settings (раздельные настройки звука) ===
+let settings = JSON.parse(localStorage.getItem('towerSettings') || 'null') || {
+    musicEnabled: true,
+    sfxEnabled: true,
+    hapticsEnabled: true
+};
+function saveSettings() { localStorage.setItem('towerSettings', JSON.stringify(settings)); }
+
+// === Stats (общая статистика) ===
+let stats = JSON.parse(localStorage.getItem('towerStats') || 'null') || {
+    totalGames: 0,
+    totalPerfect: 0,
+    totalGolden: 0,
+    totalBomb: 0,
+    totalIce: 0,
+    totalFury: 0,
+    maxScore: 0,
+    maxCombo: 0,
+    maxTimeScore: 0
+};
+function saveStats() { localStorage.setItem('towerStats', JSON.stringify(stats)); }
+
+// === Achievements ===
+let unlockedAchievements = JSON.parse(localStorage.getItem('towerAchievements') || '[]');
+function saveAchievements() { localStorage.setItem('towerAchievements', JSON.stringify(unlockedAchievements)); }
+
+// === Level / XP ===
+let xpTotal = parseInt(localStorage.getItem('towerXP')) || 0;
+let level = parseInt(localStorage.getItem('towerLevel')) || 1;
+function xpForNextLevel(lvl) { return 100 + (lvl - 1) * 50; }
+function saveLevelProgress() {
+    localStorage.setItem('towerXP', xpTotal);
+    localStorage.setItem('towerLevel', level);
+}
+
+// === Streak ===
+let streak = parseInt(localStorage.getItem('towerStreak')) || 0;
+let lastVisitDate = localStorage.getItem('towerLastVisit') || '';
+let dailyRewardPending = false;
+let dailyRewardAmount = 0;
+
+// === Leaderboard (личный топ-10) ===
+let leaderboard = JSON.parse(localStorage.getItem('towerLeaderboard') || '[]');
+function saveLeaderboard() { localStorage.setItem('towerLeaderboard', JSON.stringify(leaderboard)); }
 
 const QUESTS_POOL = [
     { type: 'perfect', target: 3, text: '🎯 Точность x3', reward: 15 },
@@ -104,16 +182,25 @@ const QUESTS_POOL = [
 // ============ DOM ============
 const $ = id => document.getElementById(id);
 const scoreEl = $('score'), highScoreEl = $('high-score'), gameCoinsEl = $('game-coins');
-const gameOverEl = $('game-over'), pauseScreen = $('pause-screen'), shopScreen = $('shop-screen'), rulesScreen = $('rules-screen'), startScreen = $('start-screen');
+const gameOverEl = $('game-over'), pauseScreen = $('pause-screen'), shopScreen = $('shop-screen');
+const rulesScreen = $('rules-screen'), startScreen = $('start-screen');
+const achScreen = $('achievements-screen'), lbScreen = $('leaderboard-screen');
+const settingsScreen = $('settings-screen'), dailyScreen = $('daily-screen');
 const perfectText = $('perfect-text'), comboText = $('combo-text'), milestoneText = $('milestone-text'), bonusText = $('bonus-text');
-const finalScoreVal = $('final-score-val'), gameCoinsEarnedEl = $('game-coins-earned'), timerEl = $('timer'), modeLabel = $('mode-label');
+const levelupPopup = $('levelup-popup'), achievementPopup = $('achievement-popup');
+const finalScoreVal = $('final-score-val'), gameCoinsEarnedEl = $('game-coins-earned'), gameXPEarnedEl = $('game-xp-earned');
+const timerEl = $('timer'), modeLabel = $('mode-label');
 const questsEl = $('quests'), muteBtn = $('mute-btn'), pauseBtn = $('pause-btn'), menuToggleBtn = $('menu-toggle-btn');
 const tutorialEl = $('tutorial'), nextBlockEmoji = $('next-block-emoji');
 const screenFlash = $('screen-flash'), coinsBalanceEl = $('coins-balance'), skinListEl = $('skin-list'), menuCoinsEl = $('menu-coins');
 const shopProgressEl = $('shop-progress');
+const achListEl = $('ach-list'), achProgressEl = $('ach-progress');
+const lbListEl = $('lb-list');
+const menuLevelNum = $('menu-level-num'), menuXPFill = $('menu-xp-fill'), menuXPText = $('menu-xp-text');
+const menuStreakEl = $('menu-streak');
+const dailyStreakText = $('daily-streak-text'), dailyCoinsReward = $('daily-coins-reward'), dailySubText = $('daily-sub-text');
 
 highScoreEl.innerText = `РЕКОРД: ${highScore}`;
-updateCoinUI();
 
 // ============ МОНЕТЫ ============
 function addCoins(amount) {
@@ -134,6 +221,150 @@ function showCoinPopup(amount) {
     popup.style.top = (rect.bottom + 4) + 'px';
     document.body.appendChild(popup);
     setTimeout(() => popup.remove(), 900);
+}
+
+// ============ XP & LEVEL ============
+function addXP(amount) {
+    if (amount <= 0) return;
+    xpTotal += amount;
+    sessionXP += amount;
+    while (xpTotal >= xpForNextLevel(level) && level < 50) {
+        xpTotal -= xpForNextLevel(level);
+        level++;
+        // Награда за уровень
+        addCoins(50);
+        showPopup(levelupPopup, `🏅 УРОВЕНЬ ${level}! +50 🪙`, 2000);
+        playSound('milestone');
+        triggerHaptic('success');
+        checkAchievements();
+    }
+    saveLevelProgress();
+    updateLevelUI();
+}
+function updateLevelUI() {
+    const nextXP = xpForNextLevel(level);
+    menuLevelNum.innerText = level;
+    menuXPFill.style.width = Math.min(100, (xpTotal / nextXP) * 100) + '%';
+    menuXPText.innerText = `${xpTotal} / ${nextXP} XP`;
+}
+
+// ============ STREAK (ежедневный вход) ============
+function checkDailyStreak() {
+    const today = new Date().toDateString();
+    if (today === lastVisitDate) return; // Уже заходил сегодня
+    
+    const lastDate = lastVisitDate ? new Date(lastVisitDate) : null;
+    const todayDate = new Date(today);
+    let dayDiff = 999;
+    if (lastDate) {
+        dayDiff = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
+    }
+    
+    if (dayDiff === 1) streak++;
+    else streak = 1;
+    
+    lastVisitDate = today;
+    localStorage.setItem('towerLastVisit', lastVisitDate);
+    localStorage.setItem('towerStreak', streak);
+    
+    // Награда
+    dailyRewardAmount = Math.min(100, 10 + (streak - 1) * 5);
+    dailyRewardPending = true;
+    updateStreakUI();
+}
+
+function updateStreakUI() {
+    if (streak > 0) {
+        menuStreakEl.innerText = `🔥 ${streak}`;
+        menuStreakEl.classList.remove('hidden');
+    } else {
+        menuStreakEl.classList.add('hidden');
+    }
+}
+
+function showDailyReward() {
+    if (!dailyRewardPending) return;
+    dailyStreakText.innerText = `🔥 День ${streak} подряд!`;
+    dailyCoinsReward.innerText = `+${dailyRewardAmount} 🪙`;
+    if (streak === 1) dailySubText.innerText = 'Заходи каждый день — награда растёт!';
+    else if (streak < 7) dailySubText.innerText = `Следующий день: +${Math.min(100, 10 + streak * 5)} 🪙`;
+    else dailySubText.innerText = '🔥 Максимальная награда!';
+    dailyScreen.style.display = 'flex';
+}
+
+// ============ АЧИВКИ ============
+function checkAchievements() {
+    let newUnlocked = false;
+    ACHIEVEMENTS.forEach(a => {
+        if (unlockedAchievements.includes(a.id)) return;
+        try {
+            if (a.check()) {
+                unlockedAchievements.push(a.id);
+                newUnlocked = true;
+                addCoins(20); // награда за ачивку
+                showPopup(achievementPopup, `${a.icon} ${a.name}!`, 2000);
+                playSound('quest');
+                triggerHaptic('success');
+            }
+        } catch (e) {}
+    });
+    if (newUnlocked) saveAchievements();
+}
+
+function renderAchievements() {
+    achListEl.innerHTML = '';
+    ACHIEVEMENTS.forEach(a => {
+        const unlocked = unlockedAchievements.includes(a.id);
+        const div = document.createElement('div');
+        div.className = 'ach-item' + (unlocked ? ' unlocked' : '');
+        div.innerHTML = `
+            <span class="ach-icon">${a.icon}</span>
+            <div class="ach-info">
+                <span class="ach-name">${a.name}${unlocked ? ' ✓' : ''}</span>
+                <span class="ach-desc">${a.desc}</span>
+            </div>
+        `;
+        achListEl.appendChild(div);
+    });
+    achProgressEl.innerText = `${unlockedAchievements.length}/${ACHIEVEMENTS.length}`;
+}
+
+// ============ LEADERBOARD ============
+function addToLeaderboard(scoreValue, mode) {
+    if (scoreValue <= 0) return;
+    leaderboard.push({ score: scoreValue, mode, date: new Date().toLocaleDateString('ru-RU') });
+    leaderboard.sort((a, b) => b.score - a.score);
+    leaderboard = leaderboard.slice(0, 10);
+    saveLeaderboard();
+}
+
+function renderLeaderboard() {
+    lbListEl.innerHTML = '';
+    if (leaderboard.length === 0) {
+        lbListEl.innerHTML = '<div class="lb-empty">Пока пусто — сыграй первую игру!</div>';
+        return;
+    }
+    leaderboard.forEach((entry, i) => {
+        const div = document.createElement('div');
+        div.className = 'lb-item' + (i === 0 ? ' top1' : i === 1 ? ' top2' : i === 2 ? ' top3' : '');
+        const modeName = entry.mode === 'time' ? '⏱' : '🎮';
+        div.innerHTML = `
+            <span><span class="lb-rank">#${i + 1}</span>${entry.score} ${modeName}</span>
+            <span class="lb-date">${entry.date}</span>
+        `;
+        lbListEl.appendChild(div);
+    });
+}
+
+// ============ НАСТРОЙКИ ============
+function updateSettingsUI() {
+    $('toggle-music').dataset.on = settings.musicEnabled;
+    $('toggle-music').innerText = settings.musicEnabled ? 'ВКЛ' : 'ВЫКЛ';
+    $('toggle-sfx').dataset.on = settings.sfxEnabled;
+    $('toggle-sfx').innerText = settings.sfxEnabled ? 'ВКЛ' : 'ВЫКЛ';
+    $('toggle-haptics').dataset.on = settings.hapticsEnabled;
+    $('toggle-haptics').innerText = settings.hapticsEnabled ? 'ВКЛ' : 'ВЫКЛ';
+    muteBtn.innerText = (settings.musicEnabled || settings.sfxEnabled) ? '🔊' : '🔇';
 }
 
 // ============ AUDIO ============
@@ -159,7 +390,7 @@ function initAudio() {
 }
 
 function playSound(type, level = 0) {
-    if (isMuted || !audioCtx || audioCtx.state === 'suspended') return;
+    if (!settings.sfxEnabled || !audioCtx || audioCtx.state === 'suspended') return;
     try {
         const now = audioCtx.currentTime; const master = audioCtx.createGain(); master.connect(audioCtx.destination);
         const tone = (freq, endFreq, wave, dur, vol, delay = 0) => {
@@ -186,12 +417,12 @@ function playSound(type, level = 0) {
     } catch(e) {}
 }
 
-function playKick() { if (!audioCtx || isMuted) return; try { const osc = audioCtx.createOscillator(), g = audioCtx.createGain(); osc.frequency.setValueAtTime(140, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.12); g.gain.setValueAtTime(0.25, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12); osc.connect(g); g.connect(musicGain); osc.start(); osc.stop(audioCtx.currentTime + 0.12); } catch(e) {} }
-function playHat() { if (!audioCtx || isMuted) return; try { const src = audioCtx.createBufferSource(); src.buffer = noiseBuffer; const filter = audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 6000; const g = audioCtx.createGain(); g.gain.setValueAtTime(0.06, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04); src.connect(filter); filter.connect(g); g.connect(musicGain); src.start(); src.stop(audioCtx.currentTime + 0.04); } catch(e) {} }
-function playBass() { if (!audioCtx || isMuted) return; try { const osc = audioCtx.createOscillator(), g = audioCtx.createGain(); osc.type = 'triangle'; osc.frequency.setValueAtTime(65, audioCtx.currentTime); g.gain.setValueAtTime(0.15, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2); osc.connect(g); g.connect(musicGain); osc.start(); osc.stop(audioCtx.currentTime + 0.2); } catch(e) {} }
+function playKick() { if (!audioCtx || !settings.musicEnabled) return; try { const osc = audioCtx.createOscillator(), g = audioCtx.createGain(); osc.frequency.setValueAtTime(140, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.12); g.gain.setValueAtTime(0.25, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12); osc.connect(g); g.connect(musicGain); osc.start(); osc.stop(audioCtx.currentTime + 0.12); } catch(e) {} }
+function playHat() { if (!audioCtx || !settings.musicEnabled) return; try { const src = audioCtx.createBufferSource(); src.buffer = noiseBuffer; const filter = audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 6000; const g = audioCtx.createGain(); g.gain.setValueAtTime(0.06, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04); src.connect(filter); filter.connect(g); g.connect(musicGain); src.start(); src.stop(audioCtx.currentTime + 0.04); } catch(e) {} }
+function playBass() { if (!audioCtx || !settings.musicEnabled) return; try { const osc = audioCtx.createOscillator(), g = audioCtx.createGain(); osc.type = 'triangle'; osc.frequency.setValueAtTime(65, audioCtx.currentTime); g.gain.setValueAtTime(0.15, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2); osc.connect(g); g.connect(musicGain); osc.start(); osc.stop(audioCtx.currentTime + 0.2); } catch(e) {} }
 
 function musicTick() {
-    if (!musicPlaying || isMuted || gameState !== 'playing') return;
+    if (!musicPlaying || !settings.musicEnabled || gameState !== 'playing') return;
     const beat = musicBeat % 8;
     if (beat === 0 || beat === 3 || beat === 4) playKick();
     if (beat === 2 || beat === 6) playHat();
@@ -199,7 +430,7 @@ function musicTick() {
     musicBeat++;
     musicTimeout = setTimeout(musicTick, (60000 / musicTempo) / 2);
 }
-function startMusic() { if (musicPlaying || isMuted) return; initAudio(); if (!audioCtx) return; musicPlaying = true; musicBeat = 0; musicTempo = 110; musicTick(); }
+function startMusic() { if (musicPlaying || !settings.musicEnabled) return; initAudio(); if (!audioCtx) return; musicPlaying = true; musicBeat = 0; musicTempo = 110; musicTick(); }
 function stopMusic() { musicPlaying = false; if (musicTimeout) { clearTimeout(musicTimeout); musicTimeout = null; } }
 
 // ============ QUESTS ============
@@ -297,6 +528,7 @@ function renderShop() {
                 unlockedSkins.push(skin); localStorage.setItem('towerSkins', JSON.stringify(unlockedSkins));
                 currentSkin = skin; localStorage.setItem('towerSkin', currentSkin);
                 updateCoinUI(); renderShop(); triggerHaptic('success');
+                checkAchievements();
             } else { triggerHaptic('error'); }
         });
     });
@@ -350,11 +582,9 @@ function createGlowTexture() {
     return new THREE.CanvasTexture(c);
 }
 
-// ============ ТЕКСТУРЫ (эмодзи+текст поверх цвета) ============
 function createTexture(emoji, text, color, type = 'normal') {
     const c = document.createElement('canvas'); c.width = c.height = 512;
     const ctx = c.getContext('2d');
-    
     if (type === 'golden') {
         const grad = ctx.createLinearGradient(0, 0, 512, 512);
         grad.addColorStop(0, '#FFE082'); grad.addColorStop(0.3, '#FFD700'); grad.addColorStop(0.6, '#FFC107'); grad.addColorStop(1, '#FF8F00');
@@ -391,41 +621,19 @@ function createTexture(emoji, text, color, type = 'normal') {
         grad.addColorStop(1, 'rgba(0,0,0,0.15)');
         ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
     }
-
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.lineJoin = 'round';
-    ctx.miterLimit = 2;
-
-    // Эмодзи с белым контуром (эффект наклейки поверх цвета)
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.miterLimit = 2;
     ctx.font = '260px Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-    ctx.shadowColor = '#FFFFFF';
-    ctx.shadowBlur = 0;
-    const outlineOffsets = [
-        [-12,0],[12,0],[0,-12],[0,12],
-        [-9,-9],[9,-9],[-9,9],[9,9],
-        [-6,0],[6,0],[0,-6],[0,6]
-    ];
-    for (const [dx, dy] of outlineOffsets) {
-        ctx.shadowOffsetX = dx; ctx.shadowOffsetY = dy;
-        ctx.fillText(emoji, 256, 195);
-    }
+    ctx.shadowColor = '#FFFFFF'; ctx.shadowBlur = 0;
+    const outlineOffsets = [[-12,0],[12,0],[0,-12],[0,12],[-9,-9],[9,-9],[-9,9],[9,9],[-6,0],[6,0],[0,-6],[0,6]];
+    for (const [dx, dy] of outlineOffsets) { ctx.shadowOffsetX = dx; ctx.shadowOffsetY = dy; ctx.fillText(emoji, 256, 195); }
     ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
     ctx.fillText(emoji, 256, 195);
-
-    // Текст: белая обводка + тёмная заливка
     ctx.font = '900 100px "Rubik", sans-serif';
-    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 26;
-    ctx.strokeText(text, 256, 445);
-    ctx.fillStyle = type === 'golden' ? '#3E2723' : '#1A0A00';
-    ctx.fillText(text, 256, 445);
-    
+    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 26; ctx.strokeText(text, 256, 445);
+    ctx.fillStyle = type === 'golden' ? '#3E2723' : '#1A0A00'; ctx.fillText(text, 256, 445);
     const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    tex.minFilter = THREE.LinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    tex.generateMipmaps = false;
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter; tex.generateMipmaps = false;
     return tex;
 }
 
@@ -542,15 +750,17 @@ function dropBlock() {
     if (maxDiff < 0.15) {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         combo++;
+        stats.totalPerfect++;
+        if (combo > stats.maxCombo) stats.maxCombo = combo;
         let points = 1;
-        if (bType === 'golden') { points = 3; updateQuest('golden', 1); }
-        else if (bType === 'bomb') { points = 2; updateQuest('bomb', 1); }
-        else if (bType === 'ice') { points = 2; updateQuest('ice', 1); }
+        if (bType === 'golden') { points = 3; updateQuest('golden', 1); stats.totalGolden++; }
+        else if (bType === 'bomb') { points = 2; updateQuest('bomb', 1); stats.totalBomb++; }
+        else if (bType === 'ice') { points = 2; updateQuest('ice', 1); stats.totalIce++; }
         if (bType === 'bomb') { playSound('bomb'); showPopup(bonusText, '💥 БУМ! +2', 1000); shakeIntensity = 0.5; }
         else { playSound('perfect', combo); if (bType === 'golden') showPopup(bonusText, '👑 ЗОЛОТО +3', 900); else if (bType === 'ice') showPopup(bonusText, '❄️ ЛЕД +2', 900); else showPopup(perfectText, null, 600); }
         flashScreen();
         if (gameMode === 'time') { timeLeft += 2; updateTimerDisplay(); }
-        if (combo >= 5 && !isFury) { isFury = true; furyBlocksLeft = 3; document.body.classList.add('fury-active'); playSound('fury'); showPopup(milestoneText, '🔥 ЯРОСТЬ! x2', 2000); updateQuest('fury', 1); }
+        if (combo >= 5 && !isFury) { isFury = true; furyBlocksLeft = 3; document.body.classList.add('fury-active'); playSound('fury'); showPopup(milestoneText, '🔥 ЯРОСТЬ! x2', 2000); updateQuest('fury', 1); stats.totalFury++; }
         if (combo > 1 && !isFury) showPopup(comboText, `КОМБО x${combo}`, 800);
         if (isFury) points *= 2;
         updateQuest('perfect', 1); updateQuest('combo', combo, true); triggerHaptic('light');
@@ -713,15 +923,14 @@ function clearScene() {
     confetti.forEach(c => { scene.remove(c); disposeMesh(c); });
     blocks = []; debris = []; confetti = []; currentBlock = null;
 }
-function saveCurrentScoreIfNeeded() {
-    if (score > 0 && score > highScore) { highScore = score; localStorage.setItem('towerHighScore', highScore); highScoreEl.innerText = `РЕКОРД: ${highScore}`; }
-}
 
+// ============ STATE MANAGEMENT ============
 function startGame(mode) {
     try {
         initAudio(); stopMusic(); clearScene();
         if (mode) gameMode = mode;
-        score = 0; combo = 0; sessionCoins = 0; isFury = false; furyBlocksLeft = 0; document.body.classList.remove('fury-active');
+        score = 0; combo = 0; sessionCoins = 0; sessionXP = 0;
+        isFury = false; furyBlocksLeft = 0; document.body.classList.remove('fury-active');
         scoreEl.innerText = score; direction = 1; currentSpeed = BASE_SPEED; musicTempo = 110; gameState = 'playing'; currentBiomeIndex = 0;
         targetBgColor.set(BIOMES[0].bg); scene.background.set(BIOMES[0].bg); document.body.style.background = BIOMES[0].bg;
         document.body.classList.add('in-game');
@@ -734,7 +943,8 @@ function startGame(mode) {
         startScreen.style.display = 'none'; gameOverEl.style.display = 'none'; pauseScreen.style.display = 'none';
         camera.position.set(20, 25, 20); camera.lookAt(0, 0, 0);
         if (showTutorialHint) tutorialEl.style.display = 'block';
-        createBaseBlock(); startMusic(); updateQuest('games', 1);
+        createBaseBlock(); startMusic();
+        updateQuest('games', 1);
     } catch(err) {
         console.error('startGame error:', err);
         gameState = 'menu'; startScreen.style.display = 'flex'; gameOverEl.style.display = 'none'; pauseScreen.style.display = 'none';
@@ -746,11 +956,21 @@ function goToMenu() {
     stopMusic(); clearScene(); gameState = 'menu';
     document.body.classList.remove('in-game', 'fury-active');
     if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
-    gameOverEl.style.display = 'none'; pauseScreen.style.display = 'none'; shopScreen.style.display = 'none'; rulesScreen.style.display = 'none'; startScreen.style.display = 'flex';
+    gameOverEl.style.display = 'none'; pauseScreen.style.display = 'none';
+    shopScreen.style.display = 'none'; rulesScreen.style.display = 'none';
+    achScreen.style.display = 'none'; lbScreen.style.display = 'none'; settingsScreen.style.display = 'none';
+    startScreen.style.display = 'flex';
     scene.background.set(BIOMES[0].bg); document.body.style.background = BIOMES[0].bg;
     camera.position.set(20, 25, 20); camera.lookAt(0, 0, 0);
     if (windGain && audioCtx) try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); } catch(e) {}
-    updateCoinUI();
+    updateCoinUI(); updateLevelUI(); updateStreakUI();
+}
+
+function saveCurrentScoreIfNeeded() {
+    if (score > 0 && score > highScore) {
+        highScore = score; localStorage.setItem('towerHighScore', highScore);
+        highScoreEl.innerText = `РЕКОРД: ${highScore}`;
+    }
 }
 
 function triggerGameOver() {
@@ -758,12 +978,45 @@ function triggerGameOver() {
     gameState = 'gameover'; playSound('gameover'); stopMusic(); shakeIntensity = 0.8;
     document.body.classList.remove('in-game', 'fury-active');
     if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
+    
+    // === Статистика ===
+    stats.totalGames++;
+    if (score > stats.maxScore) stats.maxScore = score;
+    if (gameMode === 'time' && score > stats.maxTimeScore) stats.maxTimeScore = score;
+    saveStats();
+    
+    // === XP ===
+    const earnedXP = score * 5;
+    addXP(earnedXP);
+    
+    // === Квест на время ===
     if (gameMode === 'time' && score > 0) updateQuest('time_game', 1);
+    
+    // === Лидерборд ===
+    addToLeaderboard(score, gameMode);
+    
+    // === Рекорд ===
     finalScoreVal.innerText = score;
+    const isNew = score > highScore;
+    if (isNew) {
+        highScore = score;
+        localStorage.setItem('towerHighScore', highScore);
+        highScoreEl.innerText = `РЕКОРД: ${highScore}`;
+    }
+    $('new-record').style.display = isNew ? 'block' : 'none';
+    
     if (sessionCoins > 0) {
         gameCoinsEarnedEl.innerText = `+${sessionCoins} 🪙 за игру`;
         gameCoinsEarnedEl.style.display = 'block';
     } else { gameCoinsEarnedEl.style.display = 'none'; }
+    if (earnedXP > 0) {
+        gameXPEarnedEl.innerText = `+${earnedXP} XP`;
+        gameXPEarnedEl.style.display = 'block';
+    } else { gameXPEarnedEl.style.display = 'none'; }
+    
+    // === Проверка ачивок ===
+    checkAchievements();
+    
     setTimeout(() => { gameOverEl.style.display = 'flex'; }, 800);
     triggerHaptic('error');
 }
@@ -782,10 +1035,11 @@ function togglePause() {
     }
 }
 
+// ============ INPUT ============
 function handleInput(e) {
     const target = e.target;
     if (target && target.closest && target.closest('button, .mode-btn, #top-right-controls, .modal')) return;
-    if (target && target.closest && target.closest('#start-screen, #game-over, #pause-screen, #shop-screen, #rules-screen')) return;
+    if (target && target.closest && target.closest('#start-screen, #game-over, #pause-screen, #shop-screen, #rules-screen, #achievements-screen, #leaderboard-screen, #settings-screen, #daily-screen')) return;
     if (gameState === 'playing') {
         if (e.type === 'touchstart') e.preventDefault();
         dropBlock();
@@ -808,6 +1062,7 @@ function bindModeButton(id, mode) {
 bindModeButton('btn-classic', 'classic');
 bindModeButton('btn-time', 'time');
 
+// ============ BUTTONS ============
 safeClick($('restart-btn'), () => startGame());
 safeClick($('menu-btn'), () => goToMenu());
 safeClick(pauseBtn, () => togglePause());
@@ -818,18 +1073,54 @@ safeClick($('shop-btn'), () => { renderShop(); shopScreen.style.display = 'flex'
 safeClick($('close-shop'), () => { shopScreen.style.display = 'none'; startScreen.style.display = 'flex'; updateCoinUI(); });
 safeClick($('rules-btn'), () => { rulesScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
 safeClick($('close-rules'), () => { rulesScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
+safeClick($('ach-btn'), () => { renderAchievements(); achScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
+safeClick($('close-achievements'), () => { achScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
+safeClick($('lb-btn'), () => { renderLeaderboard(); lbScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
+safeClick($('close-leaderboard'), () => { lbScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
+safeClick($('settings-btn'), () => { updateSettingsUI(); settingsScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
+safeClick($('close-settings'), () => { settingsScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
+
+safeClick($('toggle-music'), () => {
+    settings.musicEnabled = !settings.musicEnabled; saveSettings(); updateSettingsUI();
+    if (!settings.musicEnabled) stopMusic(); else if (gameState === 'playing') startMusic();
+});
+safeClick($('toggle-sfx'), () => { settings.sfxEnabled = !settings.sfxEnabled; saveSettings(); updateSettingsUI(); });
+safeClick($('toggle-haptics'), () => { settings.hapticsEnabled = !settings.hapticsEnabled; saveSettings(); updateSettingsUI(); });
+
+safeClick($('claim-daily'), () => {
+    if (dailyRewardPending) {
+        addCoins(dailyRewardAmount);
+        dailyRewardPending = false;
+        playSound('quest');
+        triggerHaptic('success');
+    }
+    dailyScreen.style.display = 'none';
+    startScreen.style.display = 'flex';
+});
+
+// Mute кнопка в игре — быстрый тумблер на всё
+safeClick(muteBtn, () => {
+    const allOn = settings.musicEnabled || settings.sfxEnabled;
+    if (allOn) {
+        settings.musicEnabled = false;
+        settings.sfxEnabled = false;
+        stopMusic();
+        if (windGain && audioCtx) try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); } catch(e) {}
+    } else {
+        settings.musicEnabled = true;
+        settings.sfxEnabled = true;
+        if (gameState === 'playing') startMusic();
+    }
+    saveSettings();
+    updateSettingsUI();
+});
+
 safeClick($('challenge-btn'), () => {
     const text = `Я построил башню на ${score} этажей в MEGA HYPE! Слабо побить мой рекорд? 🏗️`;
     const url = window.location.href;
     if (tg) tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
     else window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
 });
-safeClick(muteBtn, () => {
-    isMuted = !isMuted; localStorage.setItem('towerMuted', isMuted);
-    muteBtn.innerText = isMuted ? '🔇' : '🔊';
-    if (isMuted) { stopMusic(); if (windGain && audioCtx) try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); } catch(e) {} } else if (gameState === 'playing') startMusic();
-});
-muteBtn.innerText = isMuted ? '🔇' : '🔊';
 
 function onResize() {
     if (!camera || !renderer) return;
@@ -845,4 +1136,14 @@ function updateTimerDisplay() { timerEl.innerText = `⏱ ${timeLeft}`; timerEl.s
 // ============ INIT ============
 initThree();
 loadQuests();
+updateCoinUI();
+updateLevelUI();
+updateSettingsUI();
+
+// Проверка стрика и показ награды
+checkDailyStreak();
+if (dailyRewardPending) {
+    setTimeout(() => showDailyReward(), 400);
+}
+
 animate();
