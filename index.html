@@ -672,4 +672,301 @@ function dropBlock() {
         else if (currentBlock.userData.blockType === 'bomb') points = 2;
         else if (currentBlock.userData.blockType === 'ice') points = 2;
         if (currentBlock.userData.blockType === 'bomb') { playSound('bomb'); showPopup(bonusText, '💥 БУМ! +2', 1000); shakeIntensity = 0.5; updateQuest('bomb', 1); }
-        else { playSound('perfect', combo); if (currentBlock.userData.blockType === 'golden') { showPopup(bonusText, '👑 ЗОЛОТО
+        else { playSound('perfect', combo); if (currentBlock.userData.blockType === 'golden') { showPopup(bonusText, '👑 ЗОЛОТО +3', 900); updateQuest('golden', 1); } else if (currentBlock.userData.blockType === 'ice') { showPopup(bonusText, '❄️ ЛЕД +2', 900); updateQuest('ice', 1); } else showPopup(perfectText, null, 600); }
+        flashScreen();
+        if (gameMode === 'time') { timeLeft += 2; updateTimerDisplay(); }
+        if (combo >= 5 && !isFury) { isFury = true; furyBlocksLeft = 3; document.body.classList.add('fury-active'); playSound('fury'); showPopup(milestoneText, '🔥 ЯРОСТЬ! x2 ОЧКИ', 2000); }
+        if (combo > 1 && !isFury) showPopup(comboText, `КОМБО x${combo}`, 800);
+        if (isFury) points *= 2;
+        updateQuest('perfect', 1); updateQuest('combo', combo, true); triggerHaptic('light');
+        const oldScore = score; score += points;
+        checkMilestone(oldScore, score); triggerPerfectParticles();
+    } else {
+        combo = 0; updateQuest('cut', 1);
+        if (currentBlock.userData.blockType === 'bomb') { score = Math.max(0, score - 1); playSound('bomb'); shakeIntensity = 0.5; showPopup(bonusText, '💣 -1 ОЧКО', 900); spawnBombParticles(); triggerHaptic('error'); }
+        else { playSound('drop'); triggerHaptic('light'); }
+        let cutAxis = movingAxis === 'diag' ? (absDiffX > absDiffZ ? 'x' : 'z') : movingAxis;
+        let cutDiff = cutAxis === 'x' ? diffX : diffZ;
+        let origSize = cutAxis === 'x' ? sizeX : sizeZ;
+        let newSize = origSize - Math.abs(cutDiff);
+        createDebris(cutDiff, origSize, newSize, cutAxis, top);
+        const w = cutAxis === 'x' ? newSize : currentBlock.userData.w;
+        const d = cutAxis === 'z' ? newSize : currentBlock.userData.d;
+        scene.remove(currentBlock); disposeMesh(currentBlock);
+        const nm = createBlockMesh(w, BLOCK_HEIGHT, d, currentBlock.userData.color, currentBlock.userData.emoji, currentBlock.userData.text, 'normal');
+        let targetX = top.position.x, targetZ = top.position.z;
+        if (cutAxis === 'x') targetX = top.position.x + (diffX > 0 ? (origSize-newSize)/2 : -(origSize-newSize)/2);
+        if (cutAxis === 'z') targetZ = top.position.z + (diffZ > 0 ? (origSize-newSize)/2 : -(origSize-newSize)/2);
+        nm.position.set(targetX, currentBlock.position.y, targetZ);
+        nm.userData = { ...currentBlock.userData, w, d, blockType: 'normal', squash: 1 };
+        currentBlock = nm;
+        if (currentBlock.userData.blockType !== 'bomb') score++;
+    }
+    currentBlock.userData.squash = 0;
+    if (isFury) { furyBlocksLeft--; if (furyBlocksLeft <= 0) { isFury = false; document.body.classList.remove('fury-active'); } }
+    updateScoreUI();
+    currentSpeed = Math.min(MAX_SPEED, BASE_SPEED + score * 0.004);
+    musicTempo = Math.min(160, 110 + Math.floor(score / 10) * 5);
+    blocks.push(currentBlock); scene.add(currentBlock); spawnNewBlock();
+}
+
+function updateScoreUI() { scoreEl.innerText = score; scoreEl.classList.add('score-pop'); setTimeout(() => scoreEl.classList.remove('score-pop'), 150); updateQuest('stack', score, true); }
+function checkMilestone(oldScore, newScore) { const oldM = Math.floor(oldScore / 10); const newM = Math.floor(newScore / 10); if (newM > oldM) triggerMilestone(newM * 10); }
+
+// ==========================================
+// EFFECTS
+// ==========================================
+function triggerPerfectParticles() {
+    currentBlock.material.forEach(m => { if (m.emissive) { m.emissive.setHex(0x444444); setTimeout(() => m.emissive.setHex(0x000000), 200); } });
+    for (let i = 0; i < 12; i++) {
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), new THREE.MeshBasicMaterial({ color: 0x06D6A0 }));
+        p.position.copy(currentBlock.position); p.position.y += 0.5;
+        p.userData = { vel: new THREE.Vector3((Math.random()-0.5)*0.6, Math.random()*0.6+0.2, (Math.random()-0.5)*0.6), life: 1.0 };
+        scene.add(p); debris.push(p);
+    }
+}
+function spawnBombParticles() {
+    for (let i = 0; i < 20; i++) {
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshBasicMaterial({ color: i % 2 ? 0xFF0000 : 0xFFAA00 }));
+        p.position.copy(currentBlock.position);
+        p.userData = { vel: new THREE.Vector3((Math.random()-0.5)*1.2, Math.random()*0.8+0.3, (Math.random()-0.5)*1.2), life: 1.0 };
+        scene.add(p); debris.push(p);
+    }
+}
+function triggerMilestone(points) {
+    playSound('milestone'); triggerHaptic('success');
+    const newBiome = Math.floor(points / 10) % BIOMES.length; currentBiomeIndex = newBiome;
+    targetBgColor.set(BIOMES[newBiome].bg); document.body.style.background = BIOMES[newBiome].bg;
+    showPopup(milestoneText, `${points} ЭТАЖЕЙ!`, 1500);
+    const topPos = blocks[blocks.length - 1].position;
+    for (let i = 0; i < 40; i++) {
+        const piece = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.02), new THREE.MeshBasicMaterial({ color: SKINS[currentSkin].colors[Math.floor(Math.random() * SKINS[currentSkin].colors.length)] }));
+        piece.position.set(topPos.x + (Math.random()-0.5)*2, topPos.y + 2, topPos.z + (Math.random()-0.5)*2);
+        const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 0.3 + 0.1;
+        piece.userData = { vel: new THREE.Vector3(Math.cos(angle)*speed, Math.random()*0.6+0.3, Math.sin(angle)*speed), rotSpeed: new THREE.Vector3(Math.random()*0.3, Math.random()*0.3, Math.random()*0.3) };
+        scene.add(piece); confetti.push(piece);
+    }
+}
+function createDebris(diff, origSize, newSize, axis, top) {
+    const dSize = origSize - newSize;
+    const geo = new THREE.BoxGeometry(axis === 'x' ? dSize : currentBlock.userData.w, BLOCK_HEIGHT, axis === 'z' ? dSize : currentBlock.userData.d);
+    const mat = new THREE.MeshStandardMaterial({ color: currentBlock.userData.color, roughness: 0.9 });
+    const mesh = new THREE.Mesh(geo, mat); mesh.castShadow = true;
+    let px = currentBlock.position.x, pz = currentBlock.position.z;
+    if (axis === 'x') px = diff > 0 ? top.position.x + (origSize/2) + (dSize/2) : top.position.x - (origSize/2) - (dSize/2);
+    else pz = diff > 0 ? top.position.z + (origSize/2) + (dSize/2) : top.position.z - (origSize/2) - (dSize/2);
+    mesh.position.set(axis === 'x' ? px : currentBlock.position.x, currentBlock.position.y, axis === 'z' ? pz : currentBlock.position.z);
+    mesh.userData = { vel: new THREE.Vector3(axis === 'x' ? (diff > 0 ? 0.15 : -0.15) : 0, 0.1, axis === 'z' ? (diff > 0 ? 0.15 : -0.15) : 0), rotSpeed: new THREE.Vector3((Math.random()-0.5)*0.3, (Math.random()-0.5)*0.3, (Math.random()-0.5)*0.3) };
+    scene.add(mesh); debris.push(mesh);
+}
+
+// ==========================================
+// CAMERA & LOOP
+// ==========================================
+function updateCamera() {
+    if (!blocks.length) return;
+    const top = blocks[blocks.length - 1];
+    const ty = top.position.y, tx = top.position.x * 0.5, tz = top.position.z * 0.5;
+    camera.position.x += (tx + 20 - camera.position.x) * 0.1; camera.position.y += (ty + 25 - camera.position.y) * 0.1; camera.position.z += (tz + 20 - camera.position.z) * 0.1;
+    camera.lookAt(tx, ty + 2, tz);
+    if (shakeIntensity > 0.01) { camera.position.x += (Math.random()-0.5) * shakeIntensity; camera.position.y += (Math.random()-0.5) * shakeIntensity; camera.position.z += (Math.random()-0.5) * shakeIntensity; shakeIntensity *= 0.85; }
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    const time = clock.getElapsedTime();
+    if (audioCtx && windGain && gameState === 'playing') {
+        const windVol = Math.min(0.15, score * 0.005);
+        try { windGain.gain.setTargetAtTime(windVol, audioCtx.currentTime, 0.5); } catch(e) {}
+    } else if (windGain && audioCtx) {
+        try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); } catch(e) {}
+    }
+    if (gameState === 'playing' && currentBlock?.userData.moving) {
+        let speed = currentSpeed;
+        if (isFury) speed *= 0.6;
+        if (currentBlock.userData.blockType === 'ice') speed = Math.min(speed * 1.8, 0.6);
+        let delta = speed * direction;
+        if (score > 20 && !isFury) delta += Math.sin(performance.now() * 0.003) * 0.02;
+        if (movingAxis === 'x') { currentBlock.position.x += delta; if (currentBlock.position.x > 15) direction = -1; if (currentBlock.position.x < -15) direction = 1; }
+        else if (movingAxis === 'z') { currentBlock.position.z += delta; if (currentBlock.position.z > 15) direction = -1; if (currentBlock.position.z < -15) direction = 1; }
+        else if (movingAxis === 'diag') {
+            currentBlock.position.x += delta; currentBlock.position.z += delta * 0.8;
+            if (currentBlock.position.x > 15 || currentBlock.position.z > 15) direction = -1;
+            if (currentBlock.position.x < -15 || currentBlock.position.z < -15) direction = 1;
+        }
+        if (currentBlock.userData.blockType === 'golden' || currentBlock.userData.blockType === 'bomb') {
+            const pulse = 0.3 + (Math.sin(time * 8) * 0.2);
+            currentBlock.material.forEach(m => { if (m.emissive) m.emissiveIntensity = pulse; });
+        } else if (currentBlock.userData.blockType === 'ice') {
+            const pulse = 0.85 + (Math.sin(time * 4) * 0.1);
+            currentBlock.material.forEach(m => { if (m.transparent) m.opacity = pulse; });
+        }
+    }
+    blocks.forEach(b => {
+        if (b.userData.squash !== undefined && b.userData.squash < 1) {
+            b.userData.squash += 0.1;
+            if (b.userData.squash > 1) b.userData.squash = 1;
+            const scaleY = 1 - Math.sin(b.userData.squash * Math.PI) * 0.3;
+            const scaleXZ = 1 + Math.sin(b.userData.squash * Math.PI) * 0.15;
+            b.scale.set(scaleXZ, scaleY, scaleXZ);
+        }
+    });
+    if (currentBlock?.userData.falling) { currentBlock.position.y -= 0.3; currentBlock.rotation.x += 0.05; currentBlock.rotation.z += 0.05; }
+    for (let i = debris.length - 1; i >= 0; i--) {
+        const d = debris[i]; d.position.add(d.userData.vel); d.userData.vel.y -= 0.02;
+        if (d.userData.rotSpeed) { d.rotation.x += d.userData.rotSpeed.x; d.rotation.y += d.userData.rotSpeed.y; d.rotation.z += d.userData.rotSpeed.z; }
+        if (d.userData.life !== undefined) { d.userData.life -= 0.02; d.scale.setScalar(d.userData.life); if (d.userData.life <= 0) { scene.remove(d); disposeMesh(d); debris.splice(i, 1); continue; } }
+        if (d.position.y < camera.position.y - 40) { scene.remove(d); disposeMesh(d); debris.splice(i, 1); }
+    }
+    for (let i = confetti.length - 1; i >= 0; i--) {
+        const c = confetti[i]; c.position.add(c.userData.vel); c.userData.vel.y -= 0.015; c.userData.vel.x *= 0.98; c.userData.vel.z *= 0.98;
+        c.rotation.x += c.userData.rotSpeed.x; c.rotation.y += c.userData.rotSpeed.y; c.rotation.z += c.userData.rotSpeed.z;
+        if (c.position.y < camera.position.y - 40) { scene.remove(c); disposeMesh(c); confetti.splice(i, 1); }
+    }
+    if (gameState === 'playing' || gameState === 'gameover') updateCamera();
+    scene.background.lerp(targetBgColor, 0.05);
+    renderer.render(scene, camera);
+}
+
+// ==========================================
+// STATE MANAGEMENT
+// ==========================================
+function clearScene() {
+    blocks.forEach(b => { scene.remove(b); disposeMesh(b); }); debris.forEach(d => { scene.remove(d); disposeMesh(d); }); confetti.forEach(c => { scene.remove(c); disposeMesh(c); });
+    blocks = []; debris = []; confetti = []; currentBlock = null;
+}
+function saveCurrentScoreIfNeeded() {
+    if (score > 0 && score > highScore) { highScore = score; localStorage.setItem('towerHighScore', highScore); highScoreEl.innerText = `РЕКОРД: ${highScore}`; }
+}
+
+function startGame(mode) {
+    try {
+        initAudio(); stopMusic(); clearScene();
+        if (mode) gameMode = mode;
+        score = 0; combo = 0; isFury = false; furyBlocksLeft = 0; document.body.classList.remove('fury-active');
+        scoreEl.innerText = score; direction = 1; currentSpeed = BASE_SPEED; musicTempo = 110; gameState = 'playing'; currentBiomeIndex = 0;
+        targetBgColor.set(BIOMES[0].bg); scene.background.set(BIOMES[0].bg); document.body.style.background = BIOMES[0].bg;
+        document.body.classList.add('in-game');
+        if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
+        if (gameMode === 'time') {
+            timeLeft = 60; timerEl.style.display = 'block'; updateTimerDisplay();
+            timeAttackTimer = setInterval(() => { if (gameState !== 'playing') return; timeLeft--; updateTimerDisplay(); if (timeLeft <= 0) { clearInterval(timeAttackTimer); timeAttackTimer = null; triggerGameOver(); } }, 1000);
+        } else { timerEl.style.display = 'none'; }
+        modeLabel.innerText = { classic: 'КЛАССИКА', time: 'НА ВРЕМЯ' }[gameMode];
+        startScreen.style.display = 'none'; gameOverEl.style.display = 'none'; pauseScreen.style.display = 'none';
+        camera.position.set(20, 25, 20); camera.lookAt(0, 0, 0);
+        if (showTutorialHint) tutorialEl.style.display = 'block';
+        createBaseBlock(); startMusic(); updateQuest('games', 1);
+    } catch(err) {
+        console.error('startGame error:', err);
+        gameState = 'menu';
+        startScreen.style.display = 'flex';
+        gameOverEl.style.display = 'none';
+        pauseScreen.style.display = 'none';
+    }
+}
+
+function goToMenu() {
+    if (gameState === 'playing') saveCurrentScoreIfNeeded();
+    stopMusic(); clearScene(); gameState = 'menu';
+    document.body.classList.remove('in-game', 'fury-active');
+    if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
+    gameOverEl.style.display = 'none'; pauseScreen.style.display = 'none'; shopScreen.style.display = 'none'; rulesScreen.style.display = 'none'; startScreen.style.display = 'flex';
+    scene.background.set(BIOMES[0].bg); document.body.style.background = BIOMES[0].bg;
+    camera.position.set(20, 25, 20); camera.lookAt(0, 0, 0);
+    if (windGain && audioCtx) try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); } catch(e) {}
+}
+
+function triggerGameOver() {
+    if (gameState === 'gameover') return;
+    gameState = 'gameover'; playSound('gameover'); stopMusic(); shakeIntensity = 0.8;
+    document.body.classList.remove('in-game', 'fury-active');
+    if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
+    finalScoreVal.innerText = score;
+    setTimeout(() => { gameOverEl.style.display = 'flex'; }, 800);
+    triggerHaptic('error');
+}
+
+function togglePause() {
+    if (gameState === 'playing') {
+        gameState = 'paused'; pauseScreen.style.display = 'flex';
+        document.body.classList.remove('in-game');
+        if (timeAttackTimer) clearInterval(timeAttackTimer);
+    } else if (gameState === 'paused') {
+        gameState = 'playing'; pauseScreen.style.display = 'none';
+        document.body.classList.add('in-game');
+        if (gameMode === 'time') {
+            timeAttackTimer = setInterval(() => { if (gameState !== 'playing') return; timeLeft--; updateTimerDisplay(); if (timeLeft <= 0) { clearInterval(timeAttackTimer); triggerGameOver(); } }, 1000);
+        }
+    }
+}
+
+// ==========================================
+// INPUT & BUTTONS
+// ==========================================
+function handleInput(e) {
+    const target = e.target;
+    if (target && target.closest && target.closest('button, .mode-btn, #top-right-controls, .modal')) return;
+    if (target && target.closest && target.closest('#start-screen, #game-over, #pause-screen, #shop-screen, #rules-screen')) return;
+    if (gameState === 'playing') {
+        if (e.type === 'touchstart') e.preventDefault();
+        dropBlock();
+    }
+}
+window.addEventListener('mousedown', handleInput);
+window.addEventListener('touchstart', handleInput, { passive: false });
+
+// ПРЯМЫЕ ОБРАБОТЧИКИ ДЛЯ КНОПОК РЕЖИМА (самый надёжный способ)
+function bindModeButton(id, mode) {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    const handle = (e) => {
+        if (e) { if (e.cancelable !== false) e.stopPropagation(); e.preventDefault(); }
+        if (gameState === 'playing') return; // уже играем, не перезапускаем
+        startGame(mode);
+    };
+    btn.addEventListener('click', handle);
+    btn.addEventListener('touchend', handle, { passive: false });
+}
+bindModeButton('btn-classic', 'classic');
+bindModeButton('btn-time', 'time');
+
+// Остальные кнопки через safeClick
+safeClick($('restart-btn'), () => startGame());
+safeClick($('menu-btn'), () => goToMenu());
+safeClick(pauseBtn, () => togglePause());
+safeClick($('pause-resume'), () => togglePause());
+safeClick($('pause-menu'), () => goToMenu());
+safeClick(menuToggleBtn, () => { if (gameState === 'playing' || gameState === 'paused') goToMenu(); });
+safeClick($('shop-btn'), () => { renderShop(); shopScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
+safeClick($('close-shop'), () => { shopScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
+safeClick($('rules-btn'), () => { rulesScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
+safeClick($('close-rules'), () => { rulesScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
+safeClick($('challenge-btn'), () => {
+    const text = `Я построил башню на ${score} этажей в MEGA HYPE! Слабо побить мой рекорд? 🏗️`;
+    const url = window.location.href;
+    if (tg) tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
+    else window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+});
+safeClick(muteBtn, () => {
+    isMuted = !isMuted; localStorage.setItem('towerMuted', isMuted);
+    muteBtn.innerText = isMuted ? '🔇' : '🔊';
+    if (isMuted) { stopMusic(); if (windGain && audioCtx) try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); } catch(e) {} } else if (gameState === 'playing') startMusic();
+});
+muteBtn.innerText = isMuted ? '🔇' : '🔊';
+
+function onResize() {
+    if (!camera || !renderer) return;
+    const aspect = window.innerWidth / window.innerHeight; const d = 10;
+    camera.left = -d * aspect; camera.right = d * aspect; camera.top = d; camera.bottom = -d;
+    camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+}
+function updateTimerDisplay() { timerEl.innerText = `⏱ ${timeLeft}`; timerEl.style.color = timeLeft <= 10 ? '#EF476F' : '#06D6A0'; }
+
+// INIT
+initThree();
+loadQuests();
+animate();
+</script>
+</body>
+</html>
