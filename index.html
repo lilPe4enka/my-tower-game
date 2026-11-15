@@ -18,7 +18,7 @@
 </head>
 <body>
 
-<!-- ==== UI LAYER (счёт, квесты, кнопки в игре) ==== -->
+<!-- ==== UI LAYER ==== -->
 <div id="ui-layer">
     <div id="quests"></div>
     <div id="top-right-controls">
@@ -42,6 +42,8 @@
     <div id="perfect-text" class="popup-text">ИДЕАЛЬНО</div>
     <div id="bonus-text" class="popup-text">БОНУС</div>
     <div id="milestone-text" class="popup-text">10 ЭТАЖЕЙ</div>
+    <div id="levelup-popup" class="popup-text">НОВЫЙ УРОВЕНЬ!</div>
+    <div id="achievement-popup" class="popup-text">АЧИВКА!</div>
     <div id="tutorial">Тапни, когда блок будет ровно над башней!</div>
 </div>
 
@@ -54,6 +56,7 @@
     <p>Твой результат:</p>
     <div class="final-score" id="final-score-val">0</div>
     <div id="game-coins-earned"></div>
+    <div id="game-xp-earned"></div>
     <div class="btn-group">
         <div class="btn-row">
             <button id="challenge-btn">📣 ВЫЗВАТЬ ДРУГА</button>
@@ -100,14 +103,70 @@
         <div class="rule-block"><span class="emoji">🧱</span><span><b>Хрупкий.</b> НЕ ставь идеально — разобьётся!</span></div>
         <p style="margin-top: 15px;"><strong>🔥 Ярость:</strong> 5 идеалов подряд → x2 очки на 3 хода.</p>
         <p><strong>📐 Диагональ:</strong> После 30 очков блоки летают по диагонали.</p>
+        <p><strong>🏅 Уровни:</strong> За каждую игру получаешь XP. Новый уровень = +50 🪙.</p>
     </div>
     <button id="close-rules" class="close-modal-btn">ПОНЯТНО</button>
+</div>
+
+<!-- ==== ACHIEVEMENTS ==== -->
+<div id="achievements-screen" class="screen modal">
+    <div class="shop-header">
+        <h2>🏆 Ачивки</h2>
+        <div class="coins-balance" id="ach-progress">0/22</div>
+    </div>
+    <div class="ach-list" id="ach-list"></div>
+    <button id="close-achievements" class="close-modal-btn">ЗАКРЫТЬ</button>
+</div>
+
+<!-- ==== LEADERBOARD ==== -->
+<div id="leaderboard-screen" class="screen modal">
+    <h1>👑 Зал Славы</h1>
+    <p class="lb-sub">Твои лучшие результаты</p>
+    <div class="lb-list" id="lb-list"></div>
+    <button id="close-leaderboard" class="close-modal-btn">ЗАКРЫТЬ</button>
+</div>
+
+<!-- ==== SETTINGS ==== -->
+<div id="settings-screen" class="screen modal">
+    <h1>⚙️ Настройки</h1>
+    <div class="settings-list">
+        <div class="setting-row">
+            <span class="setting-label">🎵 Музыка</span>
+            <button class="toggle-btn" id="toggle-music" data-on="true">ВКЛ</button>
+        </div>
+        <div class="setting-row">
+            <span class="setting-label">🔊 Звуки</span>
+            <button class="toggle-btn" id="toggle-sfx" data-on="true">ВКЛ</button>
+        </div>
+        <div class="setting-row">
+            <span class="setting-label">📳 Вибрация</span>
+            <button class="toggle-btn" id="toggle-haptics" data-on="true">ВКЛ</button>
+        </div>
+    </div>
+    <button id="close-settings" class="close-modal-btn">ЗАКРЫТЬ</button>
+</div>
+
+<!-- ==== DAILY REWARD ==== -->
+<div id="daily-screen" class="screen modal">
+    <h1>🎁 Ежедневный вход!</h1>
+    <p id="daily-streak-text">День 1</p>
+    <div class="daily-coins" id="daily-coins-reward">+10 🪙</div>
+    <p class="daily-sub" id="daily-sub-text">Заходи каждый день — награда растёт!</p>
+    <button id="claim-daily" class="claim-btn">ЗАБРАТЬ</button>
 </div>
 
 <!-- ==== START SCREEN ==== -->
 <div id="start-screen" class="screen">
     <h1>🏗️ БАШНЯ<br>ХАЙПА</h1>
-    <div id="menu-coins">🪙 0</div>
+    <div id="start-top-info">
+        <div id="menu-coins">🪙 0</div>
+        <div id="menu-streak" title="Дней подряд">🔥 0</div>
+    </div>
+    <div id="menu-level-box">
+        <div class="level-badge">🏅 LVL <span id="menu-level-num">1</span></div>
+        <div class="xp-bar"><div class="xp-fill" id="menu-xp-fill"></div></div>
+        <div class="xp-text" id="menu-xp-text">0 / 100 XP</div>
+    </div>
     <div class="mode-buttons">
         <button class="mode-btn" data-mode="classic" id="btn-classic">
             <span class="mode-icon">🎮</span>
@@ -127,6 +186,11 @@
     <div class="menu-footer">
         <button id="shop-btn">🛍️ МАГАЗИН</button>
         <button id="rules-btn">📖 ПРАВИЛА</button>
+    </div>
+    <div class="menu-footer secondary">
+        <button id="ach-btn">🏆 АЧИВКИ</button>
+        <button id="lb-btn">👑 ЗАЛ</button>
+        <button id="settings-btn">⚙️</button>
     </div>
 </div>
 
