@@ -22,7 +22,7 @@
             padding-top: var(--safe-top); padding-bottom: var(--safe-bottom);
         }
         canvas { display: block; }
-        button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; cursor: pointer; }
+        button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; cursor: pointer; font-family: 'Rubik', sans-serif; }
 
         /* UI Layer */
         #ui-layer {
@@ -60,16 +60,13 @@
             background: rgba(255,255,255,0.7); backdrop-filter: blur(8px);
             padding: 10px 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.8);
             display: flex; flex-direction: column; align-items: center; gap: 4px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 10; transition: opacity 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 10;
         }
         #next-block-ui .label { font-size: 10px; color: #8A84A0; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
         #next-block-emoji { font-size: 32px; line-height: 1; }
 
         /* Fury Mode Overlay */
-        #fury-overlay {
-            position: absolute; inset: 0; pointer-events: none;
-            box-shadow: inset 0 0 50px rgba(255, 0, 100, 0.5); opacity: 0; transition: opacity 0.5s; z-index: 5;
-        }
+        #fury-overlay { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 50px rgba(255, 0, 100, 0.5); opacity: 0; transition: opacity 0.5s; z-index: 5; }
         .fury-active #fury-overlay { opacity: 1; animation: furyPulse 1s infinite alternate; }
         @keyframes furyPulse { from { box-shadow: inset 0 0 30px rgba(255, 0, 100, 0.4); } to { box-shadow: inset 0 0 80px rgba(255, 0, 100, 0.8); } }
 
@@ -92,16 +89,16 @@
         #start-screen h1 { font-size: 40px; margin: 0 0 8px 0; font-weight: 900; line-height: 1.1;}
         #start-screen p { font-size: 16px; color: #8A84A0; margin: 0 0 20px 0; }
         
-        .mode-buttons { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 300px; }
-        .mode-btn { background: white; color: var(--text); border: 2px solid transparent; padding: 12px 20px; border-radius: 20px; font-family: 'Rubik', sans-serif; display: flex; align-items: center; gap: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: all 0.2s; }
+        .mode-buttons { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 300px; pointer-events: auto; }
+        .mode-btn { background: white; color: var(--text); border: 2px solid transparent; padding: 12px 20px; border-radius: 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: all 0.2s; text-align: left; width: 100%; pointer-events: auto; }
         .mode-btn:active { transform: scale(0.98); }
-        .mode-btn .mode-icon { font-size: 30px; }
-        .mode-btn .mode-info { text-align: left; }
+        .mode-btn .mode-icon { font-size: 30px; flex-shrink: 0; }
+        .mode-btn .mode-info { display: flex; flex-direction: column; text-align: left; flex: 1; }
         .mode-btn .mode-name { font-size: 17px; font-weight: 900; display: block; }
-        .mode-btn .mode-desc { font-size: 11px; color: #8A84A0; }
+        .mode-btn .mode-desc { font-size: 11px; color: #8A84A0; display: block; }
 
         .menu-footer { display: flex; gap: 10px; margin-top: 15px; width: 100%; max-width: 300px; }
-        .menu-footer button { flex: 1; background: white; border: none; padding: 12px; border-radius: 15px; font-family: 'Rubik', sans-serif; font-weight: 900; font-size: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .menu-footer button { flex: 1; background: white; border: none; padding: 12px; border-radius: 15px; font-weight: 900; font-size: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; gap: 6px; }
         #shop-btn { background: #FFD740 !important; color: #5D576B; }
         #rules-btn { background: #B2EBF2 !important; color: #00838F; }
 
@@ -112,7 +109,7 @@
         
         .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
         .btn-row { display: flex; gap: 10px; }
-        .btn-group button { flex: 1; border: none; padding: 14px 16px; font-family: 'Rubik', sans-serif; font-weight: 900; font-size: 14px; border-radius: 15px; transition: all 0.2s; }
+        .btn-group button { flex: 1; border: none; padding: 14px 16px; font-weight: 900; font-size: 14px; border-radius: 15px; transition: all 0.2s; }
         #restart-btn, #pause-resume { background: #06D6A0; color: white; box-shadow: 0 6px 15px rgba(6,214,160,0.3); }
         #menu-btn, #pause-menu { background: #8A84A0; color: white; box-shadow: 0 6px 15px rgba(138,132,160,0.3); }
         #challenge-btn { background: #0088cc; color: white; box-shadow: 0 6px 15px rgba(0,136,204,0.3); }
@@ -124,7 +121,7 @@
         .skin-list { display: flex; flex-direction: column; gap: 10px; }
         .skin-item { display: flex; align-items: center; justify-content: space-between; background: #F5F5F5; padding: 10px 15px; border-radius: 15px; }
         .skin-item .skin-info { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
-        .skin-item button { padding: 8px 15px; border-radius: 10px; border: none; font-weight: 900; font-family: 'Rubik', sans-serif; font-size: 13px; }
+        .skin-item button { padding: 8px 15px; border-radius: 10px; border: none; font-weight: 900; font-size: 13px; }
         .skin-item button.buy { background: #06D6A0; color: white; }
         .skin-item button.equip { background: #FF9F1C; color: white; }
         .skin-item button.equipped { background: #CBF3F0; color: #2EC4B6; }
@@ -134,7 +131,7 @@
         .rules-content p { margin: 8px 0; }
         .rules-content strong { color: #EF476F; }
         .rule-block { display: flex; align-items: center; gap: 10px; background: #F5F5F5; padding: 8px 12px; border-radius: 12px; margin-bottom: 6px; font-weight: 500; }
-        .rule-block .emoji { font-size: 24px; }
+        .rule-block .emoji { font-size: 24px; flex-shrink: 0; }
         
         #tutorial { position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%); background: rgba(93,87,107,0.95); color: white; padding: 12px 20px; border-radius: 16px; font-weight: 700; font-size: 14px; text-align: center; display: none; z-index: 15; pointer-events: none; animation: bounce 1.5s infinite; width: max-content; max-width: 90%; }
         @keyframes bounce { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-8px); } }
@@ -245,13 +242,19 @@
     <h1>🏗️ БАШНЯ<br>ХАЙПА</h1>
     <p>Строй, зарабатывай монеты, покупай скины!</p>
     <div class="mode-buttons">
-        <button class="mode-btn" data-mode="classic">
+        <button class="mode-btn" data-mode="classic" id="btn-classic">
             <span class="mode-icon">🎮</span>
-            <div class="mode-info"><span class="mode-name">Классика</span><span class="mode-desc">Без ограничений по времени</span></div>
+            <span class="mode-info">
+                <span class="mode-name">Классика</span>
+                <span class="mode-desc">Без ограничений по времени</span>
+            </span>
         </button>
-        <button class="mode-btn" data-mode="time">
+        <button class="mode-btn" data-mode="time" id="btn-time">
             <span class="mode-icon">⏱</span>
-            <div class="mode-info"><span class="mode-name">На время</span><span class="mode-desc">60 сек, +2 сек за идеал</span></div>
+            <span class="mode-info">
+                <span class="mode-name">На время</span>
+                <span class="mode-desc">60 сек, +2 сек за идеал</span>
+            </span>
         </button>
     </div>
     <div class="menu-footer">
@@ -282,7 +285,7 @@ function triggerHaptic(type = 'light') {
 function safeClick(el, handler) {
     if (!el) return;
     let lastFire = 0;
-    const wrapped = (e) => { const now = Date.now(); if (now - lastFire < 300) return; lastFire = now; if (e.cancelable !== false) e.stopPropagation(); handler(e); };
+    const wrapped = (e) => { const now = Date.now(); if (now - lastFire < 300) return; lastFire = now; if (e.cancelable !== false) e.stopPropagation(); try { handler(e); } catch(err) { console.error('Handler error:', err); } };
     el.addEventListener('click', wrapped); el.addEventListener('touchend', wrapped, { passive: true });
 }
 
@@ -364,46 +367,47 @@ function initAudio() {
             noiseBuffer = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
             const data = noiseBuffer.getChannelData(0);
             for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
-            
             musicGain = audioCtx.createGain(); musicGain.gain.value = 0.12; musicGain.connect(audioCtx.destination);
             windGain = audioCtx.createGain(); windGain.gain.value = 0; windGain.connect(audioCtx.destination);
             const windOsc = audioCtx.createBufferSource(); windOsc.buffer = noiseBuffer; windOsc.loop = true;
             const windFilter = audioCtx.createBiquadFilter(); windFilter.type = 'lowpass'; windFilter.frequency.value = 400;
             windOsc.connect(windFilter); windFilter.connect(windGain); windOsc.start();
-        } catch(e) {}
+        } catch(e) { console.warn('Audio init failed:', e); }
     }
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
 }
 
 function playSound(type, level = 0) {
     if (isMuted || !audioCtx || audioCtx.state === 'suspended') return;
-    const now = audioCtx.currentTime; const master = audioCtx.createGain(); master.connect(audioCtx.destination);
-    const tone = (freq, endFreq, wave, dur, vol, delay = 0) => {
-        const osc = audioCtx.createOscillator(); const g = audioCtx.createGain(); const filter = audioCtx.createBiquadFilter();
-        osc.type = wave; osc.frequency.setValueAtTime(freq, now + delay);
-        if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, now + delay + dur);
-        filter.type = 'lowpass'; filter.frequency.value = 2000;
-        g.gain.setValueAtTime(0, now + delay); g.gain.linearRampToValueAtTime(vol, now + delay + 0.02); g.gain.exponentialRampToValueAtTime(0.001, now + delay + dur);
-        osc.connect(filter); filter.connect(g); g.connect(master); osc.start(now + delay); osc.stop(now + delay + dur);
-    };
-    const noise = (dur, vol, delay = 0) => {
-        const src = audioCtx.createBufferSource(); src.buffer = noiseBuffer; const filter = audioCtx.createBiquadFilter(); const g = audioCtx.createGain();
-        filter.type = 'bandpass'; filter.frequency.value = 1000;
-        g.gain.setValueAtTime(vol, now + delay); g.gain.exponentialRampToValueAtTime(0.01, now + delay + dur);
-        src.connect(filter); filter.connect(g); g.connect(master); src.start(now + delay);
-    };
-    if (type === 'drop') { tone(90, 40, 'sine', 0.15, 0.35); noise(0.08, 0.1); }
-    else if (type === 'perfect') { const mult = Math.pow(1.059, Math.min(level, 12)); tone(523.25 * mult, null, 'sine', 0.4, 0.25); tone(659.25 * mult, null, 'sine', 0.4, 0.18); }
-    else if (type === 'milestone') { [261.63, 329.63, 392.00, 523.25].forEach((f, i) => tone(f, null, 'triangle', 0.5, 0.12, i * 0.1)); }
-    else if (type === 'bomb') { noise(0.4, 0.4); tone(120, 30, 'sawtooth', 0.4, 0.3); }
-    else if (type === 'gameover') { tone(200, 80, 'triangle', 0.8, 0.25); tone(150, 60, 'triangle', 0.8, 0.18, 0.1); }
-    else if (type === 'quest') { tone(659.25, null, 'sine', 0.2, 0.2); tone(783.99, null, 'sine', 0.3, 0.2, 0.1); tone(1046.5, null, 'sine', 0.4, 0.2, 0.2); }
-    else if (type === 'fury') { tone(440, 880, 'sawtooth', 0.5, 0.15); tone(554, 1108, 'sawtooth', 0.5, 0.1); }
+    try {
+        const now = audioCtx.currentTime; const master = audioCtx.createGain(); master.connect(audioCtx.destination);
+        const tone = (freq, endFreq, wave, dur, vol, delay = 0) => {
+            const osc = audioCtx.createOscillator(); const g = audioCtx.createGain(); const filter = audioCtx.createBiquadFilter();
+            osc.type = wave; osc.frequency.setValueAtTime(freq, now + delay);
+            if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, now + delay + dur);
+            filter.type = 'lowpass'; filter.frequency.value = 2000;
+            g.gain.setValueAtTime(0, now + delay); g.gain.linearRampToValueAtTime(vol, now + delay + 0.02); g.gain.exponentialRampToValueAtTime(0.001, now + delay + dur);
+            osc.connect(filter); filter.connect(g); g.connect(master); osc.start(now + delay); osc.stop(now + delay + dur);
+        };
+        const noise = (dur, vol, delay = 0) => {
+            const src = audioCtx.createBufferSource(); src.buffer = noiseBuffer; const filter = audioCtx.createBiquadFilter(); const g = audioCtx.createGain();
+            filter.type = 'bandpass'; filter.frequency.value = 1000;
+            g.gain.setValueAtTime(vol, now + delay); g.gain.exponentialRampToValueAtTime(0.01, now + delay + dur);
+            src.connect(filter); filter.connect(g); g.connect(master); src.start(now + delay);
+        };
+        if (type === 'drop') { tone(90, 40, 'sine', 0.15, 0.35); noise(0.08, 0.1); }
+        else if (type === 'perfect') { const mult = Math.pow(1.059, Math.min(level, 12)); tone(523.25 * mult, null, 'sine', 0.4, 0.25); tone(659.25 * mult, null, 'sine', 0.4, 0.18); }
+        else if (type === 'milestone') { [261.63, 329.63, 392.00, 523.25].forEach((f, i) => tone(f, null, 'triangle', 0.5, 0.12, i * 0.1)); }
+        else if (type === 'bomb') { noise(0.4, 0.4); tone(120, 30, 'sawtooth', 0.4, 0.3); }
+        else if (type === 'gameover') { tone(200, 80, 'triangle', 0.8, 0.25); tone(150, 60, 'triangle', 0.8, 0.18, 0.1); }
+        else if (type === 'quest') { tone(659.25, null, 'sine', 0.2, 0.2); tone(783.99, null, 'sine', 0.3, 0.2, 0.1); tone(1046.5, null, 'sine', 0.4, 0.2, 0.2); }
+        else if (type === 'fury') { tone(440, 880, 'sawtooth', 0.5, 0.15); tone(554, 1108, 'sawtooth', 0.5, 0.1); }
+    } catch(e) {}
 }
 
-function playKick() { if (!audioCtx) return; const osc = audioCtx.createOscillator(), g = audioCtx.createGain(); osc.frequency.setValueAtTime(140, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.12); g.gain.setValueAtTime(0.25, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12); osc.connect(g); g.connect(musicGain); osc.start(); osc.stop(audioCtx.currentTime + 0.12); }
-function playHat() { if (!audioCtx) return; const src = audioCtx.createBufferSource(); src.buffer = noiseBuffer; const filter = audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 6000; const g = audioCtx.createGain(); g.gain.setValueAtTime(0.06, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04); src.connect(filter); filter.connect(g); g.connect(musicGain); src.start(); src.stop(audioCtx.currentTime + 0.04); }
-function playBass() { if (!audioCtx) return; const osc = audioCtx.createOscillator(), g = audioCtx.createGain(); osc.type = 'triangle'; osc.frequency.setValueAtTime(65, audioCtx.currentTime); g.gain.setValueAtTime(0.15, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2); osc.connect(g); g.connect(musicGain); osc.start(); osc.stop(audioCtx.currentTime + 0.2); }
+function playKick() { if (!audioCtx || isMuted) return; try { const osc = audioCtx.createOscillator(), g = audioCtx.createGain(); osc.frequency.setValueAtTime(140, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.12); g.gain.setValueAtTime(0.25, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12); osc.connect(g); g.connect(musicGain); osc.start(); osc.stop(audioCtx.currentTime + 0.12); } catch(e) {} }
+function playHat() { if (!audioCtx || isMuted) return; try { const src = audioCtx.createBufferSource(); src.buffer = noiseBuffer; const filter = audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 6000; const g = audioCtx.createGain(); g.gain.setValueAtTime(0.06, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04); src.connect(filter); filter.connect(g); g.connect(musicGain); src.start(); src.stop(audioCtx.currentTime + 0.04); } catch(e) {} }
+function playBass() { if (!audioCtx || isMuted) return; try { const osc = audioCtx.createOscillator(), g = audioCtx.createGain(); osc.type = 'triangle'; osc.frequency.setValueAtTime(65, audioCtx.currentTime); g.gain.setValueAtTime(0.15, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2); osc.connect(g); g.connect(musicGain); osc.start(); osc.stop(audioCtx.currentTime + 0.2); } catch(e) {} }
 
 function musicTick() {
     if (!musicPlaying || isMuted || gameState !== 'playing') return;
@@ -482,7 +486,6 @@ function renderShop() {
         div.innerHTML = `<div class="skin-info"><span>${skin.emojis[0]}</span> ${skin.name}</div> ${btnHtml}`;
         skinListEl.appendChild(div);
     }
-
     skinListEl.querySelectorAll('button.equip').forEach(btn => {
         safeClick(btn, () => { currentSkin = btn.dataset.skin; localStorage.setItem('towerSkin', currentSkin); renderShop(); });
     });
@@ -505,6 +508,8 @@ function renderShop() {
 // ==========================================
 // THREE.JS INIT
 // ==========================================
+const BIOMES = [{ bg: '#FDE2E4' }, { bg: '#E2ECE9' }, { bg: '#D0E6F9' }, { bg: '#F9E2D0' }, { bg: '#2B2D42' }];
+
 function initThree() {
     scene = new THREE.Scene(); scene.background = new THREE.Color(BIOMES[0].bg); scene.fog = new THREE.FogExp2(BIOMES[0].bg, 0.02);
     const aspect = window.innerWidth / window.innerHeight; const d = 10;
@@ -559,7 +564,6 @@ function createTexture(emoji, text, color, type = 'normal') {
     ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.beginPath(); ctx.arc(256, 220, 150, 0, Math.PI*2); ctx.fill();
     ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 10; ctx.shadowOffsetX = 4; ctx.shadowOffsetY = 4;
     ctx.font = '220px Arial'; ctx.fillText(emoji, 256, 210);
-    
     ctx.fillStyle = type === 'golden' ? '#5C4033' : '#ffffff'; ctx.font = '900 72px "Rubik", sans-serif';
     ctx.lineWidth = 10; ctx.strokeStyle = type === 'golden' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.2)';
     ctx.strokeText(text, 256, 430); ctx.fillText(text, 256, 430);
@@ -573,12 +577,10 @@ function createTexture(emoji, text, color, type = 'normal') {
 function createBlockMesh(w, h, d, color, emoji, text, type = 'normal') {
     const geo = new THREE.BoxGeometry(w, h, d); const tex = createTexture(emoji, text, color, type);
     let sideOpts = { map: tex, roughness: 0.7 }; let topOpts = { color: color, roughness: 0.8 };
-
     if (type === 'golden') { sideOpts.emissive = new THREE.Color(0xFFAA00); sideOpts.emissiveIntensity = 0.4; topOpts.emissive = new THREE.Color(0xFFAA00); topOpts.emissiveIntensity = 0.4; topOpts.color = new THREE.Color(0xFFD700); }
     else if (type === 'bomb') { sideOpts.emissive = new THREE.Color(0x550000); sideOpts.emissiveIntensity = 0.5; topOpts.emissive = new THREE.Color(0x550000); topOpts.emissiveIntensity = 0.5; topOpts.color = new THREE.Color(0x222222); }
     else if (type === 'ice') { sideOpts.transparent = true; sideOpts.opacity = 0.85; topOpts.transparent = true; topOpts.opacity = 0.85; sideOpts.emissive = new THREE.Color(0x00FFFF); sideOpts.emissiveIntensity = 0.2; topOpts.emissive = new THREE.Color(0x00FFFF); topOpts.emissiveIntensity = 0.2; }
     else if (type === 'crumble') { sideOpts.emissive = new THREE.Color(0x3E2723); sideOpts.emissiveIntensity = 0.3; topOpts.emissive = new THREE.Color(0x3E2723); topOpts.emissiveIntensity = 0.3; }
-
     const side = new THREE.MeshStandardMaterial(sideOpts); const top = new THREE.MeshStandardMaterial(topOpts);
     const mesh = new THREE.Mesh(geo, [side, side, top, top, side, side]);
     mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.blockType = type;
@@ -596,11 +598,10 @@ function rollBlockType() {
 }
 
 function getBlockVisuals(type, skinKey) {
-    const skin = SKINS[skinKey];
+    const skin = SKINS[skinKey] || SKINS.default;
     const rndColor = skin.colors[Math.floor(Math.random() * skin.colors.length)];
     const rndEmoji = skin.emojis[Math.floor(Math.random() * skin.emojis.length)];
     const rndText = skin.texts[Math.floor(Math.random() * skin.texts.length)];
-    
     switch(type) {
         case 'golden': return { color: '#FFD700', emoji: '👑', text: 'ЗОЛОТО' };
         case 'bomb': return { color: '#2C3E50', emoji: '💣', text: 'БУМ' };
@@ -627,17 +628,14 @@ function spawnNewBlock() {
     const top = blocks[blocks.length - 1];
     if (score > 30) movingAxis = 'diag';
     else movingAxis = blocks.length % 2 === 1 ? 'x' : 'z';
-
     const { type, color, emoji, text } = nextBlockData;
     nextBlockData = generateNextBlockData();
     nextBlockEmoji.innerText = nextBlockData.emoji;
-
     const w = top.geometry.parameters.width, d = top.geometry.parameters.depth;
     let sx = top.position.x, sz = top.position.z;
     if (movingAxis === 'x') sx = direction === 1 ? -15 : 15;
     else if (movingAxis === 'z') sz = direction === 1 ? -15 : 15;
     else if (movingAxis === 'diag') { sx = direction === 1 ? -15 : 15; sz = direction === 1 ? -15 : 15; }
-
     currentBlock = createBlockMesh(w, BLOCK_HEIGHT, d, color, emoji, text, type);
     currentBlock.position.set(sx, top.position.y + BLOCK_HEIGHT, sz);
     currentBlock.userData = { w, d, moving: true, color, emoji, text, blockType: type, squash: 1 };
@@ -648,31 +646,23 @@ function spawnNewBlock() {
 // GAME LOGIC
 // ==========================================
 function showPopup(el, text, duration = 800) { if (!el) return; if (text) el.innerText = text; el.classList.add('show-popup'); setTimeout(() => el.classList.remove('show-popup'), duration); }
-function flashScreen() { screenFlash.style.opacity = '0.6'; setTimeout(() => screenFlash.style.opacity = '0', 100); }
+function flashScreen() { if(screenFlash){screenFlash.style.opacity = '0.6'; setTimeout(() => screenFlash.style.opacity = '0', 100);} }
 
 function dropBlock() {
     if (gameState !== 'playing' || !currentBlock?.userData.moving) return;
     if (showTutorialHint) { tutorialEl.style.display = 'none'; localStorage.setItem('towerTutorialShown', 'true'); showTutorialHint = false; }
-
     currentBlock.userData.moving = false;
     const top = blocks[blocks.length - 1];
-    
     let diffX = 0, diffZ = 0, sizeX = currentBlock.geometry.parameters.width, sizeZ = currentBlock.geometry.parameters.depth;
-
     if (movingAxis === 'x') diffX = currentBlock.position.x - top.position.x;
     else if (movingAxis === 'z') diffZ = currentBlock.position.z - top.position.z;
     else if (movingAxis === 'diag') { diffX = currentBlock.position.x - top.position.x; diffZ = currentBlock.position.z - top.position.z; }
-
     const absDiffX = Math.abs(diffX), absDiffZ = Math.abs(diffZ);
     const maxDiff = Math.max(absDiffX, absDiffZ);
     
     if ((movingAxis === 'x' || movingAxis === 'diag') && absDiffX >= sizeX / 2) { currentBlock.userData.falling = true; triggerGameOver(); return; }
     if ((movingAxis === 'z' || movingAxis === 'diag') && absDiffZ >= sizeZ / 2) { currentBlock.userData.falling = true; triggerGameOver(); return; }
-
-    if (currentBlock.userData.blockType === 'crumble' && maxDiff < 0.15) {
-        currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
-        spawnBombParticles(); triggerGameOver(); return;
-    }
+    if (currentBlock.userData.blockType === 'crumble' && maxDiff < 0.15) { currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z; spawnBombParticles(); triggerGameOver(); return; }
 
     if (maxDiff < 0.15) {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
@@ -681,323 +671,5 @@ function dropBlock() {
         if (currentBlock.userData.blockType === 'golden') points = 3;
         else if (currentBlock.userData.blockType === 'bomb') points = 2;
         else if (currentBlock.userData.blockType === 'ice') points = 2;
-
         if (currentBlock.userData.blockType === 'bomb') { playSound('bomb'); showPopup(bonusText, '💥 БУМ! +2', 1000); shakeIntensity = 0.5; updateQuest('bomb', 1); }
-        else { playSound('perfect', combo); if (currentBlock.userData.blockType === 'golden') { showPopup(bonusText, '👑 ЗОЛОТО +3', 900); updateQuest('golden', 1); } else if (currentBlock.userData.blockType === 'ice') { showPopup(bonusText, '❄️ ЛЕД +2', 900); updateQuest('ice', 1); } else showPopup(perfectText, null, 600); }
-
-        flashScreen();
-        if (gameMode === 'time') { timeLeft += 2; updateTimerDisplay(); }
-        
-        if (combo >= 5 && !isFury) {
-            isFury = true; furyBlocksLeft = 3;
-            document.body.classList.add('fury-active');
-            playSound('fury'); showPopup(milestoneText, '🔥 ЯРОСТЬ! x2 ОЧКИ', 2000);
-        }
-
-        if (combo > 1 && !isFury) showPopup(comboText, `КОМБО x${combo}`, 800);
-        if (isFury) points *= 2;
-
-        updateQuest('perfect', 1); updateQuest('combo', combo, true); triggerHaptic('light');
-
-        const oldScore = score; score += points;
-        checkMilestone(oldScore, score); triggerPerfectParticles();
-    } else {
-        combo = 0; updateQuest('cut', 1);
-        if (currentBlock.userData.blockType === 'bomb') { score = Math.max(0, score - 1); playSound('bomb'); shakeIntensity = 0.5; showPopup(bonusText, '💣 -1 ОЧКО', 900); spawnBombParticles(); triggerHaptic('error'); }
-        else { playSound('drop'); triggerHaptic('light'); }
-
-        let cutAxis = movingAxis === 'diag' ? (absDiffX > absDiffZ ? 'x' : 'z') : movingAxis;
-        let cutDiff = cutAxis === 'x' ? diffX : diffZ;
-        let origSize = cutAxis === 'x' ? sizeX : sizeZ;
-        let newSize = origSize - Math.abs(cutDiff);
-
-        createDebris(cutDiff, origSize, newSize, cutAxis, top);
-
-        const w = cutAxis === 'x' ? newSize : currentBlock.userData.w;
-        const d = cutAxis === 'z' ? newSize : currentBlock.userData.d;
-        scene.remove(currentBlock); disposeMesh(currentBlock);
-
-        const nm = createBlockMesh(w, BLOCK_HEIGHT, d, currentBlock.userData.color, currentBlock.userData.emoji, currentBlock.userData.text, 'normal');
-        
-        let targetX = top.position.x, targetZ = top.position.z;
-        if (cutAxis === 'x') targetX = top.position.x + (diffX > 0 ? (origSize-newSize)/2 : -(origSize-newSize)/2);
-        if (cutAxis === 'z') targetZ = top.position.z + (diffZ > 0 ? (origSize-newSize)/2 : -(origSize-newSize)/2);
-        
-        nm.position.set(targetX, currentBlock.position.y, targetZ);
-        nm.userData = { ...currentBlock.userData, w, d, blockType: 'normal', squash: 1 };
-        currentBlock = nm;
-        if (currentBlock.userData.blockType !== 'bomb') score++;
-    }
-
-    currentBlock.userData.squash = 0;
-    if (isFury) { furyBlocksLeft--; if (furyBlocksLeft <= 0) { isFury = false; document.body.classList.remove('fury-active'); } }
-
-    updateScoreUI();
-    currentSpeed = Math.min(MAX_SPEED, BASE_SPEED + score * 0.004);
-    musicTempo = Math.min(160, 110 + Math.floor(score / 10) * 5);
-
-    blocks.push(currentBlock); scene.add(currentBlock); spawnNewBlock();
-}
-
-function updateScoreUI() { scoreEl.innerText = score; scoreEl.classList.add('score-pop'); setTimeout(() => scoreEl.classList.remove('score-pop'), 150); updateQuest('stack', score, true); }
-function checkMilestone(oldScore, newScore) { const oldM = Math.floor(oldScore / 10); const newM = Math.floor(newScore / 10); if (newM > oldM) triggerMilestone(newM * 10); }
-
-// ==========================================
-// EFFECTS
-// ==========================================
-function triggerPerfectParticles() {
-    currentBlock.material.forEach(m => { if (m.emissive) { m.emissive.setHex(0x444444); setTimeout(() => m.emissive.setHex(0x000000), 200); } });
-    for (let i = 0; i < 12; i++) {
-        const p = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), new THREE.MeshBasicMaterial({ color: 0x06D6A0 }));
-        p.position.copy(currentBlock.position); p.position.y += 0.5;
-        p.userData = { vel: new THREE.Vector3((Math.random()-0.5)*0.6, Math.random()*0.6+0.2, (Math.random()-0.5)*0.6), life: 1.0 };
-        scene.add(p); debris.push(p);
-    }
-}
-
-function spawnBombParticles() {
-    for (let i = 0; i < 20; i++) {
-        const p = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshBasicMaterial({ color: i % 2 ? 0xFF0000 : 0xFFAA00 }));
-        p.position.copy(currentBlock.position);
-        p.userData = { vel: new THREE.Vector3((Math.random()-0.5)*1.2, Math.random()*0.8+0.3, (Math.random()-0.5)*1.2), life: 1.0 };
-        scene.add(p); debris.push(p);
-    }
-}
-
-function triggerMilestone(points) {
-    playSound('milestone'); triggerHaptic('success');
-    const newBiome = Math.floor(points / 10) % BIOMES.length; currentBiomeIndex = newBiome;
-    targetBgColor.set(BIOMES[newBiome].bg); document.body.style.background = BIOMES[newBiome].bg;
-    showPopup(milestoneText, `${points} ЭТАЖЕЙ!`, 1500);
-
-    const topPos = blocks[blocks.length - 1].position;
-    for (let i = 0; i < 40; i++) {
-        const piece = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.02), new THREE.MeshBasicMaterial({ color: SKINS[currentSkin].colors[Math.floor(Math.random() * SKINS[currentSkin].colors.length)] }));
-        piece.position.set(topPos.x + (Math.random()-0.5)*2, topPos.y + 2, topPos.z + (Math.random()-0.5)*2);
-        const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 0.3 + 0.1;
-        piece.userData = { vel: new THREE.Vector3(Math.cos(angle)*speed, Math.random()*0.6+0.3, Math.sin(angle)*speed), rotSpeed: new THREE.Vector3(Math.random()*0.3, Math.random()*0.3, Math.random()*0.3) };
-        scene.add(piece); confetti.push(piece);
-    }
-}
-
-function createDebris(diff, origSize, newSize, axis, top) {
-    const dSize = origSize - newSize;
-    const geo = new THREE.BoxGeometry(axis === 'x' ? dSize : currentBlock.userData.w, BLOCK_HEIGHT, axis === 'z' ? dSize : currentBlock.userData.d);
-    const mat = new THREE.MeshStandardMaterial({ color: currentBlock.userData.color, roughness: 0.9 });
-    const mesh = new THREE.Mesh(geo, mat); mesh.castShadow = true;
-    let px = currentBlock.position.x, pz = currentBlock.position.z;
-    if (axis === 'x') px = diff > 0 ? top.position.x + (origSize/2) + (dSize/2) : top.position.x - (origSize/2) - (dSize/2);
-    else pz = diff > 0 ? top.position.z + (origSize/2) + (dSize/2) : top.position.z - (origSize/2) - (dSize/2);
-    mesh.position.set(axis === 'x' ? px : currentBlock.position.x, currentBlock.position.y, axis === 'z' ? pz : currentBlock.position.z);
-    mesh.userData = { vel: new THREE.Vector3(axis === 'x' ? (diff > 0 ? 0.15 : -0.15) : 0, 0.1, axis === 'z' ? (diff > 0 ? 0.15 : -0.15) : 0), rotSpeed: new THREE.Vector3((Math.random()-0.5)*0.3, (Math.random()-0.5)*0.3, (Math.random()-0.5)*0.3) };
-    scene.add(mesh); debris.push(mesh);
-}
-
-// ==========================================
-// CAMERA & LOOP
-// ==========================================
-function updateCamera() {
-    if (!blocks.length) return;
-    const top = blocks[blocks.length - 1];
-    const ty = top.position.y, tx = top.position.x * 0.5, tz = top.position.z * 0.5;
-    camera.position.x += (tx + 20 - camera.position.x) * 0.1; camera.position.y += (ty + 25 - camera.position.y) * 0.1; camera.position.z += (tz + 20 - camera.position.z) * 0.1;
-    camera.lookAt(tx, ty + 2, tz);
-    if (shakeIntensity > 0.01) { camera.position.x += (Math.random()-0.5) * shakeIntensity; camera.position.y += (Math.random()-0.5) * shakeIntensity; camera.position.z += (Math.random()-0.5) * shakeIntensity; shakeIntensity *= 0.85; }
-}
-
-function animate() {
-    requestAnimationFrame(animate);
-    const time = clock.getElapsedTime();
-
-    if (audioCtx && windGain && gameState === 'playing') {
-        const windVol = Math.min(0.15, score * 0.005);
-        windGain.gain.setTargetAtTime(windVol, audioCtx.currentTime, 0.5);
-    } else if (windGain && audioCtx) {
-        windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5);
-    }
-
-    if (gameState === 'playing' && currentBlock?.userData.moving) {
-        let speed = currentSpeed;
-        if (isFury) speed *= 0.6;
-        if (currentBlock.userData.blockType === 'ice') speed = Math.min(speed * 1.8, 0.6);
-
-        let delta = speed * direction;
-        if (score > 20 && !isFury) delta += Math.sin(performance.now() * 0.003) * 0.02;
-
-        if (movingAxis === 'x') { currentBlock.position.x += delta; if (currentBlock.position.x > 15) direction = -1; if (currentBlock.position.x < -15) direction = 1; }
-        else if (movingAxis === 'z') { currentBlock.position.z += delta; if (currentBlock.position.z > 15) direction = -1; if (currentBlock.position.z < -15) direction = 1; }
-        else if (movingAxis === 'diag') {
-            currentBlock.position.x += delta; currentBlock.position.z += delta * 0.8;
-            if (currentBlock.position.x > 15 || currentBlock.position.z > 15) direction = -1;
-            if (currentBlock.position.x < -15 || currentBlock.position.z < -15) direction = 1;
-        }
-
-        if (currentBlock.userData.blockType === 'golden' || currentBlock.userData.blockType === 'bomb') {
-            const pulse = 0.3 + (Math.sin(time * 8) * 0.2);
-            currentBlock.material.forEach(m => { if (m.emissive) m.emissiveIntensity = pulse; });
-        } else if (currentBlock.userData.blockType === 'ice') {
-            const pulse = 0.85 + (Math.sin(time * 4) * 0.1);
-            currentBlock.material.forEach(m => { if (m.transparent) m.opacity = pulse; });
-        }
-    }
-
-    blocks.forEach(b => {
-        if (b.userData.squash !== undefined && b.userData.squash < 1) {
-            b.userData.squash += 0.1;
-            if (b.userData.squash > 1) b.userData.squash = 1;
-            const scaleY = 1 - Math.sin(b.userData.squash * Math.PI) * 0.3;
-            const scaleXZ = 1 + Math.sin(b.userData.squash * Math.PI) * 0.15;
-            b.scale.set(scaleXZ, scaleY, scaleXZ);
-        }
-    });
-
-    if (currentBlock?.userData.falling) { currentBlock.position.y -= 0.3; currentBlock.rotation.x += 0.05; currentBlock.rotation.z += 0.05; }
-
-    for (let i = debris.length - 1; i >= 0; i--) {
-        const d = debris[i]; d.position.add(d.userData.vel); d.userData.vel.y -= 0.02;
-        if (d.userData.rotSpeed) { d.rotation.x += d.userData.rotSpeed.x; d.rotation.y += d.userData.rotSpeed.y; d.rotation.z += d.userData.rotSpeed.z; }
-        if (d.userData.life !== undefined) { d.userData.life -= 0.02; d.scale.setScalar(d.userData.life); if (d.userData.life <= 0) { scene.remove(d); disposeMesh(d); debris.splice(i, 1); continue; } }
-        if (d.position.y < camera.position.y - 40) { scene.remove(d); disposeMesh(d); debris.splice(i, 1); }
-    }
-
-    for (let i = confetti.length - 1; i >= 0; i--) {
-        const c = confetti[i]; c.position.add(c.userData.vel); c.userData.vel.y -= 0.015; c.userData.vel.x *= 0.98; c.userData.vel.z *= 0.98;
-        c.rotation.x += c.userData.rotSpeed.x; c.rotation.y += c.userData.rotSpeed.y; c.rotation.z += c.userData.rotSpeed.z;
-        if (c.position.y < camera.position.y - 40) { scene.remove(c); disposeMesh(c); confetti.splice(i, 1); }
-    }
-
-    if (gameState === 'playing' || gameState === 'gameover') updateCamera();
-    scene.background.lerp(targetBgColor, 0.05);
-    renderer.render(scene, camera);
-}
-
-// ==========================================
-// STATE MANAGEMENT
-// ==========================================
-function clearScene() {
-    blocks.forEach(b => { scene.remove(b); disposeMesh(b); }); debris.forEach(d => { scene.remove(d); disposeMesh(d); }); confetti.forEach(c => { scene.remove(c); disposeMesh(c); });
-    blocks = []; debris = []; confetti = []; currentBlock = null;
-}
-
-function saveCurrentScoreIfNeeded() {
-    if (score > 0) {
-        if (score > highScore) { highScore = score; localStorage.setItem('towerHighScore', highScore); highScoreEl.innerText = `РЕКОРД: ${highScore}`; }
-    }
-}
-
-function startGame(mode) {
-    initAudio(); stopMusic(); clearScene();
-    if (mode) gameMode = mode;
-    score = 0; combo = 0; isFury = false; furyBlocksLeft = 0; document.body.classList.remove('fury-active');
-    scoreEl.innerText = score; direction = 1; currentSpeed = BASE_SPEED; musicTempo = 110; gameState = 'playing'; currentBiomeIndex = 0;
-    targetBgColor.set(BIOMES[0].bg); scene.background.set(BIOMES[0].bg); document.body.style.background = BIOMES[0].bg;
-    document.body.classList.add('in-game');
-
-    if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
-    if (gameMode === 'time') {
-        timeLeft = 60; timerEl.style.display = 'block'; updateTimerDisplay();
-        timeAttackTimer = setInterval(() => { if (gameState !== 'playing') return; timeLeft--; updateTimerDisplay(); if (timeLeft <= 0) { clearInterval(timeAttackTimer); timeAttackTimer = null; triggerGameOver(); } }, 1000);
-    } else { timerEl.style.display = 'none'; }
-
-    modeLabel.innerText = { classic: 'КЛАССИКА', time: 'НА ВРЕМЯ' }[gameMode];
-    startScreen.style.display = 'none'; gameOverEl.style.display = 'none'; pauseScreen.style.display = 'none';
-    camera.position.set(20, 25, 20); camera.lookAt(0, 0, 0);
-    if (showTutorialHint) tutorialEl.style.display = 'block';
-
-    createBaseBlock(); startMusic(); updateQuest('games', 1);
-}
-
-function goToMenu() {
-    if (gameState === 'playing') saveCurrentScoreIfNeeded();
-    stopMusic(); clearScene(); gameState = 'menu';
-    document.body.classList.remove('in-game', 'fury-active');
-    if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
-    gameOverEl.style.display = 'none'; pauseScreen.style.display = 'none'; shopScreen.style.display = 'none'; rulesScreen.style.display = 'none'; startScreen.style.display = 'flex';
-    scene.background.set(BIOMES[0].bg); document.body.style.background = BIOMES[0].bg;
-    camera.position.set(20, 25, 20); camera.lookAt(0, 0, 0);
-    if (windGain && audioCtx) windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5);
-}
-
-function triggerGameOver() {
-    if (gameState === 'gameover') return;
-    gameState = 'gameover'; playSound('gameover'); stopMusic(); shakeIntensity = 0.8;
-    document.body.classList.remove('in-game', 'fury-active');
-    if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
-    finalScoreVal.innerText = score;
-    setTimeout(() => { gameOverEl.style.display = 'flex'; }, 800);
-    triggerHaptic('error');
-}
-
-function togglePause() {
-    if (gameState === 'playing') {
-        gameState = 'paused'; pauseScreen.style.display = 'flex';
-        document.body.classList.remove('in-game');
-        if (timeAttackTimer) clearInterval(timeAttackTimer);
-    } else if (gameState === 'paused') {
-        gameState = 'playing'; pauseScreen.style.display = 'none';
-        document.body.classList.add('in-game');
-        if (gameMode === 'time') {
-            timeAttackTimer = setInterval(() => { if (gameState !== 'playing') return; timeLeft--; updateTimerDisplay(); if (timeLeft <= 0) { clearInterval(timeAttackTimer); triggerGameOver(); } }, 1000);
-        }
-    }
-}
-
-// ==========================================
-// INPUT & BUTTONS
-// ==========================================
-function handleInput(e) {
-    const target = e.target;
-    if (target && target.closest && target.closest('button, .mode-btn, #top-right-controls, .modal')) return;
-    if (target && target.closest && target.closest('#start-screen, #game-over, #pause-screen, #shop-screen, #rules-screen')) return;
-    if (gameState === 'playing') {
-        if (e.type === 'touchstart') e.preventDefault();
-        dropBlock();
-    }
-}
-window.addEventListener('mousedown', handleInput);
-window.addEventListener('touchstart', handleInput, { passive: false });
-
-document.querySelectorAll('.mode-btn').forEach(btn => {
-    safeClick(btn, () => { startGame(btn.dataset.mode); });
-});
-
-safeClick($('restart-btn'), () => startGame());
-safeClick($('menu-btn'), () => goToMenu());
-safeClick(pauseBtn, () => togglePause());
-safeClick($('pause-resume'), () => togglePause());
-safeClick($('pause-menu'), () => goToMenu());
-safeClick(menuToggleBtn, () => { if (gameState === 'playing' || gameState === 'paused') goToMenu(); });
-safeClick($('shop-btn'), () => { renderShop(); shopScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
-safeClick($('close-shop'), () => { shopScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
-safeClick($('rules-btn'), () => { rulesScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
-safeClick($('close-rules'), () => { rulesScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
-safeClick($('challenge-btn'), () => {
-    const text = `Я построил башню на ${score} этажей в MEGA HYPE! Слабо побить мой рекорд? 🏗️`;
-    const url = window.location.href;
-    if (tg) tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
-    else window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
-});
-
-safeClick(muteBtn, () => {
-    isMuted = !isMuted; localStorage.setItem('towerMuted', isMuted);
-    muteBtn.innerText = isMuted ? '🔇' : '🔊';
-    if (isMuted) { stopMusic(); if (windGain && audioCtx) windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); } else if (gameState === 'playing') startMusic();
-});
-muteBtn.innerText = isMuted ? '🔇' : '🔊';
-
-function onResize() {
-    if (!camera || !renderer) return;
-    const aspect = window.innerWidth / window.innerHeight; const d = 10;
-    camera.left = -d * aspect; camera.right = d * aspect; camera.top = d; camera.bottom = -d;
-    camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-function updateTimerDisplay() { timerEl.innerText = `⏱ ${timeLeft}`; timerEl.style.color = timeLeft <= 10 ? '#EF476F' : '#06D6A0'; }
-
-// INIT
-initThree();
-loadQuests();
-animate();
-</script>
-</body>
-</html>
+        else { playSound('perfect', combo); if (currentBlock.userData.blockType === 'golden') { showPopup(bonusText, '👑 ЗОЛОТО
