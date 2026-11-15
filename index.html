@@ -15,6 +15,9 @@
 </head>
 <body>
 
+<!-- Плавающая кнопка настроек (вне экранов) -->
+<button id="settings-btn" class="floating-settings" title="Настройки">⚙️</button>
+
 <!-- ==== UI LAYER ==== -->
 <div id="ui-layer">
     <div id="quests"></div>
@@ -190,64 +193,67 @@
 
 <!-- ==== START SCREEN ==== -->
 <div id="start-screen" class="screen">
-    <button id="settings-btn" class="floating-settings" title="Настройки">⚙️</button>
-    
-    <h1 class="start-title">🏗️ БАШНЯ<br>ХАЙПА</h1>
-    
-    <div id="start-top-info" class="top-info">
-        <div id="menu-coins" class="pill pill-coin">🪙 0</div>
-        <div id="menu-streak" class="pill pill-streak hidden">🔥 0</div>
-    </div>
-    
-    <div id="menu-level-box" class="level-box">
-        <div class="level-badge">🏅 LVL <span id="menu-level-num">1</span></div>
-        <div class="xp-bar"><div class="xp-fill" id="menu-xp-fill"></div></div>
-        <div class="xp-text" id="menu-xp-text">0 / 100 XP</div>
-    </div>
-    
-    <div id="chest-btn-container" style="display:none;">
-        <button id="chest-btn" class="chest-open-btn">
-            📦 Открыть сундуки
-            <span id="chest-count-badge" class="chest-badge">0</span>
-        </button>
-    </div>
-    
-    <div class="mode-buttons">
-        <button class="mode-btn" data-mode="classic" id="btn-classic">
-            <span class="mode-icon">🎮</span>
-            <span class="mode-info">
-                <span class="mode-name">Классика</span>
-                <span class="mode-desc">Без ограничений по времени</span>
-            </span>
-            <span class="mode-arrow">›</span>
-        </button>
-        <button class="mode-btn" data-mode="time" id="btn-time">
-            <span class="mode-icon">⏱</span>
-            <span class="mode-info">
-                <span class="mode-name">На время</span>
-                <span class="mode-desc">60 сек, +2 сек за идеал</span>
-            </span>
-            <span class="mode-arrow">›</span>
-        </button>
-    </div>
-    
-    <div class="menu-footer">
-        <button id="shop-btn" class="footer-btn">
-            <span class="footer-icon">🛍️</span>
-            <span class="footer-label">Магазин</span>
-        </button>
-        <button id="rules-btn" class="footer-btn">
-            <span class="footer-icon">📖</span>
-            <span class="footer-label">Правила</span>
-        </button>
-        <button id="ach-btn" class="footer-btn">
-            <span class="footer-icon">🏆</span>
-            <span class="footer-label">Ачивки</span>
-        </button>
-        <button id="lb-btn" class="footer-btn">
-            <span class="footer-icon">👑</span>
-            <span class="footer-label">Топ</span>
-        </button>
+    <div class="start-content">
+        <h1 class="start-title">
+            <span class="title-emoji">🏗️</span>
+            <span class="title-text">БАШНЯ<br>ХАЙПА</span>
+        </h1>
+        
+        <div id="start-top-info" class="top-info">
+            <div id="menu-coins" class="pill pill-coin">🪙 0</div>
+            <div id="menu-streak" class="pill pill-streak hidden">🔥 0</div>
+        </div>
+        
+        <div id="menu-level-box" class="level-box">
+            <div class="level-badge">🏅 LVL <span id="menu-level-num">1</span></div>
+            <div class="xp-bar"><div class="xp-fill" id="menu-xp-fill"></div></div>
+            <div class="xp-text" id="menu-xp-text">0 / 100 XP</div>
+        </div>
+        
+        <div id="chest-btn-container" style="display:none;">
+            <button id="chest-btn" class="chest-open-btn">
+                📦 Открыть сундуки
+                <span id="chest-count-badge" class="chest-badge">0</span>
+            </button>
+        </div>
+        
+        <div class="mode-buttons">
+            <button class="mode-btn" data-mode="classic" id="btn-classic">
+                <span class="mode-icon">🎮</span>
+                <span class="mode-info">
+                    <span class="mode-name">Классика</span>
+                    <span class="mode-desc">Без ограничений по времени</span>
+                </span>
+                <span class="mode-arrow">›</span>
+            </button>
+            <button class="mode-btn" data-mode="time" id="btn-time">
+                <span class="mode-icon">⏱</span>
+                <span class="mode-info">
+                    <span class="mode-name">На время</span>
+                    <span class="mode-desc">60 сек, +2 сек за идеал</span>
+                </span>
+                <span class="mode-arrow">›</span>
+            </button>
+        </div>
+        
+        <div class="menu-footer">
+            <button id="shop-btn" class="footer-btn">
+                <span class="footer-icon">🛍️</span>
+                <span class="footer-label">Магазин</span>
+            </button>
+            <button id="rules-btn" class="footer-btn">
+                <span class="footer-icon">📖</span>
+                <span class="footer-label">Правила</span>
+            </button>
+            <button id="ach-btn" class="footer-btn">
+                <span class="footer-icon">🏆</span>
+                <span class="footer-label">Ачивки</span>
+            </button>
+            <button id="lb-btn" class="footer-btn">
+                <span class="footer-icon">👑</span>
+                <span class="footer-label">Топ</span>
+            </button>
+        </div>
     </div>
 </div>
 
