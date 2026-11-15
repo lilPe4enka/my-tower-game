@@ -51,8 +51,69 @@ const SKINS = {
     space: { name: 'Космос', price: 250, emojis: ['🌍','🌕','🚀','👾','🛸','⭐','🪐','🌌','☄️','👨‍🚀','🌟','✨','💫','🌠'], colors: ['#1A237E','#283593','#311B92','#4527A0','#512DA8','#01579B','#0D47A1'], texts: ['МАРС','ЛУНА','САТУРН','НЛО','ЗВЕЗДА','КОСМОС','ОРБИТА','ГРАВИТАЦИЯ','ВАКУУМ','СКАФАНДР','ГАЛАКТИКА'] },
     ocean: { name: 'Океан', price: 320, emojis: ['🐠','🐟','🐡','🦈','🐬','🐳','🐋','🦑','🐙','🦀','🦞','🦐','🐚','🌊'], colors: ['#0288D1','#0277BD','#01579B','#006064','#00838F','#0097A7','#26C6DA'], texts: ['РЫБА','АКУЛА','ДЕЛЬФИН','КИТ','ОСЬМИНОГ','КРАБ','РАК','КРЕВЕТКА','РАКОВИНА','ВОЛНА','МЕДУЗА','КОРАЛЛ'] },
     retro: { name: 'Ретро 8-бит', price: 400, emojis: ['👾','🕹️','💾','📼','📟','📺','🎮','🖥️','💿','🎧'], colors: ['#00C853','#00B248','#00897B','#00BFA5','#76FF03','#AA00FF'], texts: ['PIXEL','GAME','RETRO','8-BIT','ATARI','NINTENDO','SEGA','TETRIS','JOYSTICK','CRT','ARCADE'] },
-    neon: { name: 'Неон', price: 500, emojis: ['💎','🔮','🎆','🎇','✨','💫','🌟','⚡','🌈','🎊'], colors: ['#E91E63','#9C27B0','#3F51B5','#00BCD4','#8BC34A','#FFEB3B','#FF4081','#00E5FF'], texts: ['НЕОН','СВЕТ','ЛАЗЕР','РАДУГА','БЛЕСК','СИЯНИЕ','ФЛЭШ','ИМПУЛЬС','ЭНЕРГИЯ','ВСПЫШКА'] }
+    neon: { name: 'Неон', price: 500, emojis: ['💎','🔮','🎆','🎇','✨','💫','🌟','⚡','🌈','🎊'], colors: ['#E91E63','#9C27B0','#3F51B5','#00BCD4','#8BC34A','#FFEB3B','#FF4081','#00E5FF'], texts: ['НЕОН','СВЕТ','ЛАЗЕР','РАДУГА','БЛЕСК','СИЯНИЕ','ФЛЭШ','ИМПУЛЬС','ЭНЕРГИЯ','ВСПЫШКА'] },
+    ice: { name: 'Лёд', price: 200, emojis: ['❄️','🧊','⛷️','🏔️','🌨️','🌬️','💧','🥶','🐧','🐻‍❄️'], colors: ['#81D4FA','#4FC3F7','#29B6F6','#03A9F4','#039BE5','#0288D1'], texts: ['ЛЁД','СНЕГ','МОРОЗ','СТУЖА','ХОЛОД','ЗИМА','СНЕЖИНКА','ВЬЮГА','ГРАД','НАСТ'], modifiers: { speedMult: 1.3, coinMult: 1.2 } },
+    stone: { name: 'Камень', price: 200, emojis: ['🪨','🏔️','⛰️','🗿','💎','🧱','🏛️','⚓','🔩','🪙'], colors: ['#757575','#616161','#424242','#546E7A','#455A64','#37474F'], texts: ['КАМЕНЬ','ГРАНИТ','БАЗАЛЬТ','РУДА','МРАМОР','КИРПИЧ','СТЕНА','СКАЛА','ГЛЫБА','ОПОРА'], modifiers: { speedMult: 0.85, scoreMult: 1.2 } },
+    fire: { name: 'Огонь', price: 250, emojis: ['🔥','🌋','☄️','💥','🎇','🚒','🌶️','⚡','🎆','🌟'], colors: ['#FF5722','#FF3D00','#E64A19','#F4511E','#D84315','#BF360C'], texts: ['ОГОНЬ','ПЛАМЯ','ЖАР','ИСКРА','ВЗРЫВ','ВУЛКАН','ЛАВА','ФАКЕЛ','ПОЖАР','БУРЯ'], modifiers: { fireChance: 0.05 } },
+    legend: { name: 'Легенда', price: 999999, notBuyable: true, emojis: ['👑','🏆','🥇','⭐','💫','✨','🌟','💎','🎖️','🏅'], colors: ['#FFD700','#FFA000','#FF6F00','#F57C00','#FFEB3B','#FFC107'], texts: ['ЛЕГЕНДА','ЧЕМПИОН','БОСС','ТОП','КРАШ','ФЛЕКС','ГИГАЧАД','ХАЙП','ИМБА','ОГОНЬ'] }
 };
+
+const PALETTES = {
+    standard: { name: 'Классика', price: 0, colors: BASE_COLORS },
+    pastel: { name: 'Пастель', price: 50, colors: ['#FFB3BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF', '#E0BBE4', '#FFC8DD', '#CDEAC0'] },
+    neon: { name: 'Неон', price: 80, colors: ['#FF0080', '#FF8C00', '#FFD700', '#00FF88', '#00D4FF', '#0080FF', '#8B00FF', '#FF00FF'] },
+    dark: { name: 'Тёмная', price: 100, colors: ['#212121', '#424242', '#616161', '#1A237E', '#283593', '#4A148C', '#311B92', '#004D40'] },
+    rainbow: { name: 'Радуга', price: 150, colors: ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3', '#FF1493'] },
+};
+
+const BACKGROUNDS = {
+    default: { name: 'Стандарт', price: 0, colors: ['#FDE2E4', '#E2ECE9', '#D0E6F9', '#F9E2D0', '#2B2D42'] },
+    night: { name: 'Ночь', price: 100, colors: ['#0F172A', '#1E293B', '#1E1B4B', '#312E81', '#020617'], stars: true },
+    sunset: { name: 'Закат', price: 80, colors: ['#FFB88C', '#FF9A8B', '#FF6B6B', '#FFD5A0', '#6A1B9A'] },
+    ocean: { name: 'Океан', price: 120, colors: ['#87CEEB', '#4A90E2', '#2E5C8A', '#1E3A5F', '#0A1E3F'] },
+    city: { name: 'Город', price: 150, colors: ['#B0B0C0', '#9090A0', '#707080', '#505060', '#303040'] },
+    space: { name: 'Космос', price: 200, colors: ['#0a0020', '#200040', '#300060', '#400080', '#050010'], stars: true },
+};
+
+const SEASONS = [
+    { months: [12, 1, 2], name: 'Зима', icon: '❄️', coinMult: 1.2, xpMult: 1.0 },
+    { months: [3, 4, 5], name: 'Весна', icon: '🌸', coinMult: 1.0, xpMult: 1.15 },
+    { months: [6, 7, 8], name: 'Лето', icon: '☀️', coinMult: 1.1, xpMult: 1.1 },
+    { months: [9, 10, 11], name: 'Осень', icon: '🍂', coinMult: 1.15, xpMult: 1.0 },
+];
+
+const DAILY_CHALLENGES = [
+    { id: 'golden_only', name: 'Золотой дождь', desc: 'Только золотые блоки', icon: '👑', modifiers: { onlyType: 'golden' } },
+    { id: 'bomb_only', name: 'Минное поле', desc: 'Только бомбы', icon: '💣', modifiers: { onlyType: 'bomb' } },
+    { id: 'ice_only', name: 'Гололёд', desc: 'Только лёд', icon: '❄️', modifiers: { onlyType: 'ice' } },
+    { id: 'rainbow_only', name: 'Радуга', desc: 'Только радужные', icon: '🌈', modifiers: { onlyType: 'rainbow' } },
+    { id: 'normal_only', name: 'Обыденность', desc: 'Только обычные', icon: '🍕', modifiers: { onlyType: 'normal' } },
+    { id: 'crumble_only', name: 'Хрупкий мир', desc: 'Только хрупкие', icon: '🧱', modifiers: { onlyType: 'crumble' } },
+    { id: 'fast_1_5', name: 'Турбо', desc: 'Скорость x1.5', icon: '⚡', modifiers: { speedMult: 1.5 } },
+    { id: 'fast_2', name: 'Гипер-турбо', desc: 'Скорость x2', icon: '💨', modifiers: { speedMult: 2.0 } },
+    { id: 'slow_0_7', name: 'Медитация', desc: 'Скорость x0.7', icon: '🧘', modifiers: { speedMult: 0.7 } },
+    { id: 'rocket_start', name: 'Ракета', desc: 'Быстрый старт', icon: '🎯', modifiers: { startSpeed: 0.3 } },
+    { id: 'lazy_start', name: 'Ленивый', desc: 'Медленный старт', icon: '🐌', modifiers: { startSpeed: 0.08 } },
+    { id: 'double_score', name: 'x2 очки', desc: 'Все очки удвоены', icon: '✨', modifiers: { scoreMult: 2 } },
+    { id: 'half_score', name: 'x0.5 очки', desc: 'Все очки пополам', icon: '📉', modifiers: { scoreMult: 0.5 } },
+    { id: 'triple_score', name: 'x3 очки', desc: 'Все очки утроены', icon: '🌟', modifiers: { scoreMult: 3 } },
+    { id: 'double_coins', name: 'x2 монеты', desc: 'Монеты удвоены', icon: '💰', modifiers: { coinMult: 2 } },
+    { id: 'triple_coins', name: 'x3 монеты', desc: 'Монеты утроены', icon: '💎', modifiers: { coinMult: 3 } },
+    { id: 'double_xp', name: 'x2 опыт', desc: 'Опыт удвоен', icon: '⭐', modifiers: { xpMult: 2 } },
+    { id: 'small_start', name: 'Малыш', desc: 'Маленький стартовый блок', icon: '🐜', modifiers: { baseSize: 2.5 } },
+    { id: 'big_start', name: 'Гигант', desc: 'Огромный стартовый блок', icon: '🐘', modifiers: { baseSize: 6 } },
+    { id: 'diag_start', name: 'Диагональ', desc: 'Сразу диагональ', icon: '📐', modifiers: { diagFromStart: true } },
+    { id: 'one_shot', name: 'Один шанс', desc: 'Промах = конец', icon: '💀', modifiers: { noCut: true } },
+    { id: 'no_fury', name: 'Без ярости', desc: 'Ярость не активируется', icon: '😴', modifiers: { noFury: true } },
+    { id: 'fast_accel', name: 'Разгон', desc: 'Ускорение x2', icon: '🚀', modifiers: { accelMult: 2 } },
+    { id: 'slow_accel', name: 'Плавный', desc: 'Ускорение x0.5', icon: '🧊', modifiers: { accelMult: 0.5 } },
+    { id: 'time_30', name: 'Спринт', desc: 'Таймер 30 сек', icon: '⏱', modifiers: { timeLimit: 30 } },
+    { id: 'time_90', name: 'Марафон', desc: 'Таймер 90 сек', icon: '🕐', modifiers: { timeLimit: 90 } },
+    { id: 'glass_cannon', name: 'Стекл. пушка', desc: 'x3 очки, но 1 промах', icon: '🔮', modifiers: { scoreMult: 3, noCut: true } },
+    { id: 'hardcore', name: 'Хардкор', desc: 'Быстро + 1 промах', icon: '☠️', modifiers: { speedMult: 1.5, noCut: true } },
+    { id: 'rush', name: 'Спешка', desc: 'Быстро + x2 очки', icon: '🔥', modifiers: { speedMult: 1.3, scoreMult: 2 } },
+    { id: 'rich', name: 'Богатый день', desc: 'x3 монеты + x2 очки', icon: '🤑', modifiers: { coinMult: 3, scoreMult: 2 } },
+];
 
 const POWERUP_DEFS = {
     magnet:     { icon: '🧲', name: 'Магнит',     desc: '1 блок встанет идеально',  price: 50 },
@@ -69,28 +130,33 @@ const ACHIEVEMENTS = [
     { id: 'score_100', name: 'Легенда', desc: '100 очков в игре', icon: '👑', check: () => stats.maxScore >= 100 },
     { id: 'combo_3', name: 'Комбо-мастер', desc: 'Комбо x3', icon: '🔥', check: () => stats.maxCombo >= 3 },
     { id: 'combo_5', name: 'Огненный', desc: 'Комбо x5', icon: '💥', check: () => stats.maxCombo >= 5 },
-    { id: 'perfect_50', name: 'Снайпер', desc: '50 идеалов', icon: '🎯', check: () => stats.totalPerfect >= 50 },
-    { id: 'perfect_200', name: 'Точность', desc: '200 идеалов', icon: '🎪', check: () => stats.totalPerfect >= 200 },
+    { id: 'perfect_50', name: 'Снайпер', desc: '50 идеалов', icon: '🎯', check: () => stats.totalPerfect >= 50, reward: 50 },
+    { id: 'perfect_200', name: 'Точность', desc: '200 идеалов → золотой след', icon: '🎪', check: () => stats.totalPerfect >= 200, reward: 200, feature: 'goldenTrail' },
     { id: 'games_10', name: 'Игрок', desc: '10 игр', icon: '🎮', check: () => stats.totalGames >= 10 },
     { id: 'games_50', name: 'Заядлый', desc: '50 игр', icon: '🎲', check: () => stats.totalGames >= 50 },
     { id: 'fury_1', name: 'В ярости', desc: 'Активируй ярость', icon: '😡', check: () => stats.totalFury >= 1 },
-    { id: 'fury_10', name: 'Берсерк', desc: '10 яростей', icon: '👹', check: () => stats.totalFury >= 10 },
+    { id: 'fury_10', name: 'Берсерк', desc: '10 яростей → красная тема', icon: '👹', check: () => stats.totalFury >= 10, reward: 150, feature: 'redTheme' },
     { id: 'golden_5', name: 'Король золота', desc: '5 идеальных золотых', icon: '💎', check: () => stats.totalGolden >= 5 },
     { id: 'bomb_5', name: 'Сапёр', desc: '5 идеальных бомб', icon: '💣', check: () => stats.totalBomb >= 5 },
     { id: 'ice_5', name: 'Ледокол', desc: '5 идеальных льдов', icon: '❄️', check: () => stats.totalIce >= 5 },
     { id: 'secret_1', name: 'Тайна', desc: 'Поймай секретный блок', icon: '🌟', check: () => stats.totalSecret >= 1 },
     { id: 'secret_10', name: 'Охотник', desc: '10 секретных блоков', icon: '🔮', check: () => stats.totalSecret >= 10 },
     { id: 'skins_3', name: 'Коллекционер', desc: '3 скина', icon: '🎨', check: () => unlockedSkins.length >= 3 },
-    { id: 'skins_all', name: 'Все скины', desc: 'Все скины', icon: '🏆', check: () => unlockedSkins.length >= Object.keys(SKINS).length },
+    { id: 'skins_all', name: 'Все скины', desc: 'Собери все базовые скины', icon: '🏆', reward: 500, special: 'legend', check: () => {
+        const buyable = Object.keys(SKINS).filter(k => k !== 'legend' && !SKINS[k].notBuyable);
+        return buyable.every(k => unlockedSkins.includes(k));
+    }},
     { id: 'rich_500', name: 'Богач', desc: '500 монет', icon: '💰', check: () => coins >= 500 },
     { id: 'level_10', name: 'Ветеран', desc: '10 уровень', icon: '🌟', check: () => level >= 10 },
+    { id: 'daily_1', name: 'Испытатель', desc: 'Пройди 1 челлендж', icon: '🎯', check: () => stats.dailyCompleted >= 1 },
+    { id: 'daily_10', name: 'Челленджер', desc: '10 челленджей', icon: '🏹', check: () => stats.dailyCompleted >= 10, reward: 100 },
 ];
 
-const BIOMES = [{ bg: '#FDE2E4' }, { bg: '#E2ECE9' }, { bg: '#D0E6F9' }, { bg: '#F9E2D0' }, { bg: '#2B2D42' }];
-
 // ============ STATE ============
-const BLOCK_SIZE = 4, BLOCK_HEIGHT = 1, BASE_SPEED = 0.16, MAX_SPEED = 0.45;
+const BLOCK_SIZE = 4, BLOCK_HEIGHT = 1, BASE_SPEED = 0.16;
+let dynamicMaxSpeed = 0.45;
 let scene, camera, renderer, musicGain, windGain;
+let bgStarsGroup = null;
 let blocks = [], debris = [], confetti = [];
 let currentBlock, nextBlockData, direction = 1;
 let score = 0, combo = 0;
@@ -99,21 +165,36 @@ let sessionCoins = 0, sessionXP = 0;
 let highScore = parseInt(localStorage.getItem('towerHighScore')) || 0;
 let currentSkin = localStorage.getItem('towerSkin') || 'default';
 let unlockedSkins = JSON.parse(localStorage.getItem('towerSkins') || '["default"]');
+let currentPalette = localStorage.getItem('towerPalette') || 'standard';
+let unlockedPalettes = JSON.parse(localStorage.getItem('towerUnlockedPalettes') || '["standard"]');
+let currentBackground = localStorage.getItem('towerBackground') || 'default';
+let unlockedBackgrounds = JSON.parse(localStorage.getItem('towerUnlockedBackgrounds') || '["default"]');
+let unlockedFeatures = JSON.parse(localStorage.getItem('towerFeatures') || '{}');
+
 let gameState = 'menu', gameMode = 'classic';
 let movingAxis = 'x', currentSpeed = BASE_SPEED;
-let currentBiomeIndex = 0, targetBgColor = new THREE.Color(BIOMES[0].bg), shakeIntensity = 0;
+let currentBiomeIndex = 0, targetBgColor = new THREE.Color(BACKGROUNDS.default.colors[0]), shakeIntensity = 0;
 let timeLeft = 60, timeAttackTimer = null;
 let showTutorialHint = !localStorage.getItem('towerTutorialShown');
 let clock = new THREE.Clock();
 let newQuestsTimeout = null, quests = [];
 let isFury = false, furyBlocksLeft = 0;
 let glowTexture = null;
+let dailyModifiers = {};
+let dailyChallengeActive = false;
 
 let settings = JSON.parse(localStorage.getItem('towerSettings') || 'null') || { musicEnabled: true, sfxEnabled: true, hapticsEnabled: true };
 function saveSettings() { localStorage.setItem('towerSettings', JSON.stringify(settings)); }
 
-let stats = JSON.parse(localStorage.getItem('towerStats') || 'null') || { totalGames: 0, totalPerfect: 0, totalGolden: 0, totalBomb: 0, totalIce: 0, totalFury: 0, totalSecret: 0, maxScore: 0, maxCombo: 0, maxTimeScore: 0 };
+let stats = JSON.parse(localStorage.getItem('towerStats') || 'null') || { totalGames: 0, totalPerfect: 0, totalGolden: 0, totalBomb: 0, totalIce: 0, totalFury: 0, totalSecret: 0, maxScore: 0, maxCombo: 0, maxTimeScore: 0, dailyCompleted: 0 };
+if (stats.dailyCompleted === undefined) stats.dailyCompleted = 0;
 function saveStats() { localStorage.setItem('towerStats', JSON.stringify(stats)); }
+
+let totalScoreAllTime = parseInt(localStorage.getItem('towerTotalScore') || '0');
+function saveTotalScore() { localStorage.setItem('towerTotalScore', totalScoreAllTime); }
+
+let recentScores = JSON.parse(localStorage.getItem('towerRecentScores') || '[]');
+function saveRecentScores() { localStorage.setItem('towerRecentScores', JSON.stringify(recentScores)); }
 
 let unlockedAchievements = JSON.parse(localStorage.getItem('towerAchievements') || '[]');
 function saveAchievements() { localStorage.setItem('towerAchievements', JSON.stringify(unlockedAchievements)); }
@@ -146,6 +227,15 @@ function getMusicPhase() {
     if (score >= 15) return 2;
     return 1;
 }
+
+function getCurrentSeason() {
+    const m = new Date().getMonth() + 1;
+    return SEASONS.find(s => s.months.includes(m)) || SEASONS[0];
+}
+
+function getSkinModifiers() { return (SKINS[currentSkin] && SKINS[currentSkin].modifiers) || {}; }
+function getPaletteColors() { return (PALETTES[currentPalette] || PALETTES.standard).colors; }
+function getBgColors() { return (BACKGROUNDS[currentBackground] || BACKGROUNDS.default).colors; }
 
 const QUESTS_POOL = [
     { type: 'perfect', target: 3, text: '🎯 Точность x3', reward: 15 },
@@ -194,19 +284,86 @@ const questsEl = $('quests'), muteBtn = $('mute-btn'), pauseBtn = $('pause-btn')
 const tutorialEl = $('tutorial'), nextBlockEmoji = $('next-block-emoji');
 const screenFlash = $('screen-flash'), coinsBalanceEl = $('coins-balance'), skinListEl = $('skin-list'), menuCoinsEl = $('menu-coins');
 const shopProgressEl = $('shop-progress');
+const colorsListEl = $('colors-list'), backgroundsListEl = $('backgrounds-list');
 const achListEl = $('ach-list'), achProgressEl = $('ach-progress');
 const lbListEl = $('lb-list');
+const statsGridEl = $('stats-grid');
 const menuLevelNum = $('menu-level-num'), menuXPFill = $('menu-xp-fill'), menuXPText = $('menu-xp-text');
 const menuStreakEl = $('menu-streak');
 const dailyStreakText = $('daily-streak-text'), dailyCoinsReward = $('daily-coins-reward'), dailySubText = $('daily-sub-text');
 const activePowerupsEl = $('active-powerups');
+const dailyBannerEl = $('daily-challenge-banner'), dailyNameEl = $('daily-name'), dailyDescEl = $('daily-desc'), dailyIconEl = $('daily-icon'), dailyPlayBtn = $('daily-play-btn');
+const seasonPillEl = $('season-pill');
+const victoryCrownEl = $('victory-crown');
 
 highScoreEl.innerText = `РЕКОРД: ${highScore}`;
+
+// ============ СЕЗОН ============
+function initSeason() {
+    const season = getCurrentSeason();
+    const bonusParts = [];
+    if (season.coinMult > 1) bonusParts.push(`+${Math.round((season.coinMult - 1) * 100)}% 🪙`);
+    if (season.xpMult > 1) bonusParts.push(`+${Math.round((season.xpMult - 1) * 100)}% XP`);
+    if (bonusParts.length > 0 && seasonPillEl) {
+        seasonPillEl.innerText = `${season.icon} ${season.name} ${bonusParts.join(' ')}`;
+        seasonPillEl.style.display = 'block';
+    }
+}
+
+// ============ DAILY CHALLENGE ============
+function getDailyChallenge() {
+    const today = new Date();
+    const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+    return DAILY_CHALLENGES[seed % DAILY_CHALLENGES.length];
+}
+function getDailyChallengeStatus() {
+    return localStorage.getItem('towerDailyChallengeDate') === new Date().toDateString();
+}
+function markDailyChallengePlayed() {
+    localStorage.setItem('towerDailyChallengeDate', new Date().toDateString());
+    stats.dailyCompleted = (stats.dailyCompleted || 0) + 1;
+    saveStats();
+    checkAchievements();
+}
+function renderDailyChallenge() {
+    if (!dailyBannerEl) return;
+    const challenge = getDailyChallenge();
+    dailyNameEl.innerText = challenge.name;
+    dailyDescEl.innerText = challenge.desc;
+    dailyIconEl.innerText = challenge.icon;
+    const played = getDailyChallengeStatus();
+    if (played) {
+        dailyBannerEl.classList.add('played');
+        dailyPlayBtn.innerText = '✓';
+        dailyPlayBtn.disabled = true;
+    } else {
+        dailyBannerEl.classList.remove('played');
+        dailyPlayBtn.innerText = 'ИГРАТЬ';
+        dailyPlayBtn.disabled = false;
+    }
+}
+function startDailyChallenge() {
+    if (getDailyChallengeStatus()) return;
+    const challenge = getDailyChallenge();
+    dailyChallengeActive = true;
+    dailyModifiers = challenge.modifiers;
+    gameMode = 'classic';
+    markDailyChallengePlayed();
+    renderDailyChallenge();
+    startGame('classic');
+}
 
 // ============ МОНЕТЫ ============
 function addCoins(amount) {
     if (amount <= 0) return;
-    if (activePowerups.multiplier && gameState === 'playing') amount *= 2;
+    let mult = 1;
+    if (activePowerups.multiplier && gameState === 'playing') mult *= 2;
+    if (dailyModifiers.coinMult) mult *= dailyModifiers.coinMult;
+    const skinMods = getSkinModifiers();
+    if (skinMods.coinMult) mult *= skinMods.coinMult;
+    const season = getCurrentSeason();
+    if (season.coinMult) mult *= season.coinMult;
+    amount = Math.round(amount * mult);
     coins += amount; sessionCoins += amount;
     localStorage.setItem('towerCoins', coins);
     updateCoinUI(); showCoinPopup(amount);
@@ -228,6 +385,11 @@ function showCoinPopup(amount) {
 // ============ XP & LEVEL ============
 function addXP(amount) {
     if (amount <= 0) return;
+    let mult = 1;
+    if (dailyModifiers.xpMult) mult *= dailyModifiers.xpMult;
+    const season = getCurrentSeason();
+    if (season.xpMult) mult *= season.xpMult;
+    amount = Math.round(amount * mult);
     xpTotal += amount; sessionXP += amount;
     while (xpTotal >= xpForNextLevel(level) && level < 50) {
         xpTotal -= xpForNextLevel(level);
@@ -236,7 +398,9 @@ function addXP(amount) {
         showPopup(levelupPopup, `🏅 УРОВЕНЬ ${level}! +50 🪙`, 2000);
         playSound('milestone');
         triggerHaptic('success');
-        if (level % 10 === 0) setTimeout(() => addChest('level', { level }), 500);
+        if (level % 5 === 0) {
+            setTimeout(() => addChest('level', { level }), 500);
+        }
         checkAchievements();
     }
     saveLevelProgress();
@@ -290,10 +454,22 @@ function checkAchievements() {
             if (a.check()) {
                 unlockedAchievements.push(a.id);
                 newUnlocked = true;
-                addCoins(20);
+                const rewardAmount = a.reward || 20;
+                addCoins(rewardAmount);
                 showPopup(achievementPopup, `${a.icon} ${a.name}!`, 2000);
                 playSound('quest');
                 triggerHaptic('success');
+                if (a.special === 'legend' && !unlockedSkins.includes('legend')) {
+                    unlockedSkins.push('legend');
+                    localStorage.setItem('towerSkins', JSON.stringify(unlockedSkins));
+                    setTimeout(() => showPopup(bonusText, '👑 СКИН «ЛЕГЕНДА»!', 2500), 2200);
+                }
+                if (a.feature) {
+                    unlockedFeatures[a.feature] = true;
+                    localStorage.setItem('towerFeatures', JSON.stringify(unlockedFeatures));
+                    const featureNames = { goldenTrail: 'Золотой след', redTheme: 'Красная тема' };
+                    setTimeout(() => showPopup(bonusText, `✨ ${featureNames[a.feature]}!`, 2500), 2200);
+                }
             }
         } catch (e) {}
     });
@@ -321,14 +497,43 @@ function addToLeaderboard(scoreValue, mode) {
 }
 function renderLeaderboard() {
     lbListEl.innerHTML = '';
-    if (leaderboard.length === 0) { lbListEl.innerHTML = '<div class="lb-empty">Пока пусто — сыграй первую игру!</div>'; return; }
-    leaderboard.forEach((entry, i) => {
-        const div = document.createElement('div');
-        div.className = 'lb-item' + (i === 0 ? ' top1' : i === 1 ? ' top2' : i === 2 ? ' top3' : '');
-        const modeName = entry.mode === 'time' ? '⏱' : '🎮';
-        div.innerHTML = `<span><span class="lb-rank">#${i+1}</span>${entry.score} ${modeName}</span><span class="lb-date">${entry.date}</span>`;
-        lbListEl.appendChild(div);
-    });
+    if (leaderboard.length === 0) { lbListEl.innerHTML = '<div class="lb-empty">Пока пусто — сыграй первую игру!</div>'; }
+    else {
+        leaderboard.forEach((entry, i) => {
+            const div = document.createElement('div');
+            div.className = 'lb-item' + (i === 0 ? ' top1' : i === 1 ? ' top2' : i === 2 ? ' top3' : '');
+            const modeName = entry.mode === 'time' ? '⏱' : entry.mode === 'precision' ? '🎯' : entry.mode === 'speedrun' ? '⚡' : entry.mode === 'endless' ? '♾️' : entry.mode === 'mirror' ? '🪞' : '🎮';
+            div.innerHTML = `<span><span class="lb-rank">#${i+1}</span>${entry.score} ${modeName}</span><span class="lb-date">${entry.date}</span>`;
+            lbListEl.appendChild(div);
+        });
+    }
+    if (statsGridEl) {
+        const avgScore = stats.totalGames > 0 ? Math.round(totalScoreAllTime / stats.totalGames) : 0;
+        statsGridEl.innerHTML = `
+            <div class="stat-card"><div class="stat-value">${stats.totalGames}</div><div class="stat-label">Игр</div></div>
+            <div class="stat-card"><div class="stat-value">${stats.maxScore}</div><div class="stat-label">Рекорд</div></div>
+            <div class="stat-card"><div class="stat-value">${avgScore}</div><div class="stat-label">Средний</div></div>
+            <div class="stat-card"><div class="stat-value">${stats.totalPerfect}</div><div class="stat-label">Идеалов</div></div>
+            <div class="stat-card"><div class="stat-value">${stats.maxCombo}</div><div class="stat-label">Комбо</div></div>
+            <div class="stat-card"><div class="stat-value">${stats.dailyCompleted || 0}</div><div class="stat-label">Челленджей</div></div>
+        `;
+    }
+}
+
+// ============ SMART DIFFICULTY ============
+function trackGameScore(gameScore) {
+    recentScores.push(gameScore);
+    if (recentScores.length > 10) recentScores.shift();
+    saveRecentScores();
+}
+function getSmartDifficultyMultiplier() {
+    if (recentScores.length < 3) return 1.0;
+    const avg = recentScores.reduce((a, b) => a + b, 0) / recentScores.length;
+    if (avg < 12) return 0.90;
+    if (avg < 18) return 0.95;
+    if (avg > 45) return 1.08;
+    if (avg > 35) return 1.04;
+    return 1.0;
 }
 
 // ============ НАСТРОЙКИ ============
@@ -391,6 +596,7 @@ function playSound(type, level = 0) {
         else if (type === 'fury') { tone(440, 880, 'sawtooth', 0.5, 0.15); tone(554, 1108, 'sawtooth', 0.5, 0.1); }
         else if (type === 'secret') { [523.25, 659.25, 783.99, 1046.5, 1318.51].forEach((f, i) => tone(f, null, 'sine', 0.3, 0.2, i * 0.06)); }
         else if (type === 'chest') { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, null, 'triangle', 0.4, 0.2, i * 0.1)); tone(1318.51, null, 'sine', 0.6, 0.25, 0.5); }
+        else if (type === 'victory') { [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98].forEach((f, i) => tone(f, null, 'triangle', 0.5, 0.22, i * 0.1)); }
     } catch(e) {}
 }
 
@@ -404,12 +610,9 @@ function playLeadNote(idx) {
     try {
         const now = audioCtx.currentTime;
         const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(leadNotes[idx], now);
-        g.gain.setValueAtTime(0.05, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-        osc.connect(g); g.connect(musicGain);
-        osc.start(now); osc.stop(now + 0.35);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(leadNotes[idx], now);
+        g.gain.setValueAtTime(0.05, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.connect(g); g.connect(musicGain); osc.start(now); osc.stop(now + 0.35);
     } catch(e) {}
 }
 function playFuryLead() {
@@ -418,14 +621,10 @@ function playFuryLead() {
         const now = audioCtx.currentTime;
         const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
         const filter = audioCtx.createBiquadFilter();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(880, now);
-        osc.frequency.exponentialRampToValueAtTime(440, now + 0.15);
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(880, now); osc.frequency.exponentialRampToValueAtTime(440, now + 0.15);
         filter.type = 'lowpass'; filter.frequency.value = 3000;
-        g.gain.setValueAtTime(0.08, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-        osc.connect(filter); filter.connect(g); g.connect(musicGain);
-        osc.start(now); osc.stop(now + 0.2);
+        g.gain.setValueAtTime(0.08, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        osc.connect(filter); filter.connect(g); g.connect(musicGain); osc.start(now); osc.stop(now + 0.2);
     } catch(e) {}
 }
 
@@ -433,7 +632,6 @@ function musicTick() {
     if (!musicPlaying || !settings.musicEnabled || gameState !== 'playing') return;
     currentMusicPhase = getMusicPhase();
     const beat = musicBeat % 8;
-    
     if (currentMusicPhase === 4) {
         if (beat % 2 === 0) playKick();
         if (beat === 1 || beat === 3 || beat === 5 || beat === 7) playHat();
@@ -450,7 +648,6 @@ function musicTick() {
             if (beat === 7) playLeadNote(3);
         }
     }
-    
     musicBeat++;
     musicTimeout = setTimeout(musicTick, (60000 / musicTempo) / 2);
 }
@@ -513,21 +710,28 @@ function updateCoinUI() {
 }
 
 // ============ SHOP ============
+let currentShopTab = 'skins';
+
 function renderShop() {
     skinListEl.innerHTML = '';
-    shopProgressEl.innerText = `Открыто скинов: ${unlockedSkins.length}/${Object.keys(SKINS).length}`;
+    const buyableCount = Object.keys(SKINS).filter(k => !SKINS[k].notBuyable).length;
+    const unlockedBuyable = unlockedSkins.filter(k => !SKINS[k] || !SKINS[k].notBuyable).length;
+    shopProgressEl.innerText = `Открыто: ${unlockedBuyable}/${buyableCount}${unlockedSkins.includes('legend') ? ' + 👑 Легенда' : ''}`;
     for (const [key, skin] of Object.entries(SKINS)) {
+        if (key === 'legend' && !unlockedSkins.includes('legend')) continue;
         const isUnlocked = unlockedSkins.includes(key);
         const isEquipped = currentSkin === key;
-        const canBuy = coins >= skin.price;
+        const canBuy = coins >= skin.price && !skin.notBuyable;
         const div = document.createElement('div'); div.className = 'skin-item';
         let btnHtml = '';
         if (isEquipped) btnHtml = `<button class="equipped">НАДЕТО</button>`;
         else if (isUnlocked) btnHtml = `<button class="equip" data-skin="${key}">НАДЕТЬ</button>`;
+        else if (skin.notBuyable) btnHtml = `<button class="buy locked" disabled>🏆</button>`;
         else if (canBuy) btnHtml = `<button class="buy" data-skin="${key}" data-price="${skin.price}">${skin.price} 🪙</button>`;
         else btnHtml = `<button class="buy locked" disabled>${skin.price} 🪙</button>`;
         const colorDots = skin.colors.slice(0, 5).map(c => `<span style="background:${c}"></span>`).join('');
-        div.innerHTML = `<div class="skin-info"><span class="skin-preview">${skin.emojis[0]}</span><div class="skin-details"><span class="skin-name">${skin.name}</span><div class="skin-colors">${colorDots}</div></div></div>${btnHtml}`;
+        const modifierHint = skin.modifiers ? ` · <span style="color:var(--mint-dark);font-size:10px;font-weight:900">${skin.modifiers.speedMult ? (skin.modifiers.speedMult>1?'⚡ БЫСТРЕЕ':'🐌 МЕДЛЕННЕЕ') : ''} ${skin.modifiers.coinMult ? '+'+Math.round((skin.modifiers.coinMult-1)*100)+'%🪙' : ''} ${skin.modifiers.scoreMult ? '+'+Math.round((skin.modifiers.scoreMult-1)*100)+'%очк' : ''} ${skin.modifiers.fireChance ? '🔥 5%' : ''}</span>` : '';
+        div.innerHTML = `<div class="skin-info"><span class="skin-preview">${skin.emojis[0]}</span><div class="skin-details"><span class="skin-name">${skin.name}${modifierHint}</span><div class="skin-colors">${colorDots}</div></div></div>${btnHtml}`;
         skinListEl.appendChild(div);
     }
     skinListEl.querySelectorAll('button.equip').forEach(btn => {
@@ -547,6 +751,112 @@ function renderShop() {
             } else { triggerHaptic('error'); }
         });
     });
+    renderCustomize('colors');
+    renderCustomize('backgrounds');
+}
+
+function renderCustomize(type) {
+    const listEl = type === 'colors' ? colorsListEl : backgroundsListEl;
+    const data = type === 'colors' ? PALETTES : BACKGROUNDS;
+    const current = type === 'colors' ? currentPalette : currentBackground;
+    const unlocked = type === 'colors' ? unlockedPalettes : unlockedBackgrounds;
+    const saveKey = type === 'colors' ? 'towerUnlockedPalettes' : 'towerUnlockedBackgrounds';
+    const currentKey = type === 'colors' ? 'towerPalette' : 'towerBackground';
+
+    listEl.innerHTML = '';
+    for (const [key, item] of Object.entries(data)) {
+        const isUnlocked = unlocked.includes(key);
+        const isEquipped = current === key;
+        const canBuy = coins >= item.price;
+        const div = document.createElement('div'); div.className = 'customize-item';
+
+        let previewHtml = '';
+        if (type === 'colors') {
+            previewHtml = `<div class="customize-colors">${item.colors.slice(0, 5).map(c => `<span style="background:${c}"></span>`).join('')}</div>`;
+        } else {
+            previewHtml = `<div class="customize-preview" style="background:linear-gradient(135deg, ${item.colors[0]} 0%, ${item.colors[2] || item.colors[1]} 100%);">${item.stars ? '⭐' : '🌅'}</div>`;
+        }
+
+        let btnHtml = '';
+        if (isEquipped) btnHtml = `<button class="equipped">✓</button>`;
+        else if (isUnlocked) btnHtml = `<button class="equip" data-key="${key}">ВЫБРАТЬ</button>`;
+        else if (canBuy) btnHtml = `<button class="buy" data-key="${key}" data-price="${item.price}">${item.price} 🪙</button>`;
+        else btnHtml = `<button class="buy locked" disabled>${item.price} 🪙</button>`;
+
+        const statusText = isEquipped ? 'Активно' : isUnlocked ? 'Открыто' : 'Не куплено';
+        const statusClass = isEquipped ? 'customize-status active' : 'customize-status';
+
+        div.innerHTML = `${previewHtml}<div class="customize-info"><span class="customize-name">${item.name}</span><span class="${statusClass}">${statusText}</span></div>${btnHtml}`;
+        listEl.appendChild(div);
+    }
+
+    listEl.querySelectorAll('button.equip').forEach(btn => {
+        safeClick(btn, () => {
+            localStorage.setItem(currentKey, btn.dataset.key);
+            if (type === 'colors') currentPalette = btn.dataset.key;
+            else { currentBackground = btn.dataset.key; applyBackground(); }
+            renderCustomize(type);
+        });
+    });
+    listEl.querySelectorAll('button.buy').forEach(btn => {
+        if (btn.disabled) return;
+        safeClick(btn, () => {
+            const price = parseInt(btn.dataset.price);
+            if (coins >= price) {
+                coins -= price; localStorage.setItem('towerCoins', coins);
+                unlocked.push(btn.dataset.key); localStorage.setItem(saveKey, JSON.stringify(unlocked));
+                localStorage.setItem(currentKey, btn.dataset.key);
+                if (type === 'colors') currentPalette = btn.dataset.key;
+                else { currentBackground = btn.dataset.key; applyBackground(); }
+                updateCoinUI(); renderCustomize(type); triggerHaptic('success');
+            } else { triggerHaptic('error'); }
+        });
+    });
+}
+
+function switchShopTab(tab) {
+    currentShopTab = tab;
+    document.querySelectorAll('.shop-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    skinListEl.style.display = tab === 'skins' ? 'flex' : 'none';
+    colorsListEl.style.display = tab === 'colors' ? 'flex' : 'none';
+    backgroundsListEl.style.display = tab === 'backgrounds' ? 'flex' : 'none';
+    if (tab === 'skins') {
+        const buyableCount = Object.keys(SKINS).filter(k => !SKINS[k].notBuyable).length;
+        const unlockedBuyable = unlockedSkins.filter(k => !SKINS[k] || !SKINS[k].notBuyable).length;
+        shopProgressEl.innerText = `Открыто: ${unlockedBuyable}/${buyableCount}`;
+    } else if (tab === 'colors') {
+        shopProgressEl.innerText = `Открыто палитр: ${unlockedPalettes.length}/${Object.keys(PALETTES).length}`;
+    } else {
+        shopProgressEl.innerText = `Открыто фонов: ${unlockedBackgrounds.length}/${Object.keys(BACKGROUNDS).length}`;
+    }
+}
+
+function applyBackground() {
+    const bg = BACKGROUNDS[currentBackground] || BACKGROUNDS.default;
+    targetBgColor.set(bg.colors[0]);
+    if (scene) scene.background.set(bg.colors[0]);
+    document.body.style.background = bg.colors[0];
+    if (bg.stars && !bgStarsGroup) {
+        createStars();
+    } else if (!bg.stars && bgStarsGroup) {
+        scene.remove(bgStarsGroup);
+        if (bgStarsGroup.geometry) bgStarsGroup.geometry.dispose();
+        if (bgStarsGroup.material) bgStarsGroup.material.dispose();
+        bgStarsGroup = null;
+    }
+}
+
+function createStars() {
+    const geo = new THREE.BufferGeometry();
+    const positions = [];
+    for (let i = 0; i < 300; i++) {
+        positions.push((Math.random()-0.5)*200, Math.random()*150, (Math.random()-0.5)*200);
+    }
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    const mat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.6, transparent: true, opacity: 0.9 });
+    bgStarsGroup = new THREE.Points(geo, mat);
+    bgStarsGroup.userData.isStars = true;
+    scene.add(bgStarsGroup);
 }
 
 // ============ POWERUPS ============
@@ -557,7 +867,6 @@ function showPowerupSelection(mode) {
     powerupsScreen.style.display = 'flex';
     renderPowerupList();
 }
-
 function renderPowerupList() {
     const list = $('powerup-list');
     list.innerHTML = '';
@@ -584,7 +893,6 @@ function renderPowerupList() {
         list.appendChild(item);
     }
 }
-
 function startGameWithPowerups() {
     for (const key in activePowerups) { if (activePowerups[key]) ownedPowerups[key] = Math.max(0, (ownedPowerups[key] || 0) - 1); }
     savePowerups();
@@ -593,7 +901,6 @@ function startGameWithPowerups() {
     pendingGameMode = null;
     startGame(mode);
 }
-
 function updateActivePowerupsUI() {
     activePowerupsEl.innerHTML = '';
     for (const [key, isActive] of Object.entries(activePowerups)) {
@@ -608,33 +915,40 @@ function updateActivePowerupsUI() {
 
 // ============ CHESTS ============
 function addChest(type, meta = {}) {
-    chests.push({ type, ...meta, id: Date.now() + Math.random() });
+    const isRare = Math.random() < 0.1;
+    chests.push({ type, isRare, ...meta, id: Date.now() + Math.random() });
     saveChests(); updateChestUI();
-    showPopup(bonusText, '📦 НОВЫЙ СУНДУК!', 1500);
-    playSound('quest'); triggerHaptic('success');
+    if (isRare) { showPopup(bonusText, '✨ РЕДКИЙ СУНДУК!', 2200); triggerHaptic('success'); }
+    else showPopup(bonusText, '📦 НОВЫЙ СУНДУК!', 1500);
+    playSound('quest');
 }
 function updateChestUI() {
     const count = chests.length;
+    const hasRare = chests.some(c => c.isRare);
     const container = $('chest-btn-container');
     const badge = $('chest-count-badge');
-    if (count > 0) { container.style.display = 'block'; badge.innerText = count; }
-    else { container.style.display = 'none'; }
+    if (count > 0) {
+        container.style.display = 'block';
+        badge.innerText = count;
+        if (hasRare) badge.classList.add('rare'); else badge.classList.remove('rare');
+    } else container.style.display = 'none';
 }
-function rollChestReward() {
+function rollChestReward(isRare = false) {
+    const mult = isRare ? 3 : 1;
     const r = Math.random();
-    const lockedSkins = Object.keys(SKINS).filter(s => !unlockedSkins.includes(s));
+    const lockedSkins = Object.keys(SKINS).filter(s => !unlockedSkins.includes(s) && !SKINS[s].notBuyable);
     if (lockedSkins.length === 0 || r < 0.55) {
         const amounts = [50, 80, 100, 150, 200];
-        const amount = amounts[Math.floor(Math.random() * amounts.length)];
-        return { type: 'coins', amount, text: `+${amount} 🪙` };
+        const amount = amounts[Math.floor(Math.random() * amounts.length)] * mult;
+        return { type: 'coins', amount, text: `+${amount} 🪙${isRare ? ' ✨' : ''}` };
     } else if (r < 0.85) {
         const puKeys = Object.keys(POWERUP_DEFS);
         const pu = puKeys[Math.floor(Math.random() * puKeys.length)];
-        const count = Math.random() < 0.5 ? 1 : 2;
+        const count = (Math.random() < 0.5 ? 1 : 2) * mult;
         return { type: 'powerup', powerup: pu, count, text: `${POWERUP_DEFS[pu].icon} ${POWERUP_DEFS[pu].name} x${count}` };
     } else {
         const skin = lockedSkins[Math.floor(Math.random() * lockedSkins.length)];
-        return { type: 'skin', skin, text: `🎨 ${SKINS[skin].name}` };
+        return { type: 'skin', skin, text: `🎨 ${SKINS[skin].name}${isRare ? ' ✨' : ''}` };
     }
 }
 function showChestOpening() {
@@ -650,12 +964,14 @@ function showChestOpening() {
     $('open-chest-btn').innerText = 'ОТКРЫТЬ';
     $('close-chest').style.display = 'none';
     $('chest-title').innerText = '🎁 Сундук!';
-    $('chest-sub').innerText = `Осталось сундуков: ${chests.length}`;
+    const hasRare = chests[0].isRare;
+    $('chest-sub').innerText = hasRare ? '✨ РЕДКИЙ СУНДУК! x3 награда!' : `Осталось сундуков: ${chests.length}`;
 }
 function openChest() {
     if (chests.length === 0) return;
-    chests.shift(); saveChests(); updateChestUI();
-    const reward = rollChestReward();
+    const chest = chests.shift();
+    saveChests(); updateChestUI();
+    const reward = rollChestReward(chest.isRare);
     $('chest-icon').className = 'chest-icon opening';
     $('open-chest-btn').style.display = 'none';
     $('chest-rays').className = 'chest-rays show';
@@ -663,13 +979,13 @@ function openChest() {
         if (reward.type === 'coins') addCoins(reward.amount);
         else if (reward.type === 'powerup') { ownedPowerups[reward.powerup] = (ownedPowerups[reward.powerup] || 0) + reward.count; savePowerups(); }
         else if (reward.type === 'skin') { unlockedSkins.push(reward.skin); localStorage.setItem('towerSkins', JSON.stringify(unlockedSkins)); checkAchievements(); }
-        $('chest-icon').innerText = '✨';
+        $('chest-icon').innerText = chest.isRare ? '✨' : '🎁';
         $('chest-icon').className = 'chest-icon';
         $('chest-reward').innerText = reward.text;
         $('chest-reward').className = 'chest-reward show';
         playSound('chest'); triggerHaptic('success');
         if (chests.length > 0) {
-            $('chest-sub').innerText = `Осталось: ${chests.length}`;
+            $('chest-sub').innerText = chests[0].isRare ? '✨ Ещё редкий сундук!' : `Осталось: ${chests.length}`;
             $('open-chest-btn').innerText = 'ОТКРЫТЬ ЕЩЁ';
             $('open-chest-btn').style.display = 'block';
         } else {
@@ -687,7 +1003,10 @@ function getAdaptiveD(aspect) {
     return 10;
 }
 function initThree() {
-    scene = new THREE.Scene(); scene.background = new THREE.Color(BIOMES[0].bg); scene.fog = new THREE.FogExp2(BIOMES[0].bg, 0.02);
+    scene = new THREE.Scene();
+    const bg = BACKGROUNDS[currentBackground] || BACKGROUNDS.default;
+    scene.background = new THREE.Color(bg.colors[0]);
+    scene.fog = new THREE.FogExp2(bg.colors[0], 0.02);
     const aspect = window.innerWidth / window.innerHeight;
     const d = getAdaptiveD(aspect);
     camera = new THREE.OrthographicCamera(-d*aspect, d*aspect, d, -d, 1, 1000);
@@ -705,6 +1024,7 @@ function initThree() {
     window.addEventListener('resize', onResize);
     window.addEventListener('orientationchange', () => setTimeout(onResize, 100));
     glowTexture = createGlowTexture();
+    applyBackground();
 }
 function disposeMesh(mesh) {
     if (!mesh) return;
@@ -826,19 +1146,20 @@ function createBlockMesh(w, h, d, color, emoji, text, type = 'normal') {
         topOpts.emissive = new THREE.Color(0x5D4037); topOpts.emissiveIntensity = 0.3;
     } else if (type === 'rainbow') {
         sideOpts.emissive = new THREE.Color(0xFF00FF); sideOpts.emissiveIntensity = 0.5;
-        topOpts.emissive = new THREE.Color(0xFF00FF); topOpts.emissiveIntensity = 0.5;
-        topOpts.color = new THREE.Color(0xFF00FF);
+        topOpts.emissive = new THREE.Color(0xFF00FF); topOpts.emissiveIntensity = 0.5; topOpts.color = new THREE.Color(0xFF00FF);
     } else if (type === 'dragon') {
         sideOpts.emissive = new THREE.Color(0xFF6600); sideOpts.emissiveIntensity = 0.7;
-        topOpts.emissive = new THREE.Color(0xFF6600); topOpts.emissiveIntensity = 0.7;
-        topOpts.color = new THREE.Color(0xB71C1C);
+        topOpts.emissive = new THREE.Color(0xFF6600); topOpts.emissiveIntensity = 0.7; topOpts.color = new THREE.Color(0xB71C1C);
     } else if (type === 'diamond') {
         sideOpts.emissive = new THREE.Color(0x00BCD4); sideOpts.emissiveIntensity = 0.6;
-        topOpts.emissive = new THREE.Color(0x00BCD4); topOpts.emissiveIntensity = 0.6;
-        topOpts.color = new THREE.Color(0x00BCD4);
+        topOpts.emissive = new THREE.Color(0x00BCD4); topOpts.emissiveIntensity = 0.6; topOpts.color = new THREE.Color(0x00BCD4);
     } else {
         sideOpts.emissive = new THREE.Color(color); sideOpts.emissiveIntensity = 0.12;
         topOpts.emissive = new THREE.Color(color); topOpts.emissiveIntensity = 0.12;
+        if (unlockedFeatures.redTheme) {
+            sideOpts.emissive = new THREE.Color(0xFF4444);
+            sideOpts.emissiveIntensity = 0.2;
+        }
     }
     const side = new THREE.MeshStandardMaterial(sideOpts); const top = new THREE.MeshStandardMaterial(topOpts);
     const mesh = new THREE.Mesh(geo, [side, side, top, top, side, side]);
@@ -855,6 +1176,7 @@ function createBlockMesh(w, h, d, color, emoji, text, type = 'normal') {
 }
 
 function rollBlockType() {
+    if (dailyModifiers.onlyType) return dailyModifiers.onlyType;
     if (score < 5) return 'normal';
     const r = Math.random();
     if (r < 0.005) return 'rainbow';
@@ -869,7 +1191,8 @@ function rollBlockType() {
 
 function getBlockVisuals(type, skinKey) {
     const skin = SKINS[skinKey] || SKINS.default;
-    const rndColor = skin.colors[Math.floor(Math.random() * skin.colors.length)];
+    const palette = getPaletteColors();
+    const rndColor = palette[Math.floor(Math.random() * palette.length)];
     const rndEmoji = skin.emojis[Math.floor(Math.random() * skin.emojis.length)];
     const rndText = skin.texts[Math.floor(Math.random() * skin.texts.length)];
     switch(type) {
@@ -892,14 +1215,16 @@ function generateNextBlockData() {
 
 function createBaseBlock() {
     nextBlockData = generateNextBlockData();
-    const base = createBlockMesh(BLOCK_SIZE, BLOCK_HEIGHT, BLOCK_SIZE, '#FF1744', '🏗️', 'БАЗА', 'normal');
+    const baseSize = dailyModifiers.baseSize || BLOCK_SIZE;
+    const base = createBlockMesh(baseSize, BLOCK_HEIGHT, baseSize, '#FF1744', '🏗️', 'БАЗА', 'normal');
     base.position.set(0, 0, 0); scene.add(base); blocks.push(base);
     spawnNewBlock();
 }
 
 function spawnNewBlock() {
     const top = blocks[blocks.length - 1];
-    if (score > 30) movingAxis = 'diag';
+    if (dailyModifiers.diagFromStart) movingAxis = 'diag';
+    else if (score > 30) movingAxis = 'diag';
     else movingAxis = blocks.length % 2 === 1 ? 'x' : 'z';
     const { type, color, emoji, text } = nextBlockData;
     nextBlockData = generateNextBlockData();
@@ -931,84 +1256,108 @@ function dropBlock() {
     else if (movingAxis === 'diag') { diffX = currentBlock.position.x - top.position.x; diffZ = currentBlock.position.z - top.position.z; }
     let absDiffX = Math.abs(diffX), absDiffZ = Math.abs(diffZ);
     let maxDiff = Math.max(absDiffX, absDiffZ);
-    
+
+    // Магнит
     if (activePowerups.magnet && !magnetUsed) {
         magnetUsed = true;
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         diffX = 0; diffZ = 0; absDiffX = 0; absDiffZ = 0; maxDiff = 0;
         showPopup(bonusText, '🧲 МАГНИТ!', 1200);
     }
-    
+    // Алмаз — прощает любую неточность
     if (bType === 'diamond' && maxDiff < Math.max(sizeX, sizeZ) / 2) {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         diffX = 0; diffZ = 0; absDiffX = 0; absDiffZ = 0; maxDiff = 0;
     }
-    
+
     const missX = (movingAxis === 'x' || movingAxis === 'diag') && absDiffX >= sizeX / 2;
     const missZ = (movingAxis === 'z' || movingAxis === 'diag') && absDiffZ >= sizeZ / 2;
-    
-    if (missX || missZ) {
-        if (activePowerups.ghost && !ghostUsed) {
-            ghostUsed = true;
-            showPopup(bonusText, '👻 ПРИЗРАК СПАС!', 1500);
-            playSound('quest');
-            currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
-            diffX = 0; diffZ = 0; absDiffX = 0; absDiffZ = 0; maxDiff = 0;
-        } else {
-            currentBlock.userData.falling = true;
-            triggerGameOver();
-            return;
-        }
+    const precisionMode = (gameMode === 'precision');
+    const noCutActive = dailyModifiers.noCut || precisionMode;
+
+    // Ghost — автоспасение работает во ВСЕХ режимах, включая precision и noCut
+    if (activePowerups.ghost && !ghostUsed && (missX || missZ || (noCutActive && maxDiff >= 0.15))) {
+        ghostUsed = true;
+        showPopup(bonusText, '👻 ПРИЗРАК СПАС!', 1500);
+        playSound('quest');
+        currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
+        diffX = 0; diffZ = 0; absDiffX = 0; absDiffZ = 0; maxDiff = 0;
     }
-    
+
+    // Полный промах
+    if (missX || missZ) {
+        currentBlock.userData.falling = true;
+        triggerGameOver();
+        return;
+    }
+
+    // Precision / noCut: любая неидеальность = конец
+    if (noCutActive && maxDiff >= 0.15) {
+        currentBlock.userData.falling = true;
+        triggerGameOver();
+        return;
+    }
+
+    // Crumble — наоборот, идеально НЕ ставить
     if (bType === 'crumble' && maxDiff < 0.15) {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         spawnBombParticles(); triggerGameOver(); return;
     }
-    
+
     if (maxDiff < 0.15) {
+        // === PERFECT ===
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         combo++;
         stats.totalPerfect++;
         if (combo > stats.maxCombo) stats.maxCombo = combo;
-        
+
         let points = 1;
         let isSecret = false;
-        
+
         if (bType === 'golden') { points = 3; updateQuest('golden', 1); stats.totalGolden++; }
         else if (bType === 'bomb') { points = 2; updateQuest('bomb', 1); stats.totalBomb++; }
         else if (bType === 'ice') { points = 2; updateQuest('ice', 1); stats.totalIce++; }
-        else if (bType === 'rainbow') {
-            points = 10; isSecret = true;
-            stats.totalSecret++; updateQuest('secret', 1);
-            playSound('secret'); showPopup(bonusText, '🌈 РАДУГА +10!', 1500);
-        }
-        else if (bType === 'dragon') {
-            points = 10; isSecret = true;
-            stats.totalSecret++; updateQuest('secret', 1);
-            playSound('secret'); showPopup(bonusText, '🐉 ДРАКОН +10!', 1500);
-            spawnDragonFire(); shakeIntensity = 1.0;
-        }
-        else if (bType === 'diamond') {
-            points = 5; isSecret = true;
-            stats.totalSecret++; updateQuest('secret', 1);
-            playSound('secret'); showPopup(bonusText, '💎 АЛМАЗ +5!', 1500);
-        }
-        
+        else if (bType === 'rainbow') { points = 10; isSecret = true; stats.totalSecret++; updateQuest('secret', 1); playSound('secret'); showPopup(bonusText, '🌈 РАДУГА +10!', 1500); }
+        else if (bType === 'dragon') { points = 10; isSecret = true; stats.totalSecret++; updateQuest('secret', 1); playSound('secret'); showPopup(bonusText, '🐉 ДРАКОН +10!', 1500); spawnDragonFire(); shakeIntensity = 1.0; }
+        else if (bType === 'diamond') { points = 5; isSecret = true; stats.totalSecret++; updateQuest('secret', 1); playSound('secret'); showPopup(bonusText, '💎 АЛМАЗ +5!', 1500); }
+
         if (bType === 'bomb') { playSound('bomb'); showPopup(bonusText, '💥 БУМ! +2', 1000); shakeIntensity = 0.5; }
         else if (bType === 'golden') { playSound('perfect', combo); showPopup(bonusText, '👑 ЗОЛОТО +3', 900); }
         else if (bType === 'ice') { playSound('perfect', combo); showPopup(bonusText, '❄️ ЛЕД +2', 900); }
         else if (!isSecret) { playSound('perfect', combo); showPopup(perfectText, null, 600); }
-        
+
         flashScreen();
         if (gameMode === 'time') { timeLeft += 2; updateTimerDisplay(); }
-        if (combo >= 5 && !isFury) { isFury = true; furyBlocksLeft = 3; document.body.classList.add('fury-active'); playSound('fury'); showPopup(milestoneText, '🔥 ЯРОСТЬ! x2', 2000); updateQuest('fury', 1); stats.totalFury++; }
+        if (gameMode === 'speedrun') { timeLeft += 1; updateTimerDisplay(); }
+
+        if (combo >= 5 && !isFury && !dailyModifiers.noFury) {
+            isFury = true; furyBlocksLeft = 3;
+            document.body.classList.add('fury-active');
+            playSound('fury'); showPopup(milestoneText, '🔥 ЯРОСТЬ! x2', 2000);
+            updateQuest('fury', 1); stats.totalFury++;
+        }
         if (combo > 1 && !isFury) showPopup(comboText, `КОМБО x${combo}`, 800);
         if (isFury) points *= 2;
+        if (dailyModifiers.scoreMult) points = Math.round(points * dailyModifiers.scoreMult);
+        const skinMods = getSkinModifiers();
+        if (skinMods.scoreMult) points = Math.round(points * skinMods.scoreMult);
         updateQuest('perfect', 1); updateQuest('combo', combo, true); triggerHaptic('light');
         const oldScore = score; score += points;
         checkMilestone(oldScore, score); triggerPerfectParticles();
-        
+
+        // Fire skin special
+        if (skinMods.fireChance && Math.random() < skinMods.fireChance) {
+            spawnDragonFire();
+            shakeIntensity = 0.6;
+            addCoins(3);
+            showPopup(bonusText, '🔥 ОГОНЬ!', 1200);
+        }
+
+        // Golden trail feature
+        if (unlockedFeatures.goldenTrail) {
+            spawnGoldenTrail(currentBlock.position);
+        }
+
         let coinReward = 2;
         if (bType === 'golden') coinReward += 2;
         else if (bType === 'bomb') coinReward += 1;
@@ -1016,13 +1365,16 @@ function dropBlock() {
         else if (isSecret) coinReward += 3;
         addCoins(coinReward);
     } else {
+        // === CUT ===
         combo = 0; updateQuest('cut', 1);
         if (bType === 'bomb') { score = Math.max(0, score - 1); playSound('bomb'); shakeIntensity = 0.5; showPopup(bonusText, '💣 -1 ОЧКО', 900); spawnBombParticles(); triggerHaptic('error'); }
         else { playSound('drop'); triggerHaptic('light'); }
+
         let cutAxis = movingAxis === 'diag' ? (absDiffX > absDiffZ ? 'x' : 'z') : movingAxis;
         let cutDiff = cutAxis === 'x' ? diffX : diffZ;
         let origSize = cutAxis === 'x' ? sizeX : sizeZ;
         let newSize = origSize - Math.abs(cutDiff);
+        if (gameMode === 'endless') newSize = Math.min(origSize, newSize + 0.4);
         createDebris(cutDiff, origSize, newSize, cutAxis, top);
         const w = cutAxis === 'x' ? newSize : currentBlock.userData.w;
         const d = cutAxis === 'z' ? newSize : currentBlock.userData.d;
@@ -1041,13 +1393,27 @@ function dropBlock() {
     currentBlock.userData.squash = 0;
     if (isFury) { furyBlocksLeft--; if (furyBlocksLeft <= 0) { isFury = false; document.body.classList.remove('fury-active'); } }
     updateScoreUI();
-    currentSpeed = Math.min(MAX_SPEED, BASE_SPEED + score * 0.004);
+    let accelMult = dailyModifiers.accelMult || 1;
+    if (gameMode === 'endless') accelMult *= 2;
+    currentSpeed = Math.min(dynamicMaxSpeed, BASE_SPEED + score * 0.004 * accelMult);
     musicTempo = Math.min(160, 110 + Math.floor(score / 10) * 5);
     blocks.push(currentBlock); scene.add(currentBlock); spawnNewBlock();
 }
 
 function updateScoreUI() { scoreEl.innerText = score; scoreEl.classList.add('score-pop'); setTimeout(() => scoreEl.classList.remove('score-pop'), 150); updateQuest('stack', score, true); }
 function checkMilestone(oldScore, newScore) { const oldM = Math.floor(oldScore / 10); const newM = Math.floor(newScore / 10); if (newM > oldM) triggerMilestone(newM * 10); }
+
+function spawnGoldenTrail(pos) {
+    for (let i = 0; i < 6; i++) {
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 6), new THREE.MeshBasicMaterial({ color: 0xFFD700 }));
+        p.position.copy(pos);
+        p.position.x += (Math.random()-0.5) * 2;
+        p.position.z += (Math.random()-0.5) * 2;
+        p.position.y += 0.5;
+        p.userData = { vel: new THREE.Vector3((Math.random()-0.5)*0.4, Math.random()*0.5+0.2, (Math.random()-0.5)*0.4), life: 1.0 };
+        scene.add(p); debris.push(p);
+    }
+}
 
 function triggerPerfectParticles() {
     for (let i = 0; i < 12; i++) {
@@ -1079,8 +1445,9 @@ function spawnDragonFire() {
 }
 function triggerMilestone(points) {
     playSound('milestone'); triggerHaptic('success');
-    const newBiome = Math.floor(points / 10) % BIOMES.length; currentBiomeIndex = newBiome;
-    targetBgColor.set(BIOMES[newBiome].bg); document.body.style.background = BIOMES[newBiome].bg;
+    const bgColors = getBgColors();
+    const newBiome = Math.floor(points / 10) % bgColors.length; currentBiomeIndex = newBiome;
+    targetBgColor.set(bgColors[newBiome]); document.body.style.background = bgColors[newBiome];
     showPopup(milestoneText, `${points} ЭТАЖЕЙ!`, 1500);
     addCoins(5);
     const topPos = blocks[blocks.length - 1].position;
@@ -1094,6 +1461,7 @@ function triggerMilestone(points) {
 }
 function createDebris(diff, origSize, newSize, axis, top) {
     const dSize = origSize - newSize;
+    if (dSize <= 0.01) return;
     const geo = new THREE.BoxGeometry(axis === 'x' ? dSize : currentBlock.userData.w, BLOCK_HEIGHT, axis === 'z' ? dSize : currentBlock.userData.d);
     const mat = new THREE.MeshStandardMaterial({ color: currentBlock.userData.color, roughness: 0.5 });
     const mesh = new THREE.Mesh(geo, mat); mesh.castShadow = true;
@@ -1105,9 +1473,67 @@ function createDebris(diff, origSize, newSize, axis, top) {
     scene.add(mesh); debris.push(mesh);
 }
 
+// ============ АНИМАЦИИ ПРОИГРЫША / ПОБЕДЫ ============
+function playLoseAnimation() {
+    const blocksCopy = [...blocks];
+    // Включаем последний падающий блок (currentBlock) в общую анимацию
+    if (currentBlock && currentBlock.parent && !blocksCopy.includes(currentBlock)) {
+        blocksCopy.push(currentBlock);
+        currentBlock = null;
+    }
+    blocks = [];
+    blocksCopy.forEach((b, i) => {
+        setTimeout(() => {
+            if (!b.parent) return;
+            const velocity = new THREE.Vector3(
+                (Math.random() - 0.5) * 0.4,
+                -Math.random() * 0.4 - 0.2,
+                (Math.random() - 0.5) * 0.4
+            );
+            b.userData.vel = velocity;
+            b.userData.rotSpeed = new THREE.Vector3(
+                (Math.random() - 0.5) * 0.3,
+                (Math.random() - 0.5) * 0.3,
+                (Math.random() - 0.5) * 0.3
+            );
+            debris.push(b);
+        }, i * 25);
+    });
+}
+
+function playWinAnimation() {
+    playSound('victory');
+    triggerHaptic('success');
+    if (victoryCrownEl) {
+        victoryCrownEl.classList.remove('show');
+        void victoryCrownEl.offsetWidth;
+        victoryCrownEl.classList.add('show');
+        setTimeout(() => victoryCrownEl.classList.remove('show'), 2500);
+    }
+    for (let i = 0; i < 200; i++) {
+        const colorChoices = [0xFFD700, 0xFF6B9D, 0x4ECDC4, 0xA855F7, 0x4FACFE, 0xFFD93D];
+        const piece = new THREE.Mesh(
+            new THREE.BoxGeometry(0.25, 0.25, 0.03),
+            new THREE.MeshBasicMaterial({ color: colorChoices[Math.floor(Math.random() * colorChoices.length)] })
+        );
+        piece.position.set(
+            (Math.random() - 0.5) * 20,
+            camera.position.y - 5 + Math.random() * 5,
+            (Math.random() - 0.5) * 20
+        );
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 0.5 + 0.15;
+        piece.userData = {
+            vel: new THREE.Vector3(Math.cos(angle) * speed, Math.random() * 1.2 + 0.4, Math.sin(angle) * speed),
+            rotSpeed: new THREE.Vector3(Math.random() * 0.5, Math.random() * 0.5, Math.random() * 0.5)
+        };
+        scene.add(piece); confetti.push(piece);
+    }
+}
+
 function updateCamera() {
-    if (!blocks.length) return;
-    const top = blocks[blocks.length - 1];
+    if (!blocks.length && !debris.length) return;
+    const top = blocks.length > 0 ? blocks[blocks.length - 1] : { position: { x: 0, y: 0, z: 0 } };
     const ty = top.position.y, tx = top.position.x * 0.5, tz = top.position.z * 0.5;
     camera.position.x += (tx + 20 - camera.position.x) * 0.1;
     camera.position.y += (ty + 25 - camera.position.y) * 0.1;
@@ -1125,6 +1551,7 @@ function animate() {
     } else if (windGain && audioCtx) {
         try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); } catch(e) {}
     }
+    if (bgStarsGroup) bgStarsGroup.rotation.y += 0.0003;
     blocks.forEach(b => {
         const bt = b.userData.blockType;
         if (bt !== 'normal' && bt !== 'crumble') {
@@ -1137,7 +1564,7 @@ function animate() {
     if (gameState === 'playing' && currentBlock?.userData.moving) {
         let speed = currentSpeed;
         if (isFury) speed *= 0.6;
-        if (currentBlock.userData.blockType === 'ice') speed = Math.min(speed * 1.8, 0.6);
+        if (currentBlock.userData.blockType === 'ice') speed = Math.min(speed * 1.8, 0.8);
         let delta = speed * direction;
         if (score > 20 && !isFury) delta += Math.sin(performance.now() * 0.003) * 0.02;
         if (movingAxis === 'x') { currentBlock.position.x += delta; if (currentBlock.position.x > 15) direction = -1; if (currentBlock.position.x < -15) direction = 1; }
@@ -1190,29 +1617,64 @@ function startGame(mode) {
         isFury = false; furyBlocksLeft = 0; document.body.classList.remove('fury-active');
         magnetUsed = false; ghostUsed = false;
         if (freezeTimer) { clearTimeout(freezeTimer); freezeTimer = null; }
-        
-        scoreEl.innerText = score; direction = 1; currentSpeed = BASE_SPEED; musicTempo = 110;
+        if (showTutorialHint) tutorialEl.style.display = 'block';
+        updateActivePowerupsUI();
+
+        dynamicMaxSpeed = gameMode === 'endless' ? 0.7 : 0.45;
+        let baseSpeed = BASE_SPEED;
+        if (!dailyChallengeActive) baseSpeed *= getSmartDifficultyMultiplier();
+        if (dailyModifiers.speedMult) baseSpeed *= dailyModifiers.speedMult;
+        if (gameMode === 'speedrun') baseSpeed *= 1.8;
+        if (gameMode === 'mirror') baseSpeed *= 1.15;
+        const skinMods = getSkinModifiers();
+        if (skinMods.speedMult) baseSpeed *= skinMods.speedMult;
+
+        direction = gameMode === 'mirror' ? -1 : 1;
+        scoreEl.innerText = score;
+        currentSpeed = dailyModifiers.startSpeed !== undefined ? dailyModifiers.startSpeed : baseSpeed;
+        musicTempo = gameMode === 'speedrun' ? 165 : 110;
         gameState = 'playing'; currentBiomeIndex = 0;
-        targetBgColor.set(BIOMES[0].bg); scene.background.set(BIOMES[0].bg); document.body.style.background = BIOMES[0].bg;
+        const bgColors = getBgColors();
+        targetBgColor.set(bgColors[0]); scene.background.set(bgColors[0]); document.body.style.background = bgColors[0];
         document.body.classList.add('in-game');
-        
+
         if (activePowerups.freeze) {
             currentSpeed *= 0.5;
             freezeTimer = setTimeout(() => {
-                if (gameState === 'playing') currentSpeed = Math.min(MAX_SPEED, BASE_SPEED + score * 0.004);
+                if (gameState === 'playing') currentSpeed = Math.min(dynamicMaxSpeed, baseSpeed + score * 0.004);
             }, 10000);
         }
-        
+
         if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
-        if (gameMode === 'time') {
-            timeLeft = 60; timerEl.style.display = 'block'; updateTimerDisplay();
+        const timeLimit = dailyModifiers.timeLimit || (gameMode === 'time' ? 60 : 0) || (gameMode === 'speedrun' ? 30 : 0);
+        if (timeLimit > 0) {
+            timeLeft = timeLimit; timerEl.style.display = 'block'; updateTimerDisplay();
             timeAttackTimer = setInterval(() => { if (gameState !== 'playing') return; timeLeft--; updateTimerDisplay(); if (timeLeft <= 0) { clearInterval(timeAttackTimer); timeAttackTimer = null; triggerGameOver(); } }, 1000);
         } else { timerEl.style.display = 'none'; }
-        modeLabel.innerText = { classic: 'КЛАССИКА', time: 'НА ВРЕМЯ' }[gameMode];
+
+        if (dailyChallengeActive) {
+            const ch = getDailyChallenge();
+            modeLabel.innerText = `🎯 ${ch.name}`;
+        } else {
+            modeLabel.innerText = {
+                classic: 'КЛАССИКА',
+                time: 'НА ВРЕМЯ',
+                precision: '🎯 PRECISION',
+                speedrun: '⚡ SPEEDRUN',
+                endless: '♾️ ENDLESS',
+                mirror: '🪞 MIRROR'
+            }[gameMode] || 'ИГРА';
+        }
+
         startScreen.style.display = 'none'; gameOverEl.style.display = 'none'; pauseScreen.style.display = 'none';
         camera.position.set(20, 25, 20); camera.lookAt(0, 0, 0);
-        if (showTutorialHint) tutorialEl.style.display = 'block';
-        updateActivePowerupsUI();
+
+        const todayStr = new Date().toDateString();
+        if (localStorage.getItem('towerDailyGameChest') !== todayStr) {
+            localStorage.setItem('towerDailyGameChest', todayStr);
+            setTimeout(() => { addChest('daily_game'); }, 1000);
+        }
+
         createBaseBlock(); startMusic();
         updateQuest('games', 1);
     } catch(err) {
@@ -1233,15 +1695,17 @@ function goToMenu() {
     document.body.classList.remove('in-game', 'fury-active');
     if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
     resetActivePowerups();
+    dailyChallengeActive = false; dailyModifiers = {};
     gameOverEl.style.display = 'none'; pauseScreen.style.display = 'none';
     shopScreen.style.display = 'none'; rulesScreen.style.display = 'none';
     achScreen.style.display = 'none'; lbScreen.style.display = 'none'; settingsScreen.style.display = 'none';
     powerupsScreen.style.display = 'none'; chestScreen.style.display = 'none';
     startScreen.style.display = 'flex';
-    scene.background.set(BIOMES[0].bg); document.body.style.background = BIOMES[0].bg;
+    const bgColors = getBgColors();
+    scene.background.set(bgColors[0]); document.body.style.background = bgColors[0];
     camera.position.set(20, 25, 20); camera.lookAt(0, 0, 0);
     if (windGain && audioCtx) try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); } catch(e) {}
-    updateCoinUI(); updateLevelUI(); updateStreakUI(); updateChestUI();
+    updateCoinUI(); updateLevelUI(); updateStreakUI(); updateChestUI(); renderDailyChallenge();
 }
 
 function saveCurrentScoreIfNeeded() {
@@ -1257,34 +1721,41 @@ function triggerGameOver() {
     document.body.classList.remove('in-game', 'fury-active');
     if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
     if (freezeTimer) { clearTimeout(freezeTimer); freezeTimer = null; }
-    
+
     stats.totalGames++;
     if (score > stats.maxScore) stats.maxScore = score;
     if (gameMode === 'time' && score > stats.maxTimeScore) stats.maxTimeScore = score;
     saveStats();
-    
-    const earnedXP = score * 5;
+    totalScoreAllTime += score; saveTotalScore();
+    trackGameScore(score);
+
+    let earnedXP = score * 5;
+    if (dailyModifiers.xpMult) earnedXP = Math.round(earnedXP * dailyModifiers.xpMult);
     addXP(earnedXP);
     if (gameMode === 'time' && score > 0) updateQuest('time_game', 1);
     addToLeaderboard(score, gameMode);
-    
+
     finalScoreVal.innerText = score;
     const isNew = score > highScore;
     if (isNew) {
         highScore = score; localStorage.setItem('towerHighScore', highScore);
         highScoreEl.innerText = `РЕКОРД: ${highScore}`;
+        setTimeout(() => playWinAnimation(), 300);
     }
     $('new-record').style.display = isNew ? 'block' : 'none';
-    
+
     if (sessionCoins > 0) { gameCoinsEarnedEl.innerText = `+${sessionCoins} 🪙 за игру`; gameCoinsEarnedEl.style.display = 'block'; }
     else gameCoinsEarnedEl.style.display = 'none';
     if (earnedXP > 0) { gameXPEarnedEl.innerText = `+${earnedXP} XP`; gameXPEarnedEl.style.display = 'block'; }
     else gameXPEarnedEl.style.display = 'none';
-    
+
+    setTimeout(() => playLoseAnimation(), 500);
+
     checkAchievements();
     resetActivePowerups();
-    
-    setTimeout(() => { gameOverEl.style.display = 'flex'; }, 800);
+    dailyChallengeActive = false; dailyModifiers = {};
+
+    setTimeout(() => { gameOverEl.style.display = 'flex'; }, 900);
     triggerHaptic('error');
 }
 
@@ -1297,7 +1768,8 @@ function togglePause() {
     } else if (gameState === 'paused') {
         gameState = 'playing'; pauseScreen.style.display = 'none';
         document.body.classList.add('in-game');
-        if (gameMode === 'time') {
+        const timeLimit = dailyModifiers.timeLimit || (gameMode === 'time' ? 60 : 0) || (gameMode === 'speedrun' ? 30 : 0);
+        if (timeLimit > 0) {
             timeAttackTimer = setInterval(() => { if (gameState !== 'playing') return; timeLeft--; updateTimerDisplay(); if (timeLeft <= 0) { clearInterval(timeAttackTimer); triggerGameOver(); } }, 1000);
         }
     }
@@ -1306,7 +1778,7 @@ function togglePause() {
 // ============ INPUT ============
 function handleInput(e) {
     const target = e.target;
-    if (target && target.closest && target.closest('button, .mode-btn, #top-right-controls, .modal, .powerup-item')) return;
+    if (target && target.closest && target.closest('button, .mode-btn, .mini-mode-btn, #top-right-controls, .modal, .powerup-item, .daily-challenge-banner')) return;
     if (target && target.closest && target.closest('#start-screen, #game-over, #pause-screen, #shop-screen, #rules-screen, #achievements-screen, #leaderboard-screen, #settings-screen, #daily-screen, #powerups-screen, #chest-screen')) return;
     if (gameState === 'playing') {
         if (e.type === 'touchstart') e.preventDefault();
@@ -1322,6 +1794,7 @@ function bindModeButton(id, mode) {
     const handle = (e) => {
         if (e) { if (e.cancelable !== false) e.stopPropagation(); e.preventDefault(); }
         if (gameState === 'playing') return;
+        dailyChallengeActive = false; dailyModifiers = {};
         showPowerupSelection(mode);
     };
     btn.addEventListener('click', handle);
@@ -1330,6 +1803,19 @@ function bindModeButton(id, mode) {
 bindModeButton('btn-classic', 'classic');
 bindModeButton('btn-time', 'time');
 
+// Мини-режимы (без powerups)
+document.querySelectorAll('.mini-mode-btn').forEach(btn => {
+    const handle = (e) => {
+        if (e) { if (e.cancelable !== false) e.stopPropagation(); e.preventDefault(); }
+        if (gameState === 'playing') return;
+        dailyChallengeActive = false; dailyModifiers = {};
+        activePowerups = { magnet: false, freeze: false, ghost: false, multiplier: false };
+        startGame(btn.dataset.mode);
+    };
+    btn.addEventListener('click', handle);
+    btn.addEventListener('touchend', handle, { passive: false });
+});
+
 // ============ BUTTONS ============
 safeClick($('restart-btn'), () => { activePowerups = { magnet: false, freeze: false, ghost: false, multiplier: false }; startGame(); });
 safeClick($('menu-btn'), () => goToMenu());
@@ -1337,7 +1823,7 @@ safeClick(pauseBtn, () => togglePause());
 safeClick($('pause-resume'), () => togglePause());
 safeClick($('pause-menu'), () => goToMenu());
 safeClick(menuToggleBtn, () => { if (gameState === 'playing' || gameState === 'paused') goToMenu(); });
-safeClick($('shop-btn'), () => { renderShop(); shopScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
+safeClick($('shop-btn'), () => { switchShopTab('skins'); renderShop(); shopScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
 safeClick($('close-shop'), () => { shopScreen.style.display = 'none'; startScreen.style.display = 'flex'; updateCoinUI(); });
 safeClick($('rules-btn'), () => { rulesScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
 safeClick($('close-rules'), () => { rulesScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
@@ -1352,6 +1838,11 @@ safeClick($('open-chest-btn'), () => openChest());
 safeClick($('close-chest'), () => { chestScreen.style.display = 'none'; startScreen.style.display = 'flex'; updateCoinUI(); });
 safeClick($('close-powerups'), () => { powerupsScreen.style.display = 'none'; startScreen.style.display = 'flex'; pendingGameMode = null; });
 safeClick($('start-with-powerups'), () => startGameWithPowerups());
+safeClick(dailyPlayBtn, () => { if (!getDailyChallengeStatus()) startDailyChallenge(); });
+
+document.querySelectorAll('.shop-tab').forEach(tab => {
+    safeClick(tab, () => switchShopTab(tab.dataset.tab));
+});
 
 safeClick($('toggle-music'), () => {
     settings.musicEnabled = !settings.musicEnabled; saveSettings(); updateSettingsUI();
@@ -1404,12 +1895,14 @@ function updateTimerDisplay() { timerEl.innerText = `⏱ ${timeLeft}`; timerEl.s
 
 // ============ INIT ============
 initThree();
+initSeason();
 loadQuests();
 updateCoinUI();
 updateLevelUI();
 updateSettingsUI();
 updateChestUI();
 updateActivePowerupsUI();
+renderDailyChallenge();
 
 checkDailyStreak();
 if (dailyRewardPending) {
