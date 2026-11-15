@@ -54,7 +54,6 @@ const SKINS = {
     neon: { name: 'Неон', price: 500, emojis: ['💎','🔮','🎆','🎇','✨','💫','🌟','⚡','🌈','🎊'], colors: ['#E91E63','#9C27B0','#3F51B5','#00BCD4','#8BC34A','#FFEB3B','#FF4081','#00E5FF'], texts: ['НЕОН','СВЕТ','ЛАЗЕР','РАДУГА','БЛЕСК','СИЯНИЕ','ФЛЭШ','ИМПУЛЬС','ЭНЕРГИЯ','ВСПЫШКА'] }
 };
 
-// ==== СПОСОБНОСТИ ====
 const POWERUP_DEFS = {
     magnet:     { icon: '🧲', name: 'Магнит',     desc: '1 блок встанет идеально',  price: 50 },
     freeze:     { icon: '❄️', name: 'Заморозка',  desc: 'Медленно 10 секунд',       price: 30 },
@@ -110,53 +109,36 @@ let newQuestsTimeout = null, quests = [];
 let isFury = false, furyBlocksLeft = 0;
 let glowTexture = null;
 
-// === Settings ===
-let settings = JSON.parse(localStorage.getItem('towerSettings') || 'null') || {
-    musicEnabled: true, sfxEnabled: true, hapticsEnabled: true
-};
+let settings = JSON.parse(localStorage.getItem('towerSettings') || 'null') || { musicEnabled: true, sfxEnabled: true, hapticsEnabled: true };
 function saveSettings() { localStorage.setItem('towerSettings', JSON.stringify(settings)); }
 
-// === Stats ===
-let stats = JSON.parse(localStorage.getItem('towerStats') || 'null') || {
-    totalGames: 0, totalPerfect: 0, totalGolden: 0, totalBomb: 0, totalIce: 0,
-    totalFury: 0, totalSecret: 0, maxScore: 0, maxCombo: 0, maxTimeScore: 0
-};
+let stats = JSON.parse(localStorage.getItem('towerStats') || 'null') || { totalGames: 0, totalPerfect: 0, totalGolden: 0, totalBomb: 0, totalIce: 0, totalFury: 0, totalSecret: 0, maxScore: 0, maxCombo: 0, maxTimeScore: 0 };
 function saveStats() { localStorage.setItem('towerStats', JSON.stringify(stats)); }
 
-// === Achievements ===
 let unlockedAchievements = JSON.parse(localStorage.getItem('towerAchievements') || '[]');
 function saveAchievements() { localStorage.setItem('towerAchievements', JSON.stringify(unlockedAchievements)); }
 
-// === Level / XP ===
 let xpTotal = parseInt(localStorage.getItem('towerXP')) || 0;
 let level = parseInt(localStorage.getItem('towerLevel')) || 1;
 function xpForNextLevel(lvl) { return 100 + (lvl - 1) * 50; }
 function saveLevelProgress() { localStorage.setItem('towerXP', xpTotal); localStorage.setItem('towerLevel', level); }
 
-// === Streak ===
 let streak = parseInt(localStorage.getItem('towerStreak')) || 0;
 let lastVisitDate = localStorage.getItem('towerLastVisit') || '';
 let dailyRewardPending = false, dailyRewardAmount = 0;
 
-// === Leaderboard ===
 let leaderboard = JSON.parse(localStorage.getItem('towerLeaderboard') || '[]');
 function saveLeaderboard() { localStorage.setItem('towerLeaderboard', JSON.stringify(leaderboard)); }
 
-// === Powerups ===
 let ownedPowerups = JSON.parse(localStorage.getItem('towerPowerups') || 'null') || { magnet: 0, freeze: 0, ghost: 0, multiplier: 0 };
 function savePowerups() { localStorage.setItem('towerPowerups', JSON.stringify(ownedPowerups)); }
 
 let activePowerups = { magnet: false, freeze: false, ghost: false, multiplier: false };
-let magnetUsed = false;
-let ghostUsed = false;
-let freezeTimer = null;
-let pendingGameMode = null;
+let magnetUsed = false, ghostUsed = false, freezeTimer = null, pendingGameMode = null;
 
-// === Chests ===
 let chests = JSON.parse(localStorage.getItem('towerChests') || '[]');
 function saveChests() { localStorage.setItem('towerChests', JSON.stringify(chests)); }
 
-// ============ МУЗЫКА: ФАЗЫ ============
 let currentMusicPhase = 1;
 function getMusicPhase() {
     if (isFury) return 4;
@@ -254,10 +236,7 @@ function addXP(amount) {
         showPopup(levelupPopup, `🏅 УРОВЕНЬ ${level}! +50 🪙`, 2000);
         playSound('milestone');
         triggerHaptic('success');
-        // Сундук каждые 10 уровней
-        if (level % 10 === 0) {
-            setTimeout(() => addChest('level', { level }), 500);
-        }
+        if (level % 10 === 0) setTimeout(() => addChest('level', { level }), 500);
         checkAchievements();
     }
     saveLevelProgress();
@@ -285,19 +264,12 @@ function checkDailyStreak() {
     localStorage.setItem('towerStreak', streak);
     dailyRewardAmount = Math.min(100, 10 + (streak - 1) * 5);
     dailyRewardPending = true;
-    // Сундук каждый 3-й день и milestones (7, 30, 100)
-    if (streak % 3 === 0 || streak === 7 || streak === 30 || streak === 100) {
-        addChest('daily', { streak });
-    }
+    if (streak % 3 === 0 || streak === 7 || streak === 30 || streak === 100) addChest('daily', { streak });
     updateStreakUI();
 }
 function updateStreakUI() {
-    if (streak > 0) {
-        menuStreakEl.innerText = `🔥 ${streak}`;
-        menuStreakEl.classList.remove('hidden');
-    } else {
-        menuStreakEl.classList.add('hidden');
-    }
+    if (streak > 0) { menuStreakEl.innerText = `🔥 ${streak}`; menuStreakEl.classList.remove('hidden'); }
+    else { menuStreakEl.classList.add('hidden'); }
 }
 function showDailyReward() {
     if (!dailyRewardPending) return;
@@ -333,13 +305,7 @@ function renderAchievements() {
         const unlocked = unlockedAchievements.includes(a.id);
         const div = document.createElement('div');
         div.className = 'ach-item' + (unlocked ? ' unlocked' : '');
-        div.innerHTML = `
-            <span class="ach-icon">${a.icon}</span>
-            <div class="ach-info">
-                <span class="ach-name">${a.name}${unlocked ? ' ✓' : ''}</span>
-                <span class="ach-desc">${a.desc}</span>
-            </div>
-        `;
+        div.innerHTML = `<span class="ach-icon">${a.icon}</span><div class="ach-info"><span class="ach-name">${a.name}${unlocked ? ' ✓' : ''}</span><span class="ach-desc">${a.desc}</span></div>`;
         achListEl.appendChild(div);
     });
     achProgressEl.innerText = `${unlockedAchievements.length}/${ACHIEVEMENTS.length}`;
@@ -355,10 +321,7 @@ function addToLeaderboard(scoreValue, mode) {
 }
 function renderLeaderboard() {
     lbListEl.innerHTML = '';
-    if (leaderboard.length === 0) {
-        lbListEl.innerHTML = '<div class="lb-empty">Пока пусто — сыграй первую игру!</div>';
-        return;
-    }
+    if (leaderboard.length === 0) { lbListEl.innerHTML = '<div class="lb-empty">Пока пусто — сыграй первую игру!</div>'; return; }
     leaderboard.forEach((entry, i) => {
         const div = document.createElement('div');
         div.className = 'lb-item' + (i === 0 ? ' top1' : i === 1 ? ' top2' : i === 2 ? ' top3' : '');
@@ -472,7 +435,6 @@ function musicTick() {
     const beat = musicBeat % 8;
     
     if (currentMusicPhase === 4) {
-        // FURY — интенсивный трек
         if (beat % 2 === 0) playKick();
         if (beat === 1 || beat === 3 || beat === 5 || beat === 7) playHat();
         if (beat === 0 || beat === 4) playBass();
@@ -565,16 +527,7 @@ function renderShop() {
         else if (canBuy) btnHtml = `<button class="buy" data-skin="${key}" data-price="${skin.price}">${skin.price} 🪙</button>`;
         else btnHtml = `<button class="buy locked" disabled>${skin.price} 🪙</button>`;
         const colorDots = skin.colors.slice(0, 5).map(c => `<span style="background:${c}"></span>`).join('');
-        div.innerHTML = `
-            <div class="skin-info">
-                <span class="skin-preview">${skin.emojis[0]}</span>
-                <div class="skin-details">
-                    <span class="skin-name">${skin.name}</span>
-                    <div class="skin-colors">${colorDots}</div>
-                </div>
-            </div>
-            ${btnHtml}
-        `;
+        div.innerHTML = `<div class="skin-info"><span class="skin-preview">${skin.emojis[0]}</span><div class="skin-details"><span class="skin-name">${skin.name}</span><div class="skin-colors">${colorDots}</div></div></div>${btnHtml}`;
         skinListEl.appendChild(div);
     }
     skinListEl.querySelectorAll('button.equip').forEach(btn => {
@@ -612,46 +565,20 @@ function renderPowerupList() {
         const owned = ownedPowerups[key] || 0;
         const canBuy = coins >= def.price;
         const isActive = activePowerups[key];
-        
         const item = document.createElement('div');
         item.className = 'powerup-item';
         if (isActive) item.classList.add('active');
         if (!isActive && owned === 0 && !canBuy) item.classList.add('disabled');
-        
         let actionHtml = '';
-        if (isActive) {
-            actionHtml = '<span class="pw-active">✓ АКТИВНО</span>';
-        } else if (owned > 0) {
-            actionHtml = `<span class="pw-count">x${owned}</span>`;
-        } else {
-            actionHtml = `<span class="pw-price">${def.price} 🪙</span>`;
-        }
-        
-        item.innerHTML = `
-            <span class="pw-icon">${def.icon}</span>
-            <div class="pw-info">
-                <span class="pw-name">${def.name}</span>
-                <span class="pw-desc">${def.desc}</span>
-            </div>
-            ${actionHtml}
-        `;
-        
+        if (isActive) actionHtml = '<span class="pw-active">✓ АКТИВНО</span>';
+        else if (owned > 0) actionHtml = `<span class="pw-count">x${owned}</span>`;
+        else actionHtml = `<span class="pw-price">${def.price} 🪙</span>`;
+        item.innerHTML = `<span class="pw-icon">${def.icon}</span><div class="pw-info"><span class="pw-name">${def.name}</span><span class="pw-desc">${def.desc}</span></div>${actionHtml}`;
         safeClick(item, () => {
-            if (isActive) {
-                activePowerups[key] = false;
-            } else if (owned > 0) {
-                activePowerups[key] = true;
-            } else if (canBuy) {
-                coins -= def.price;
-                localStorage.setItem('towerCoins', coins);
-                ownedPowerups[key] = 1;
-                savePowerups();
-                activePowerups[key] = true;
-                updateCoinUI();
-            } else {
-                triggerHaptic('error');
-                return;
-            }
+            if (isActive) { activePowerups[key] = false; }
+            else if (owned > 0) { activePowerups[key] = true; }
+            else if (canBuy) { coins -= def.price; localStorage.setItem('towerCoins', coins); ownedPowerups[key] = 1; savePowerups(); activePowerups[key] = true; updateCoinUI(); }
+            else { triggerHaptic('error'); return; }
             renderPowerupList();
         });
         list.appendChild(item);
@@ -659,12 +586,7 @@ function renderPowerupList() {
 }
 
 function startGameWithPowerups() {
-    // Списываем активные powerups
-    for (const key in activePowerups) {
-        if (activePowerups[key]) {
-            ownedPowerups[key] = Math.max(0, (ownedPowerups[key] || 0) - 1);
-        }
-    }
+    for (const key in activePowerups) { if (activePowerups[key]) ownedPowerups[key] = Math.max(0, (ownedPowerups[key] || 0) - 1); }
     savePowerups();
     powerupsScreen.style.display = 'none';
     const mode = pendingGameMode;
@@ -687,29 +609,20 @@ function updateActivePowerupsUI() {
 // ============ CHESTS ============
 function addChest(type, meta = {}) {
     chests.push({ type, ...meta, id: Date.now() + Math.random() });
-    saveChests();
-    updateChestUI();
+    saveChests(); updateChestUI();
     showPopup(bonusText, '📦 НОВЫЙ СУНДУК!', 1500);
-    playSound('quest');
-    triggerHaptic('success');
+    playSound('quest'); triggerHaptic('success');
 }
-
 function updateChestUI() {
     const count = chests.length;
     const container = $('chest-btn-container');
     const badge = $('chest-count-badge');
-    if (count > 0) {
-        container.style.display = 'block';
-        badge.innerText = count;
-    } else {
-        container.style.display = 'none';
-    }
+    if (count > 0) { container.style.display = 'block'; badge.innerText = count; }
+    else { container.style.display = 'none'; }
 }
-
 function rollChestReward() {
     const r = Math.random();
     const lockedSkins = Object.keys(SKINS).filter(s => !unlockedSkins.includes(s));
-    
     if (lockedSkins.length === 0 || r < 0.55) {
         const amounts = [50, 80, 100, 150, 200];
         const amount = amounts[Math.floor(Math.random() * amounts.length)];
@@ -724,7 +637,6 @@ function rollChestReward() {
         return { type: 'skin', skin, text: `🎨 ${SKINS[skin].name}` };
     }
 }
-
 function showChestOpening() {
     if (chests.length === 0) return;
     startScreen.style.display = 'none';
@@ -740,38 +652,22 @@ function showChestOpening() {
     $('chest-title').innerText = '🎁 Сундук!';
     $('chest-sub').innerText = `Осталось сундуков: ${chests.length}`;
 }
-
 function openChest() {
     if (chests.length === 0) return;
-    const chest = chests.shift();
-    saveChests();
-    updateChestUI();
+    chests.shift(); saveChests(); updateChestUI();
     const reward = rollChestReward();
-    
     $('chest-icon').className = 'chest-icon opening';
     $('open-chest-btn').style.display = 'none';
     $('chest-rays').className = 'chest-rays show';
-    
     setTimeout(() => {
-        // Применяем награду
         if (reward.type === 'coins') addCoins(reward.amount);
-        else if (reward.type === 'powerup') {
-            ownedPowerups[reward.powerup] = (ownedPowerups[reward.powerup] || 0) + reward.count;
-            savePowerups();
-        } else if (reward.type === 'skin') {
-            unlockedSkins.push(reward.skin);
-            localStorage.setItem('towerSkins', JSON.stringify(unlockedSkins));
-            checkAchievements();
-        }
-        
+        else if (reward.type === 'powerup') { ownedPowerups[reward.powerup] = (ownedPowerups[reward.powerup] || 0) + reward.count; savePowerups(); }
+        else if (reward.type === 'skin') { unlockedSkins.push(reward.skin); localStorage.setItem('towerSkins', JSON.stringify(unlockedSkins)); checkAchievements(); }
         $('chest-icon').innerText = '✨';
         $('chest-icon').className = 'chest-icon';
         $('chest-reward').innerText = reward.text;
         $('chest-reward').className = 'chest-reward show';
-        
-        playSound('chest');
-        triggerHaptic('success');
-        
+        playSound('chest'); triggerHaptic('success');
         if (chests.length > 0) {
             $('chest-sub').innerText = `Осталось: ${chests.length}`;
             $('open-chest-btn').innerText = 'ОТКРЫТЬ ЕЩЁ';
@@ -790,7 +686,6 @@ function getAdaptiveD(aspect) {
     if (aspect < 1.0) return 11;
     return 10;
 }
-
 function initThree() {
     scene = new THREE.Scene(); scene.background = new THREE.Color(BIOMES[0].bg); scene.fog = new THREE.FogExp2(BIOMES[0].bg, 0.02);
     const aspect = window.innerWidth / window.innerHeight;
@@ -811,14 +706,12 @@ function initThree() {
     window.addEventListener('orientationchange', () => setTimeout(onResize, 100));
     glowTexture = createGlowTexture();
 }
-
 function disposeMesh(mesh) {
     if (!mesh) return;
     if (mesh.geometry) mesh.geometry.dispose();
     if (Array.isArray(mesh.material)) mesh.material.forEach(m => { if (m.map) m.map.dispose(); m.dispose(); });
     else if (mesh.material) { if (mesh.material.map) mesh.material.map.dispose(); mesh.material.dispose(); }
 }
-
 function createGlowTexture() {
     const c = document.createElement('canvas'); c.width = c.height = 128;
     const ctx = c.getContext('2d');
@@ -834,7 +727,6 @@ function createGlowTexture() {
 function createTexture(emoji, text, color, type = 'normal') {
     const c = document.createElement('canvas'); c.width = c.height = 512;
     const ctx = c.getContext('2d');
-    
     if (type === 'golden') {
         const grad = ctx.createLinearGradient(0, 0, 512, 512);
         grad.addColorStop(0, '#FFE082'); grad.addColorStop(0.3, '#FFD700'); grad.addColorStop(0.6, '#FFC107'); grad.addColorStop(1, '#FF8F00');
@@ -864,7 +756,6 @@ function createTexture(emoji, text, color, type = 'normal') {
         for(let i=0; i<15; i++) { ctx.beginPath(); ctx.moveTo(Math.random()*512, Math.random()*512); ctx.lineTo(Math.random()*512, Math.random()*512); ctx.stroke(); }
         ctx.strokeStyle = '#8D6E63'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
     } else if (type === 'rainbow') {
-        // Радужный градиент
         const grad = ctx.createLinearGradient(0, 0, 512, 512);
         grad.addColorStop(0, '#FF1744'); grad.addColorStop(0.16, '#FF9100');
         grad.addColorStop(0.33, '#FFEA00'); grad.addColorStop(0.5, '#00E676');
@@ -872,30 +763,21 @@ function createTexture(emoji, text, color, type = 'normal') {
         grad.addColorStop(1, '#D500F9');
         ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
         ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
-        // Блики
         ctx.fillStyle = 'rgba(255,255,255,0.4)';
         ctx.beginPath(); ctx.arc(150, 150, 60, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(350, 360, 40, 0, Math.PI*2); ctx.fill();
     } else if (type === 'dragon') {
-        // Огненный
         const grad = ctx.createLinearGradient(0, 0, 0, 512);
         grad.addColorStop(0, '#FFEB3B'); grad.addColorStop(0.3, '#FF9800');
         grad.addColorStop(0.7, '#E65100'); grad.addColorStop(1, '#B71C1C');
         ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
-        // Пламя
         ctx.fillStyle = 'rgba(255,235,59,0.4)';
-        for (let i = 0; i < 8; i++) {
-            ctx.beginPath();
-            ctx.arc(Math.random()*512, Math.random()*512, 40 + Math.random()*60, 0, Math.PI*2);
-            ctx.fill();
-        }
+        for (let i = 0; i < 8; i++) { ctx.beginPath(); ctx.arc(Math.random()*512, Math.random()*512, 40 + Math.random()*60, 0, Math.PI*2); ctx.fill(); }
         ctx.strokeStyle = '#FFEB3B'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
     } else if (type === 'diamond') {
-        // Кристальный
         const grad = ctx.createRadialGradient(256, 256, 50, 256, 256, 400);
         grad.addColorStop(0, '#E0F7FA'); grad.addColorStop(0.5, '#00BCD4'); grad.addColorStop(1, '#006064');
         ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
-        // Блики граней
         ctx.fillStyle = 'rgba(255,255,255,0.5)';
         ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(200,0); ctx.lineTo(0,200); ctx.closePath(); ctx.fill();
         ctx.beginPath(); ctx.moveTo(512,0); ctx.lineTo(312,0); ctx.lineTo(512,200); ctx.closePath(); ctx.fill();
@@ -1050,35 +932,27 @@ function dropBlock() {
     let absDiffX = Math.abs(diffX), absDiffZ = Math.abs(diffZ);
     let maxDiff = Math.max(absDiffX, absDiffZ);
     
-    // ==== МАГНИТ: принудительный идеал ====
     if (activePowerups.magnet && !magnetUsed) {
         magnetUsed = true;
-        currentBlock.position.x = top.position.x;
-        currentBlock.position.z = top.position.z;
+        currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         diffX = 0; diffZ = 0; absDiffX = 0; absDiffZ = 0; maxDiff = 0;
         showPopup(bonusText, '🧲 МАГНИТ!', 1200);
     }
     
-    // ==== АЛМАЗ: любая позиция = идеал ====
     if (bType === 'diamond' && maxDiff < Math.max(sizeX, sizeZ) / 2) {
-        currentBlock.position.x = top.position.x;
-        currentBlock.position.z = top.position.z;
+        currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         diffX = 0; diffZ = 0; absDiffX = 0; absDiffZ = 0; maxDiff = 0;
     }
     
-    // Проверка промаха
     const missX = (movingAxis === 'x' || movingAxis === 'diag') && absDiffX >= sizeX / 2;
     const missZ = (movingAxis === 'z' || movingAxis === 'diag') && absDiffZ >= sizeZ / 2;
     
     if (missX || missZ) {
-        // ==== ПРИЗРАК: прощает 1 промах ====
         if (activePowerups.ghost && !ghostUsed) {
             ghostUsed = true;
             showPopup(bonusText, '👻 ПРИЗРАК СПАС!', 1500);
             playSound('quest');
-            // Снапим блок в идеал
-            currentBlock.position.x = top.position.x;
-            currentBlock.position.z = top.position.z;
+            currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
             diffX = 0; diffZ = 0; absDiffX = 0; absDiffZ = 0; maxDiff = 0;
         } else {
             currentBlock.userData.falling = true;
@@ -1087,14 +961,12 @@ function dropBlock() {
         }
     }
     
-    // Crumble — не идеал
     if (bType === 'crumble' && maxDiff < 0.15) {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         spawnBombParticles(); triggerGameOver(); return;
     }
     
     if (maxDiff < 0.15) {
-        // ==== PERFECT ====
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         combo++;
         stats.totalPerfect++;
@@ -1109,23 +981,18 @@ function dropBlock() {
         else if (bType === 'rainbow') {
             points = 10; isSecret = true;
             stats.totalSecret++; updateQuest('secret', 1);
-            playSound('secret');
-            showPopup(bonusText, '🌈 РАДУГА +10!', 1500);
+            playSound('secret'); showPopup(bonusText, '🌈 РАДУГА +10!', 1500);
         }
         else if (bType === 'dragon') {
             points = 10; isSecret = true;
             stats.totalSecret++; updateQuest('secret', 1);
-            playSound('secret');
-            showPopup(bonusText, '🐉 ДРАКОН +10!', 1500);
-            // Огненный эффект
-            spawnDragonFire();
-            shakeIntensity = 1.0;
+            playSound('secret'); showPopup(bonusText, '🐉 ДРАКОН +10!', 1500);
+            spawnDragonFire(); shakeIntensity = 1.0;
         }
         else if (bType === 'diamond') {
             points = 5; isSecret = true;
             stats.totalSecret++; updateQuest('secret', 1);
-            playSound('secret');
-            showPopup(bonusText, '💎 АЛМАЗ +5!', 1500);
+            playSound('secret'); showPopup(bonusText, '💎 АЛМАЗ +5!', 1500);
         }
         
         if (bType === 'bomb') { playSound('bomb'); showPopup(bonusText, '💥 БУМ! +2', 1000); shakeIntensity = 0.5; }
@@ -1149,7 +1016,6 @@ function dropBlock() {
         else if (isSecret) coinReward += 3;
         addCoins(coinReward);
     } else {
-        // ==== CUT ====
         combo = 0; updateQuest('cut', 1);
         if (bType === 'bomb') { score = Math.max(0, score - 1); playSound('bomb'); shakeIntensity = 0.5; showPopup(bonusText, '💣 -1 ОЧКО', 900); spawnBombParticles(); triggerHaptic('error'); }
         else { playSound('drop'); triggerHaptic('light'); }
@@ -1200,7 +1066,6 @@ function spawnBombParticles() {
     }
 }
 function spawnDragonFire() {
-    // Огненные частицы вокруг блока
     for (let i = 0; i < 30; i++) {
         const colorChoices = [0xFFEB3B, 0xFF9800, 0xE65100, 0xFF5722];
         const p = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), new THREE.MeshBasicMaterial({ color: colorChoices[i % 4] }));
@@ -1331,7 +1196,6 @@ function startGame(mode) {
         targetBgColor.set(BIOMES[0].bg); scene.background.set(BIOMES[0].bg); document.body.style.background = BIOMES[0].bg;
         document.body.classList.add('in-game');
         
-        // Применяем заморозку
         if (activePowerups.freeze) {
             currentSpeed *= 0.5;
             freezeTimer = setTimeout(() => {
