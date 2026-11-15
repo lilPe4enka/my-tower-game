@@ -15,6 +15,7 @@
 </head>
 <body>
 
+<!-- ==== UI LAYER ==== -->
 <div id="ui-layer">
     <div id="quests"></div>
     <div id="top-right-controls">
@@ -46,6 +47,7 @@
 
 <div id="screen-flash"></div>
 
+<!-- ==== GAME OVER ==== -->
 <div id="game-over" class="screen modal">
     <h1>БАШНЯ РУХНУЛА</h1>
     <div id="new-record">🏆 НОВЫЙ РЕКОРД!</div>
@@ -55,22 +57,24 @@
     <div id="game-xp-earned"></div>
     <div class="btn-group">
         <div class="btn-row">
-            <button id="challenge-btn">📣 ВЫЗВАТЬ ДРУГА</button>
-            <button id="restart-btn">🔄 ЗАНОВО</button>
+            <button id="challenge-btn" class="btn-secondary">📣 ВЫЗВАТЬ ДРУГА</button>
+            <button id="restart-btn" class="btn-primary">🔄 ЗАНОВО</button>
         </div>
-        <button id="menu-btn">🏠 В ГЛАВНОЕ МЕНЮ</button>
+        <button id="menu-btn" class="btn-ghost">🏠 В ГЛАВНОЕ МЕНЮ</button>
     </div>
 </div>
 
+<!-- ==== PAUSE ==== -->
 <div id="pause-screen" class="screen modal">
     <h1>ПАУЗА</h1>
     <p>Отдохни немного</p>
     <div class="btn-group">
-        <button id="pause-resume">▶ ПРОДОЛЖИТЬ</button>
-        <button id="pause-menu">🏠 В МЕНЮ</button>
+        <button id="pause-resume" class="btn-primary">▶ ПРОДОЛЖИТЬ</button>
+        <button id="pause-menu" class="btn-ghost">🏠 В МЕНЮ</button>
     </div>
 </div>
 
+<!-- ==== SHOP ==== -->
 <div id="shop-screen" class="screen modal">
     <div class="shop-header">
         <h2>🛍️ Магазин</h2>
@@ -81,6 +85,7 @@
     <button id="close-shop" class="close-modal-btn">ЗАКРЫТЬ</button>
 </div>
 
+<!-- ==== RULES ==== -->
 <div id="rules-screen" class="screen modal">
     <h1>📖 ПРАВИЛА</h1>
     <div class="rules-content">
@@ -99,18 +104,18 @@
         <div class="rule-block"><span class="emoji">🐉</span><span><b>Дракон.</b> +10 очков и огонь!</span></div>
         <div class="rule-block"><span class="emoji">💎</span><span><b>Алмаз.</b> Прощает любую неточность. +5.</span></div>
         <p style="margin-top: 15px;"><strong>⚡ Способности:</strong></p>
-        <div class="rule-block"><span class="emoji">🧲</span><span><b>Магнит</b> — 1 блок встанет идеально.</span></div>
-        <div class="rule-block"><span class="emoji">❄️</span><span><b>Заморозка</b> — медленная скорость 10 сек.</span></div>
+        <div class="rule-block"><span class="emoji">🧲</span><span><b>Магнит</b> — 1 блок идеально.</span></div>
+        <div class="rule-block"><span class="emoji">❄️</span><span><b>Заморозка</b> — медленно 10 сек.</span></div>
         <div class="rule-block"><span class="emoji">👻</span><span><b>Призрак</b> — прощает 1 промах.</span></div>
-        <div class="rule-block"><span class="emoji">💰</span><span><b>Множитель</b> — x2 монет за игру.</span></div>
+        <div class="rule-block"><span class="emoji">💰</span><span><b>Множитель</b> — x2 монет.</span></div>
         <p style="margin-top: 15px;"><strong>🔥 Ярость:</strong> 5 идеалов → x2 очки.</p>
         <p><strong>📐 Диагональ:</strong> После 30 очков блоки летают по диагонали.</p>
         <p><strong>🏅 Уровни:</strong> XP за игру. Каждые 10 уровней — сундук!</p>
-        <p><strong>📦 Сундуки:</strong> За ежедневный вход и уровни. Открывай и получай монеты/скины/бустеры.</p>
     </div>
     <button id="close-rules" class="close-modal-btn">ПОНЯТНО</button>
 </div>
 
+<!-- ==== ACHIEVEMENTS ==== -->
 <div id="achievements-screen" class="screen modal">
     <div class="shop-header">
         <h2>🏆 Ачивки</h2>
@@ -120,6 +125,7 @@
     <button id="close-achievements" class="close-modal-btn">ЗАКРЫТЬ</button>
 </div>
 
+<!-- ==== LEADERBOARD ==== -->
 <div id="leaderboard-screen" class="screen modal">
     <h1>👑 Зал Славы</h1>
     <p class="lb-sub">Твои лучшие результаты</p>
@@ -127,6 +133,7 @@
     <button id="close-leaderboard" class="close-modal-btn">ЗАКРЫТЬ</button>
 </div>
 
+<!-- ==== SETTINGS ==== -->
 <div id="settings-screen" class="screen modal">
     <h1>⚙️ Настройки</h1>
     <div class="settings-list">
@@ -146,6 +153,7 @@
     <button id="close-settings" class="close-modal-btn">ЗАКРЫТЬ</button>
 </div>
 
+<!-- ==== DAILY ==== -->
 <div id="daily-screen" class="screen modal">
     <h1>🎁 Ежедневный вход!</h1>
     <p id="daily-streak-text">День 1</p>
@@ -154,18 +162,18 @@
     <button id="claim-daily" class="claim-btn">ЗАБРАТЬ</button>
 </div>
 
-<!-- ==== POWERUPS SELECTION ==== -->
+<!-- ==== POWERUPS ==== -->
 <div id="powerups-screen" class="screen modal">
     <h1>⚡ Способности</h1>
     <p class="lb-sub">Выбери бустеры на эту игру</p>
     <div class="powerup-list" id="powerup-list"></div>
     <div class="btn-group">
-        <button id="start-with-powerups" class="start-pw-btn">🚀 НАЧАТЬ ИГРУ</button>
+        <button id="start-with-powerups" class="btn-primary">🚀 НАЧАТЬ ИГРУ</button>
         <button id="close-powerups" class="close-modal-btn">ОТМЕНА</button>
     </div>
 </div>
 
-<!-- ==== CHEST OPENING ==== -->
+<!-- ==== CHEST ==== -->
 <div id="chest-screen" class="screen modal">
     <h1 id="chest-title">🎁 Сундук!</h1>
     <p class="lb-sub" id="chest-sub">Что же внутри?</p>
@@ -180,20 +188,30 @@
     </div>
 </div>
 
+<!-- ==== START SCREEN ==== -->
 <div id="start-screen" class="screen">
-    <h1>🏗️ БАШНЯ<br>ХАЙПА</h1>
-    <div id="start-top-info">
-        <div id="menu-coins">🪙 0</div>
-        <div id="menu-streak" title="Дней подряд">🔥 0</div>
+    <button id="settings-btn" class="floating-settings" title="Настройки">⚙️</button>
+    
+    <h1 class="start-title">🏗️ БАШНЯ<br>ХАЙПА</h1>
+    
+    <div id="start-top-info" class="top-info">
+        <div id="menu-coins" class="pill pill-coin">🪙 0</div>
+        <div id="menu-streak" class="pill pill-streak hidden">🔥 0</div>
     </div>
-    <div id="menu-level-box">
+    
+    <div id="menu-level-box" class="level-box">
         <div class="level-badge">🏅 LVL <span id="menu-level-num">1</span></div>
         <div class="xp-bar"><div class="xp-fill" id="menu-xp-fill"></div></div>
         <div class="xp-text" id="menu-xp-text">0 / 100 XP</div>
     </div>
+    
     <div id="chest-btn-container" style="display:none;">
-        <button id="chest-btn" class="chest-open-btn">📦 Открыть сундуки <span id="chest-count-badge" class="chest-badge">0</span></button>
+        <button id="chest-btn" class="chest-open-btn">
+            📦 Открыть сундуки
+            <span id="chest-count-badge" class="chest-badge">0</span>
+        </button>
     </div>
+    
     <div class="mode-buttons">
         <button class="mode-btn" data-mode="classic" id="btn-classic">
             <span class="mode-icon">🎮</span>
@@ -201,6 +219,7 @@
                 <span class="mode-name">Классика</span>
                 <span class="mode-desc">Без ограничений по времени</span>
             </span>
+            <span class="mode-arrow">›</span>
         </button>
         <button class="mode-btn" data-mode="time" id="btn-time">
             <span class="mode-icon">⏱</span>
@@ -208,16 +227,27 @@
                 <span class="mode-name">На время</span>
                 <span class="mode-desc">60 сек, +2 сек за идеал</span>
             </span>
+            <span class="mode-arrow">›</span>
         </button>
     </div>
+    
     <div class="menu-footer">
-        <button id="shop-btn">🛍️ МАГАЗИН</button>
-        <button id="rules-btn">📖 ПРАВИЛА</button>
-    </div>
-    <div class="menu-footer secondary">
-        <button id="ach-btn">🏆 АЧИВКИ</button>
-        <button id="lb-btn">👑 ЗАЛ</button>
-        <button id="settings-btn">⚙️</button>
+        <button id="shop-btn" class="footer-btn">
+            <span class="footer-icon">🛍️</span>
+            <span class="footer-label">Магазин</span>
+        </button>
+        <button id="rules-btn" class="footer-btn">
+            <span class="footer-icon">📖</span>
+            <span class="footer-label">Правила</span>
+        </button>
+        <button id="ach-btn" class="footer-btn">
+            <span class="footer-icon">🏆</span>
+            <span class="footer-label">Ачивки</span>
+        </button>
+        <button id="lb-btn" class="footer-btn">
+            <span class="footer-icon">👑</span>
+            <span class="footer-label">Топ</span>
+        </button>
     </div>
 </div>
 
