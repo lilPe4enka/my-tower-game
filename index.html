@@ -87,7 +87,7 @@
         /* Screens & Modals */
         .screen { position: absolute; inset: 0; z-index: 100; pointer-events: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center; color: var(--text); }
         #start-screen { background: linear-gradient(135deg, #FDE2E4 0%, #E2ECE9 100%); }
-        .modal { inset: auto; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; background: rgba(255,255,255,0.98); padding: 25px 30px; border-radius: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); backdrop-filter: blur(20px); border: 2px solid white; width: 90%; max-width: 380px; max-height: 90vh; overflow-y: auto; z-index: 110; }
+        .modal { inset: auto; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; background: rgba(255,255,255,0.98); padding: 25px 20px; border-radius: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); backdrop-filter: blur(20px); border: 2px solid white; width: 92%; max-width: 380px; max-height: 85vh; overflow-y: auto; z-index: 110; }
         
         #start-screen h1 { font-size: 40px; margin: 0 0 8px 0; font-weight: 900; line-height: 1.1;}
         #start-screen p { font-size: 16px; color: #8A84A0; margin: 0 0 20px 0; }
@@ -102,11 +102,11 @@
 
         .menu-footer { display: flex; gap: 10px; margin-top: 15px; width: 100%; max-width: 300px; }
         .menu-footer button { flex: 1; background: white; border: none; padding: 12px; border-radius: 15px; font-family: 'Rubik', sans-serif; font-weight: 900; font-size: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; gap: 6px; }
-        
         #shop-btn { background: #FFD740 !important; color: #5D576B; }
+        #rules-btn { background: #B2EBF2 !important; color: #00838F; }
 
         /* Game Over & Pause */
-        #game-over h1, #pause-screen h1 { margin: 0 0 6px 0; font-size: 26px; color: #EF476F; font-weight: 900;}
+        #game-over h1, #pause-screen h1, #rules-screen h1 { margin: 0 0 6px 0; font-size: 26px; color: #EF476F; font-weight: 900;}
         #game-over p, #pause-screen p { margin: 0; font-size: 15px; color: #8A84A0; }
         .final-score { font-size: 60px; color: var(--text); font-weight: 900; margin: 6px 0; }
         
@@ -117,7 +117,7 @@
         #menu-btn, #pause-menu { background: #8A84A0; color: white; box-shadow: 0 6px 15px rgba(138,132,160,0.3); }
         #challenge-btn { background: #0088cc; color: white; box-shadow: 0 6px 15px rgba(0,136,204,0.3); }
 
-        /* Shop */
+        /* Shop & Rules */
         .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .shop-header h2 { margin: 0; font-size: 22px; font-weight: 900; }
         .coins-balance { background: #FFF3E0; color: #F57C00; padding: 5px 12px; border-radius: 12px; font-weight: 900; font-size: 16px; }
@@ -129,6 +129,13 @@
         .skin-item button.equip { background: #FF9F1C; color: white; }
         .skin-item button.equipped { background: #CBF3F0; color: #2EC4B6; }
 
+        /* Rules Content */
+        .rules-content { text-align: left; font-size: 14px; line-height: 1.4; color: var(--text); }
+        .rules-content p { margin: 8px 0; }
+        .rules-content strong { color: #EF476F; }
+        .rule-block { display: flex; align-items: center; gap: 10px; background: #F5F5F5; padding: 8px 12px; border-radius: 12px; margin-bottom: 6px; font-weight: 500; }
+        .rule-block .emoji { font-size: 24px; }
+        
         #tutorial { position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%); background: rgba(93,87,107,0.95); color: white; padding: 12px 20px; border-radius: 16px; font-weight: 700; font-size: 14px; text-align: center; display: none; z-index: 15; pointer-events: none; animation: bounce 1.5s infinite; width: max-content; max-width: 90%; }
         @keyframes bounce { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-8px); } }
     </style>
@@ -190,13 +197,48 @@
 
 <div id="shop-screen" class="screen modal">
     <div class="shop-header">
-        <h2>🛍️ Магазин скинов</h2>
+        <h2>🛍️ Магазин</h2>
         <div class="coins-balance" id="coins-balance">🪙 0</div>
     </div>
-    <div class="skin-list" id="skin-list">
-        <!-- JS генерирует список -->
-    </div>
+    <div class="skin-list" id="skin-list"></div>
     <button id="close-shop" style="margin-top:20px; width:100%; padding:15px; border-radius:15px; border:none; background:#8A84A0; color:white; font-weight:900; font-size:16px;">ЗАКРЫТЬ</button>
+</div>
+
+<div id="rules-screen" class="screen modal">
+    <h1>📖 ПРАВИЛА ИГРЫ</h1>
+    <div class="rules-content">
+        <p><strong>🎯 Цель:</strong> Построй самую высокую башню!</p>
+        <p><strong>👆 Управление:</strong> Тапай по экрану, когда движущийся блок находится ровно над башней.</p>
+        <p><strong>✂️ Обрезка:</strong> Если ты промахнулся, блок обрежется. Если промахнулся полностью — игра окончена!</p>
+        
+        <p style="margin-top: 15px;"><strong>🧱 Типы блоков:</strong></p>
+        
+        <div class="rule-block">
+            <span class="emoji">🍕</span>
+            <span><b>Обычный.</b> Дает 1 очко.</span>
+        </div>
+        <div class="rule-block">
+            <span class="emoji">👑</span>
+            <span><b>Золотой.</b> Дает 3 очка за идеальное попадание. Светится!</span>
+        </div>
+        <div class="rule-block">
+            <span class="emoji">💣</span>
+            <span><b>Бомба.</b> Идеальное попадание: +2 очка. Обрезка: -1 очко. Очень контрастный!</span>
+        </div>
+        <div class="rule-block">
+            <span class="emoji">❄️</span>
+            <span><b>Лед.</b> Двигается в 2 раза быстрее. +2 очка за идеал.</span>
+        </div>
+        <div class="rule-block">
+            <span class="emoji">🧱</span>
+            <span><b>Хрупкий.</b> НЕ ставь его идеально! Если попадешь ровно — он разобьется, и ты проиграешь. Специально обрежь его!</span>
+        </div>
+
+        <p style="margin-top: 15px;"><strong>🔥 Режим Ярости:</strong> Сделай 5 идеальных бросков подряд. Блоки замедлятся, а очки удвоятся на 3 хода!</p>
+        <p><strong>📐 Диагональ:</strong> После 30 очков блоки начнут летать по диагонали. Хардкор!</p>
+        <p><strong>🪙 Монеты:</strong> Выполняй ежедневные квесты (слева на экране), чтобы получать монеты и покупать скины в магазине.</p>
+    </div>
+    <button id="close-rules" style="margin-top:20px; width:100%; padding:15px; border-radius:15px; border:none; background:#8A84A0; color:white; font-weight:900; font-size:16px;">ПОНЯТНО</button>
 </div>
 
 <div id="start-screen" class="screen">
@@ -214,6 +256,7 @@
     </div>
     <div class="menu-footer">
         <button id="shop-btn">🛍️ МАГАЗИН</button>
+        <button id="rules-btn">📖 ПРАВИЛА</button>
     </div>
 </div>
 
@@ -264,7 +307,7 @@ const SKINS = {
     retro: { name: 'Ретро 8-бит', emojis: RETRO_EMOJIS, colors: ['#00E676', '#00B248', '#009624', '#69F0AE', '#B9F6CA', '#D500F9'], texts: ['PIXEL', 'GAME', 'RETRO', '8-BIT', 'ATARI', 'NINTENDO', 'SEGA', 'TETRIS', 'JOYSTICK', 'CRT'], price: 500 }
 };
 
-let scene, camera, renderer, musicGain, windGain, windOsc;
+let scene, camera, renderer, musicGain, windGain;
 let blocks = [], debris = [], confetti = [];
 let currentBlock, nextBlockData, direction = 1;
 let score = 0, combo = 0, coins = parseInt(localStorage.getItem('towerCoins')) || 0;
@@ -298,7 +341,7 @@ const QUESTS_POOL = [
 // ==========================================
 const $ = id => document.getElementById(id);
 const scoreEl = $('score'), highScoreEl = $('high-score');
-const gameOverEl = $('game-over'), pauseScreen = $('pause-screen'), shopScreen = $('shop-screen'), startScreen = $('start-screen');
+const gameOverEl = $('game-over'), pauseScreen = $('pause-screen'), shopScreen = $('shop-screen'), rulesScreen = $('rules-screen'), startScreen = $('start-screen');
 const perfectText = $('perfect-text'), comboText = $('combo-text'), milestoneText = $('milestone-text'), bonusText = $('bonus-text');
 const finalScoreVal = $('final-score-val'), timerEl = $('timer'), modeLabel = $('mode-label');
 const questsEl = $('quests'), muteBtn = $('mute-btn'), pauseBtn = $('pause-btn'), menuToggleBtn = $('menu-toggle-btn');
@@ -317,14 +360,14 @@ function initAudio() {
     if (!audioCtx) {
         try {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const size = audioCtx.sampleRate * 1.0; // 1 sec for wind
+            const size = audioCtx.sampleRate * 1.0;
             noiseBuffer = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
             const data = noiseBuffer.getChannelData(0);
             for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
             
             musicGain = audioCtx.createGain(); musicGain.gain.value = 0.12; musicGain.connect(audioCtx.destination);
             windGain = audioCtx.createGain(); windGain.gain.value = 0; windGain.connect(audioCtx.destination);
-            windOsc = audioCtx.createBufferSource(); windOsc.buffer = noiseBuffer; windOsc.loop = true;
+            const windOsc = audioCtx.createBufferSource(); windOsc.buffer = noiseBuffer; windOsc.loop = true;
             const windFilter = audioCtx.createBiquadFilter(); windFilter.type = 'lowpass'; windFilter.frequency.value = 400;
             windOsc.connect(windFilter); windFilter.connect(windGain); windOsc.start();
         } catch(e) {}
@@ -363,7 +406,7 @@ function playHat() { if (!audioCtx) return; const src = audioCtx.createBufferSou
 function playBass() { if (!audioCtx) return; const osc = audioCtx.createOscillator(), g = audioCtx.createGain(); osc.type = 'triangle'; osc.frequency.setValueAtTime(65, audioCtx.currentTime); g.gain.setValueAtTime(0.15, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2); osc.connect(g); g.connect(musicGain); osc.start(); osc.stop(audioCtx.currentTime + 0.2); }
 
 function musicTick() {
-    if (!musicPlaying || isMuted) return;
+    if (!musicPlaying || isMuted || gameState !== 'playing') return;
     const beat = musicBeat % 8;
     if (beat === 0 || beat === 3 || beat === 4) playKick();
     if (beat === 2 || beat === 6) playHat();
@@ -440,13 +483,8 @@ function renderShop() {
         skinListEl.appendChild(div);
     }
 
-    // Обработчики
     skinListEl.querySelectorAll('button.equip').forEach(btn => {
-        safeClick(btn, () => {
-            currentSkin = btn.dataset.skin;
-            localStorage.setItem('towerSkin', currentSkin);
-            renderShop();
-        });
+        safeClick(btn, () => { currentSkin = btn.dataset.skin; localStorage.setItem('towerSkin', currentSkin); renderShop(); });
     });
     skinListEl.querySelectorAll('button.buy').forEach(btn => {
         safeClick(btn, () => {
@@ -456,12 +494,9 @@ function renderShop() {
                 const skin = btn.dataset.skin;
                 unlockedSkins.push(skin); localStorage.setItem('towerSkins', JSON.stringify(unlockedSkins));
                 currentSkin = skin; localStorage.setItem('towerSkin', currentSkin);
-                updateCoinUI(); renderShop();
-                triggerHaptic('success');
+                updateCoinUI(); renderShop(); triggerHaptic('success');
             } else {
-                triggerHaptic('error');
-                btn.innerText = 'НЕ ХВАТАЕТ 🪙';
-                setTimeout(() => renderShop(), 1500);
+                triggerHaptic('error'); btn.innerText = 'НЕ ХВАТАЕТ 🪙'; setTimeout(() => renderShop(), 1500);
             }
         });
     });
@@ -495,7 +530,7 @@ function disposeMesh(mesh) {
 }
 
 // ==========================================
-// TEXTURES & BLOCKS (High Quality + Skins)
+// TEXTURES & BLOCKS
 // ==========================================
 function createTexture(emoji, text, color, type = 'normal') {
     const c = document.createElement('canvas'); c.width = c.height = 512;
@@ -590,7 +625,6 @@ function createBaseBlock() {
 
 function spawnNewBlock() {
     const top = blocks[blocks.length - 1];
-    // Движение по диагонали после 30 очков
     if (score > 30) movingAxis = 'diag';
     else movingAxis = blocks.length % 2 === 1 ? 'x' : 'z';
 
@@ -614,11 +648,7 @@ function spawnNewBlock() {
 // GAME LOGIC
 // ==========================================
 function showPopup(el, text, duration = 800) { if (!el) return; if (text) el.innerText = text; el.classList.add('show-popup'); setTimeout(() => el.classList.remove('show-popup'), duration); }
-
-function flashScreen() {
-    screenFlash.style.opacity = '0.6';
-    setTimeout(() => screenFlash.style.opacity = '0', 100);
-}
+function flashScreen() { screenFlash.style.opacity = '0.6'; setTimeout(() => screenFlash.style.opacity = '0', 100); }
 
 function dropBlock() {
     if (gameState !== 'playing' || !currentBlock?.userData.moving) return;
@@ -636,23 +666,17 @@ function dropBlock() {
     const absDiffX = Math.abs(diffX), absDiffZ = Math.abs(diffZ);
     const maxDiff = Math.max(absDiffX, absDiffZ);
     
-    // Проверка на проигрыш
     if ((movingAxis === 'x' || movingAxis === 'diag') && absDiffX >= sizeX / 2) { currentBlock.userData.falling = true; triggerGameOver(); return; }
     if ((movingAxis === 'z' || movingAxis === 'diag') && absDiffZ >= sizeZ / 2) { currentBlock.userData.falling = true; triggerGameOver(); return; }
 
-    // Логика разрушающегося блока (Хрупкий)
     if (currentBlock.userData.blockType === 'crumble' && maxDiff < 0.15) {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
-        spawnBombParticles(); // Используем взрывные партиклы
-        triggerGameOver(); // Игра окончена, т.к. блок разрушился
-        return;
+        spawnBombParticles(); triggerGameOver(); return;
     }
 
-    // PERFECT
     if (maxDiff < 0.15) {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         combo++;
-
         let points = 1;
         if (currentBlock.userData.blockType === 'golden') points = 3;
         else if (currentBlock.userData.blockType === 'bomb') points = 2;
@@ -661,10 +685,9 @@ function dropBlock() {
         if (currentBlock.userData.blockType === 'bomb') { playSound('bomb'); showPopup(bonusText, '💥 БУМ! +2', 1000); shakeIntensity = 0.5; updateQuest('bomb', 1); }
         else { playSound('perfect', combo); if (currentBlock.userData.blockType === 'golden') { showPopup(bonusText, '👑 ЗОЛОТО +3', 900); updateQuest('golden', 1); } else if (currentBlock.userData.blockType === 'ice') { showPopup(bonusText, '❄️ ЛЕД +2', 900); updateQuest('ice', 1); } else showPopup(perfectText, null, 600); }
 
-        flashScreen(); // Эффект вспышки
+        flashScreen();
         if (gameMode === 'time') { timeLeft += 2; updateTimerDisplay(); }
         
-        // Активация Режима Ярости
         if (combo >= 5 && !isFury) {
             isFury = true; furyBlocksLeft = 3;
             document.body.classList.add('fury-active');
@@ -672,22 +695,17 @@ function dropBlock() {
         }
 
         if (combo > 1 && !isFury) showPopup(comboText, `КОМБО x${combo}`, 800);
-
         if (isFury) points *= 2;
 
         updateQuest('perfect', 1); updateQuest('combo', combo, true); triggerHaptic('light');
 
         const oldScore = score; score += points;
-        checkMilestone(oldScore, score);
-        triggerPerfectParticles();
+        checkMilestone(oldScore, score); triggerPerfectParticles();
     } else {
-        // CUT
-        combo = 0;
-        updateQuest('cut', 1);
+        combo = 0; updateQuest('cut', 1);
         if (currentBlock.userData.blockType === 'bomb') { score = Math.max(0, score - 1); playSound('bomb'); shakeIntensity = 0.5; showPopup(bonusText, '💣 -1 ОЧКО', 900); spawnBombParticles(); triggerHaptic('error'); }
         else { playSound('drop'); triggerHaptic('light'); }
 
-        // Урезаем блок (для диагонали урезаем по одной оси, где больше разница)
         let cutAxis = movingAxis === 'diag' ? (absDiffX > absDiffZ ? 'x' : 'z') : movingAxis;
         let cutDiff = cutAxis === 'x' ? diffX : diffZ;
         let origSize = cutAxis === 'x' ? sizeX : sizeZ;
@@ -701,7 +719,6 @@ function dropBlock() {
 
         const nm = createBlockMesh(w, BLOCK_HEIGHT, d, currentBlock.userData.color, currentBlock.userData.emoji, currentBlock.userData.text, 'normal');
         
-        // Позиционирование обрезанного блока
         let targetX = top.position.x, targetZ = top.position.z;
         if (cutAxis === 'x') targetX = top.position.x + (diffX > 0 ? (origSize-newSize)/2 : -(origSize-newSize)/2);
         if (cutAxis === 'z') targetZ = top.position.z + (diffZ > 0 ? (origSize-newSize)/2 : -(origSize-newSize)/2);
@@ -709,18 +726,11 @@ function dropBlock() {
         nm.position.set(targetX, currentBlock.position.y, targetZ);
         nm.userData = { ...currentBlock.userData, w, d, blockType: 'normal', squash: 1 };
         currentBlock = nm;
-
         if (currentBlock.userData.blockType !== 'bomb') score++;
     }
 
-    // Squash & Stretch (эффект желе)
-    currentBlock.userData.squash = 0; // Начинаем анимацию сжатия
-
-    // Режим ярости - уменьшаем счетчик
-    if (isFury) {
-        furyBlocksLeft--;
-        if (furyBlocksLeft <= 0) { isFury = false; document.body.classList.remove('fury-active'); }
-    }
+    currentBlock.userData.squash = 0;
+    if (isFury) { furyBlocksLeft--; if (furyBlocksLeft <= 0) { isFury = false; document.body.classList.remove('fury-active'); } }
 
     updateScoreUI();
     currentSpeed = Math.min(MAX_SPEED, BASE_SPEED + score * 0.004);
@@ -799,17 +809,16 @@ function animate() {
     requestAnimationFrame(animate);
     const time = clock.getElapsedTime();
 
-    // Управление ветром (громкость зависит от высоты)
     if (audioCtx && windGain && gameState === 'playing') {
         const windVol = Math.min(0.15, score * 0.005);
         windGain.gain.setTargetAtTime(windVol, audioCtx.currentTime, 0.5);
-    } else if (windGain) {
+    } else if (windGain && audioCtx) {
         windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5);
     }
 
     if (gameState === 'playing' && currentBlock?.userData.moving) {
         let speed = currentSpeed;
-        if (isFury) speed *= 0.6; // Замедление в ярости
+        if (isFury) speed *= 0.6;
         if (currentBlock.userData.blockType === 'ice') speed = Math.min(speed * 1.8, 0.6);
 
         let delta = speed * direction;
@@ -823,7 +832,6 @@ function animate() {
             if (currentBlock.position.x < -15 || currentBlock.position.z < -15) direction = 1;
         }
 
-        // Пульсация свечения
         if (currentBlock.userData.blockType === 'golden' || currentBlock.userData.blockType === 'bomb') {
             const pulse = 0.3 + (Math.sin(time * 8) * 0.2);
             currentBlock.material.forEach(m => { if (m.emissive) m.emissiveIntensity = pulse; });
@@ -833,10 +841,9 @@ function animate() {
         }
     }
 
-    // Squash & Stretch анимация
     blocks.forEach(b => {
         if (b.userData.squash !== undefined && b.userData.squash < 1) {
-            b.userData.squash += 0.1; // Скорость возврата
+            b.userData.squash += 0.1;
             if (b.userData.squash > 1) b.userData.squash = 1;
             const scaleY = 1 - Math.sin(b.userData.squash * Math.PI) * 0.3;
             const scaleXZ = 1 + Math.sin(b.userData.squash * Math.PI) * 0.15;
@@ -875,7 +882,6 @@ function clearScene() {
 function saveCurrentScoreIfNeeded() {
     if (score > 0) {
         if (score > highScore) { highScore = score; localStorage.setItem('towerHighScore', highScore); highScoreEl.innerText = `РЕКОРД: ${highScore}`; }
-        // Сохраняем в лидерборд (упрощенно)
     }
 }
 
@@ -906,10 +912,10 @@ function goToMenu() {
     stopMusic(); clearScene(); gameState = 'menu';
     document.body.classList.remove('in-game', 'fury-active');
     if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
-    gameOverEl.style.display = 'none'; pauseScreen.style.display = 'none'; shopScreen.style.display = 'none'; startScreen.style.display = 'flex';
+    gameOverEl.style.display = 'none'; pauseScreen.style.display = 'none'; shopScreen.style.display = 'none'; rulesScreen.style.display = 'none'; startScreen.style.display = 'flex';
     scene.background.set(BIOMES[0].bg); document.body.style.background = BIOMES[0].bg;
     camera.position.set(20, 25, 20); camera.lookAt(0, 0, 0);
-    windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5);
+    if (windGain && audioCtx) windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5);
 }
 
 function triggerGameOver() {
@@ -942,7 +948,7 @@ function togglePause() {
 function handleInput(e) {
     const target = e.target;
     if (target && target.closest && target.closest('button, .mode-btn, #top-right-controls, .modal')) return;
-    if (target && target.closest && target.closest('#start-screen, #game-over, #pause-screen, #shop-screen')) return;
+    if (target && target.closest && target.closest('#start-screen, #game-over, #pause-screen, #shop-screen, #rules-screen')) return;
     if (gameState === 'playing') {
         if (e.type === 'touchstart') e.preventDefault();
         dropBlock();
@@ -961,8 +967,10 @@ safeClick(pauseBtn, () => togglePause());
 safeClick($('pause-resume'), () => togglePause());
 safeClick($('pause-menu'), () => goToMenu());
 safeClick(menuToggleBtn, () => { if (gameState === 'playing' || gameState === 'paused') goToMenu(); });
-safeClick($('shop-btn'), () => { renderShop(); shopScreen.style.display = 'flex'; });
+safeClick($('shop-btn'), () => { renderShop(); shopScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
 safeClick($('close-shop'), () => { shopScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
+safeClick($('rules-btn'), () => { rulesScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
+safeClick($('close-rules'), () => { rulesScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
 safeClick($('challenge-btn'), () => {
     const text = `Я построил башню на ${score} этажей в MEGA HYPE! Слабо побить мой рекорд? 🏗️`;
     const url = window.location.href;
@@ -973,7 +981,7 @@ safeClick($('challenge-btn'), () => {
 safeClick(muteBtn, () => {
     isMuted = !isMuted; localStorage.setItem('towerMuted', isMuted);
     muteBtn.innerText = isMuted ? '🔇' : '🔊';
-    if (isMuted) { stopMusic(); windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); } else if (gameState === 'playing') startMusic();
+    if (isMuted) { stopMusic(); if (windGain && audioCtx) windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); } else if (gameState === 'playing') startMusic();
 });
 muteBtn.innerText = isMuted ? '🔇' : '🔊';
 
