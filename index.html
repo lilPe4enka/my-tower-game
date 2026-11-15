@@ -10,109 +10,389 @@
     
     <style>
         :root { 
-            --bg: #FDE2E4; --text: #5D576B; --accent: #FF9F1C; 
-            --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --bg: #FDE2E4; 
+            --text: #5D576B; 
+            --accent: #FF9F1C; 
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
         }
         * { box-sizing: border-box; }
+        html { height: 100%; overscroll-behavior: none; }
         body {
             margin: 0; padding: 0; overflow: hidden;
-            background: var(--bg); font-family: 'Rubik', sans-serif;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            background: var(--bg);
+            font-family: 'Rubik', sans-serif;
             touch-action: none; user-select: none; -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent; transition: background 1s ease;
-            padding-top: var(--safe-top); padding-bottom: var(--safe-bottom);
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior: none;
+            transition: background 1s ease;
         }
-        canvas { display: block; }
+        canvas { display: block; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; }
         button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; cursor: pointer; font-family: 'Rubik', sans-serif; }
 
-        #ui-layer { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; padding: max(60px, calc(var(--safe-top) + 50px)) 0 20px 0; z-index: 10; }
-        #score-container { display: flex; flex-direction: column; align-items: center; background: rgba(255,255,255,0.65); backdrop-filter: blur(12px); padding: 6px 28px; border-radius: 24px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.8); }
-        #score { color: var(--text); font-size: 60px; font-weight: 900; line-height: 1; transition: transform 0.1s, color 0.2s; }
-        #high-score { color: #8A84A0; font-size: 12px; font-weight: 700; margin-top: 2px; letter-spacing: 1px; }
-        #game-coins { font-size: 14px; color: #F57C00; font-weight: 900; margin-top: 3px; }
-        #timer { color: #EF476F; font-size: 22px; font-weight: 900; display: none; margin-top: 2px; }
-        #mode-label { color: #8A84A0; font-size: 10px; font-weight: 700; letter-spacing: 2px; margin-top: 2px; text-transform: uppercase; }
+        /* UI Layer */
+        #ui-layer {
+            position: fixed; inset: 0;
+            pointer-events: none;
+            display: flex; flex-direction: column; align-items: center;
+            padding-top: max(calc(var(--safe-top) + 50px), 64px);
+            padding-right: calc(var(--safe-right) + 8px);
+            padding-bottom: calc(var(--safe-bottom) + 16px);
+            padding-left: calc(var(--safe-left) + 8px);
+            z-index: 10;
+        }
+
+        #score-container {
+            display: flex; flex-direction: column; align-items: center;
+            background: rgba(255,255,255,0.65);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            padding: clamp(4px, 1.2vw, 8px) clamp(18px, 5vw, 32px);
+            border-radius: clamp(18px, 4vw, 26px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.8);
+            max-width: 90vw;
+            position: relative;
+        }
+        #score { color: var(--text); font-size: clamp(42px, 11vw, 68px); font-weight: 900; line-height: 1; transition: transform 0.1s, color 0.2s; }
+        #high-score { color: #8A84A0; font-size: clamp(9px, 2.6vw, 13px); font-weight: 700; margin-top: 2px; letter-spacing: 1px; }
+        #game-coins { font-size: clamp(10px, 2.8vw, 14px); color: #F57C00; font-weight: 900; margin-top: 3px; }
+        #timer { color: #EF476F; font-size: clamp(16px, 4.5vw, 22px); font-weight: 900; display: none; margin-top: 2px; }
+        #mode-label { color: #8A84A0; font-size: clamp(8px, 2.2vw, 10px); font-weight: 700; letter-spacing: 2px; margin-top: 2px; text-transform: uppercase; }
         .score-pop { transform: scale(1.18); color: var(--accent) !important; }
 
-        #quests { position: absolute; top: max(70px, calc(var(--safe-top) + 60px)); left: 12px; display: flex; flex-direction: column; gap: 6px; max-width: 170px; }
-        .quest-chip { background: rgba(255,255,255,0.75); backdrop-filter: blur(8px); padding: 5px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.8); white-space: nowrap; }
+        /* Quests */
+        #quests {
+            position: absolute;
+            top: max(calc(var(--safe-top) + 54px), 68px);
+            left: max(calc(var(--safe-left) + 8px), 10px);
+            display: flex; flex-direction: column; gap: 5px;
+            max-width: min(160px, 42vw);
+        }
+        .quest-chip {
+            background: rgba(255,255,255,0.75);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            padding: clamp(3px, 0.9vw, 5px) clamp(6px, 1.8vw, 10px);
+            border-radius: 10px;
+            font-size: clamp(9px, 2.4vw, 11px);
+            font-weight: 700; color: var(--text);
+            display: flex; align-items: center; gap: 4px;
+            border: 1px solid rgba(255,255,255,0.8);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
         .quest-chip.done { background: rgba(6,214,160,0.95); color: white; }
 
-        #top-right-controls { position: absolute; top: max(70px, calc(var(--safe-top) + 60px)); right: 12px; display: flex; flex-direction: column; gap: 8px; pointer-events: auto; z-index: 12; }
-        #top-right-controls button { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.75); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.8); font-size: 20px; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
+        /* Top Right Controls */
+        #top-right-controls {
+            position: absolute;
+            top: max(calc(var(--safe-top) + 54px), 68px);
+            right: max(calc(var(--safe-right) + 8px), 10px);
+            display: flex; flex-direction: column; gap: 8px;
+            pointer-events: auto; z-index: 12;
+        }
+        #top-right-controls button {
+            width: clamp(38px, 10vw, 46px);
+            height: clamp(38px, 10vw, 46px);
+            border-radius: 50%;
+            background: rgba(255,255,255,0.75);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.8);
+            font-size: clamp(16px, 4.5vw, 21px);
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.15s;
+        }
         #top-right-controls button:active { transform: scale(0.92); }
         #menu-toggle-btn, #pause-btn { display: none; }
         body.in-game #menu-toggle-btn, body.in-game #pause-btn { display: flex; }
 
-        #next-block-ui { position: absolute; bottom: 20px; left: 20px; pointer-events: none; background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); padding: 10px 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.8); display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 10; }
-        #next-block-ui .label { font-size: 10px; color: #8A84A0; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
-        #next-block-emoji { font-size: 32px; line-height: 1; }
+        /* Next Block */
+        #next-block-ui {
+            position: absolute;
+            bottom: max(calc(var(--safe-bottom) + 12px), 16px);
+            left: max(calc(var(--safe-left) + 12px), 16px);
+            pointer-events: none;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            padding: clamp(6px, 1.5vw, 10px) clamp(10px, 2.5vw, 15px);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.8);
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+        #next-block-ui .label { font-size: clamp(8px, 2vw, 10px); color: #8A84A0; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+        #next-block-emoji { font-size: clamp(24px, 6vw, 32px); line-height: 1; }
 
+        /* Fury & Flash */
         #fury-overlay { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 50px rgba(255, 0, 100, 0.5); opacity: 0; transition: opacity 0.5s; z-index: 5; }
         .fury-active #fury-overlay { opacity: 1; animation: furyPulse 1s infinite alternate; }
         @keyframes furyPulse { from { box-shadow: inset 0 0 30px rgba(255, 0, 100, 0.4); } to { box-shadow: inset 0 0 80px rgba(255, 0, 100, 0.8); } }
-
         #screen-flash { position: absolute; inset: 0; background: white; opacity: 0; pointer-events: none; z-index: 50; transition: opacity 0.1s; }
 
-        .popup-text { position: absolute; font-weight: 900; text-align: center; opacity: 0; pointer-events: none; text-transform: uppercase; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-shadow: 0 4px 15px rgba(0,0,0,0.2); left: 50%; transform: translateX(-50%) translateY(20px) scale(0.8); width: 100%; z-index: 15; }
-        #perfect-text { color: #06D6A0; font-size: 38px; top: 25%; }
-        #combo-text { color: #EF476F; font-size: 55px; top: 12%; }
-        #milestone-text { color: #118AB2; font-size: 45px; top: 35%; }
-        #bonus-text { color: #FF9F1C; font-size: 32px; top: 40%; }
+        /* Popups */
+        .popup-text {
+            position: absolute; font-weight: 900; text-align: center;
+            opacity: 0; pointer-events: none; text-transform: uppercase;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            left: 50%; transform: translateX(-50%) translateY(20px) scale(0.8);
+            width: 100%; z-index: 15; padding: 0 12px; box-sizing: border-box;
+        }
+        #perfect-text { color: #06D6A0; font-size: clamp(26px, 7vw, 42px); top: 25%; }
+        #combo-text { color: #EF476F; font-size: clamp(36px, 10vw, 58px); top: 12%; }
+        #milestone-text { color: #118AB2; font-size: clamp(28px, 8vw, 48px); top: 35%; }
+        #bonus-text { color: #FF9F1C; font-size: clamp(20px, 6vw, 34px); top: 40%; }
         .show-popup { opacity: 1 !important; transform: translateX(-50%) translateY(0) scale(1.1) !important; }
 
-        .screen { position: absolute; inset: 0; z-index: 100; pointer-events: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center; color: var(--text); }
+        /* Screens & Modals */
+        .screen {
+            position: absolute; inset: 0; z-index: 100;
+            pointer-events: auto;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: clamp(14px, 3.5vw, 24px);
+            text-align: center; color: var(--text);
+            overflow-y: auto; overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
         #start-screen { background: linear-gradient(135deg, #FDE2E4 0%, #E2ECE9 100%); }
-        .modal { inset: auto; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; background: rgba(255,255,255,0.98); padding: 25px 20px; border-radius: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); backdrop-filter: blur(20px); border: 2px solid white; width: 92%; max-width: 380px; max-height: 85vh; overflow-y: auto; z-index: 110; }
-        
-        #start-screen h1 { font-size: 40px; margin: 0 0 8px 0; font-weight: 900; line-height: 1.1;}
-        #start-screen p { font-size: 16px; color: #8A84A0; margin: 0 0 15px 0; }
+        .modal {
+            inset: auto; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            background: rgba(255,255,255,0.98);
+            padding: clamp(16px, 4vw, 24px) clamp(14px, 3.5vw, 20px);
+            border-radius: clamp(20px, 5vw, 30px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 2px solid white;
+            width: min(92vw, 400px);
+            max-height: 88vh; max-height: 88dvh;
+            overflow-y: auto; overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            z-index: 110;
+        }
 
-        #menu-coins { background: #FFF3E0; color: #F57C00; padding: 8px 20px; border-radius: 20px; font-weight: 900; font-size: 20px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(245,124,0,0.2); border: 2px solid #FFE0B2; }
+        #start-screen h1 { font-size: clamp(26px, 8vw, 42px); margin: 0 0 8px 0; font-weight: 900; line-height: 1.1; }
+        #start-screen p { font-size: clamp(13px, 3.5vw, 16px); color: #8A84A0; margin: 0 0 15px 0; }
 
-        .mode-buttons { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 300px; pointer-events: auto; }
-        .mode-btn { background: white; color: var(--text); border: 2px solid transparent; padding: 12px 20px; border-radius: 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: all 0.2s; text-align: left; width: 100%; pointer-events: auto; }
+        #menu-coins {
+            background: #FFF3E0; color: #F57C00;
+            padding: clamp(6px, 1.6vw, 9px) clamp(14px, 4vw, 22px);
+            border-radius: 20px; font-weight: 900;
+            font-size: clamp(16px, 4.5vw, 21px);
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(245,124,0,0.2);
+            border: 2px solid #FFE0B2;
+        }
+
+        .mode-buttons {
+            display: flex; flex-direction: column;
+            gap: clamp(7px, 1.8vw, 10px);
+            width: 100%; max-width: min(320px, 88vw);
+            pointer-events: auto;
+        }
+        .mode-btn {
+            background: white; color: var(--text);
+            border: 2px solid transparent;
+            padding: clamp(10px, 2.5vw, 14px) clamp(14px, 4vw, 20px);
+            border-radius: clamp(14px, 3.5vw, 20px);
+            display: flex; align-items: center;
+            gap: clamp(10px, 2.5vw, 14px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            transition: all 0.2s; text-align: left;
+            width: 100%; pointer-events: auto;
+        }
         .mode-btn:active { transform: scale(0.98); }
-        .mode-btn .mode-icon { font-size: 30px; flex-shrink: 0; }
-        .mode-btn .mode-info { display: flex; flex-direction: column; text-align: left; flex: 1; }
-        .mode-btn .mode-name { font-size: 17px; font-weight: 900; display: block; }
-        .mode-btn .mode-desc { font-size: 11px; color: #8A84A0; display: block; }
+        .mode-btn .mode-icon { font-size: clamp(24px, 7vw, 32px); flex-shrink: 0; }
+        .mode-btn .mode-info { display: flex; flex-direction: column; text-align: left; flex: 1; min-width: 0; }
+        .mode-btn .mode-name { font-size: clamp(14px, 4vw, 18px); font-weight: 900; display: block; }
+        .mode-btn .mode-desc { font-size: clamp(10px, 2.8vw, 12px); color: #8A84A0; display: block; }
 
-        .menu-footer { display: flex; gap: 10px; margin-top: 15px; width: 100%; max-width: 300px; }
-        .menu-footer button { flex: 1; background: white; border: none; padding: 12px; border-radius: 15px; font-weight: 900; font-size: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .menu-footer {
+            display: flex; gap: clamp(7px, 2vw, 10px);
+            margin-top: 15px;
+            width: 100%; max-width: min(320px, 88vw);
+        }
+        .menu-footer button {
+            flex: 1; background: white; border: none;
+            padding: clamp(10px, 2.5vw, 12px);
+            border-radius: 15px;
+            font-weight: 900; font-size: clamp(12px, 3.2vw, 14px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+        }
         #shop-btn { background: #FFD740 !important; color: #5D576B; }
         #rules-btn { background: #B2EBF2 !important; color: #00838F; }
 
-        #game-over h1, #pause-screen h1, #rules-screen h1 { margin: 0 0 6px 0; font-size: 26px; color: #EF476F; font-weight: 900;}
-        #game-over p, #pause-screen p { margin: 0; font-size: 15px; color: #8A84A0; }
-        .final-score { font-size: 60px; color: var(--text); font-weight: 900; margin: 6px 0; }
-        #game-coins-earned { color: #F57C00; font-weight: 900; font-size: 16px; margin: 4px 0 8px 0; }
-        
-        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-        .btn-row { display: flex; gap: 10px; }
-        .btn-group button { flex: 1; border: none; padding: 14px 16px; font-weight: 900; font-size: 14px; border-radius: 15px; transition: all 0.2s; }
+        #game-over h1, #pause-screen h1, #rules-screen h1 { margin: 0 0 6px 0; font-size: clamp(20px, 5.5vw, 28px); color: #EF476F; font-weight: 900; }
+        #game-over p, #pause-screen p { margin: 0; font-size: clamp(13px, 3.5vw, 15px); color: #8A84A0; }
+        .final-score { font-size: clamp(44px, 12vw, 64px); color: var(--text); font-weight: 900; margin: 6px 0; }
+        #game-coins-earned { color: #F57C00; font-weight: 900; font-size: clamp(13px, 3.5vw, 16px); margin: 4px 0 8px 0; }
+
+        .btn-group { display: flex; flex-direction: column; gap: clamp(7px, 2vw, 10px); margin-top: 20px; width: 100%; }
+        .btn-row { display: flex; gap: clamp(7px, 2vw, 10px); }
+        .btn-group button {
+            flex: 1; border: none;
+            padding: clamp(10px, 2.8vw, 14px) clamp(10px, 3vw, 16px);
+            font-weight: 900; font-size: clamp(11px, 3.2vw, 14px);
+            border-radius: clamp(12px, 3vw, 15px);
+            transition: all 0.2s; white-space: nowrap;
+        }
         #restart-btn, #pause-resume { background: #06D6A0; color: white; box-shadow: 0 6px 15px rgba(6,214,160,0.3); }
         #menu-btn, #pause-menu { background: #8A84A0; color: white; box-shadow: 0 6px 15px rgba(138,132,160,0.3); }
         #challenge-btn { background: #0088cc; color: white; box-shadow: 0 6px 15px rgba(0,136,204,0.3); }
 
-        .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .shop-header h2 { margin: 0; font-size: 22px; font-weight: 900; }
-        .coins-balance { background: #FFF3E0; color: #F57C00; padding: 5px 12px; border-radius: 12px; font-weight: 900; font-size: 16px; }
-        .skin-list { display: flex; flex-direction: column; gap: 10px; }
-        .skin-item { display: flex; align-items: center; justify-content: space-between; background: #F5F5F5; padding: 10px 15px; border-radius: 15px; }
-        .skin-item .skin-info { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
-        .skin-item button { padding: 8px 15px; border-radius: 10px; border: none; font-weight: 900; font-size: 13px; }
+        .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 10px; }
+        .shop-header h2 { margin: 0; font-size: clamp(16px, 4.5vw, 20px); font-weight: 900; }
+        .coins-balance { background: #FFF3E0; color: #F57C00; padding: 5px 12px; border-radius: 12px; font-weight: 900; font-size: clamp(12px, 3.3vw, 15px); white-space: nowrap; }
+        .shop-progress { font-size: clamp(10px, 2.6vw, 11px); color: #8A84A0; margin-bottom: 12px; font-weight: 700; }
+        .skin-list { display: flex; flex-direction: column; gap: clamp(6px, 1.5vw, 8px); }
+        .skin-item { display: flex; align-items: center; justify-content: space-between; background: #F5F5F5; padding: clamp(6px, 1.6vw, 9px) clamp(8px, 2vw, 12px); border-radius: 14px; gap: clamp(6px, 1.5vw, 8px); }
+        .skin-item .skin-info { display: flex; align-items: center; gap: clamp(6px, 1.8vw, 10px); font-weight: 700; flex: 1; min-width: 0; }
+        .skin-item .skin-preview { font-size: clamp(20px, 5.5vw, 28px); flex-shrink: 0; }
+        .skin-item .skin-details { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+        .skin-item .skin-name { font-weight: 900; font-size: clamp(11px, 3vw, 14px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .skin-item .skin-colors { display: flex; gap: 2px; margin-top: 3px; }
+        .skin-item .skin-colors span { width: clamp(7px, 2vw, 10px); height: clamp(7px, 2vw, 10px); border-radius: 50%; display: inline-block; }
+        .skin-item button { padding: clamp(5px, 1.4vw, 7px) clamp(7px, 2vw, 12px); border-radius: 10px; border: none; font-weight: 900; font-size: clamp(10px, 2.6vw, 12px); flex-shrink: 0; white-space: nowrap; }
         .skin-item button.buy { background: #06D6A0; color: white; }
+        .skin-item button.buy.locked { background: #BDBDBD; cursor: not-allowed; }
         .skin-item button.equip { background: #FF9F1C; color: white; }
         .skin-item button.equipped { background: #CBF3F0; color: #2EC4B6; }
 
-        .rules-content { text-align: left; font-size: 14px; line-height: 1.4; color: var(--text); }
+        .rules-content { text-align: left; font-size: clamp(11px, 3vw, 14px); line-height: 1.4; color: var(--text); }
         .rules-content p { margin: 8px 0; }
         .rules-content strong { color: #EF476F; }
-        .rule-block { display: flex; align-items: center; gap: 10px; background: #F5F5F5; padding: 8px 12px; border-radius: 12px; margin-bottom: 6px; font-weight: 500; }
-        .rule-block .emoji { font-size: 24px; flex-shrink: 0; }
-        
-        #tutorial { position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%); background: rgba(93,87,107,0.95); color: white; padding: 12px 20px; border-radius: 16px; font-weight: 700; font-size: 14px; text-align: center; display: none; z-index: 15; pointer-events: none; animation: bounce 1.5s infinite; width: max-content; max-width: 90%; }
+        .rule-block { display: flex; align-items: center; gap: clamp(6px, 1.5vw, 10px); background: #F5F5F5; padding: clamp(5px, 1.4vw, 8px) clamp(8px, 2vw, 12px); border-radius: 12px; margin-bottom: 6px; font-weight: 500; }
+        .rule-block .emoji { font-size: clamp(18px, 5vw, 24px); flex-shrink: 0; }
+
+        #tutorial {
+            position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%);
+            background: rgba(93,87,107,0.95); color: white;
+            padding: clamp(8px, 2vw, 12px) clamp(14px, 3.5vw, 20px);
+            border-radius: 16px; font-weight: 700;
+            font-size: clamp(11px, 3.2vw, 14px);
+            text-align: center; display: none; z-index: 15;
+            pointer-events: none; animation: bounce 1.5s infinite;
+            width: max-content; max-width: 90%; box-sizing: border-box;
+        }
         @keyframes bounce { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-8px); } }
+
+        .coin-popup {
+            position: fixed; color: #F57C00; font-weight: 900;
+            font-size: clamp(14px, 3.5vw, 18px);
+            pointer-events: none; z-index: 200;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            transform: translateX(-50%);
+            animation: coinFloat 0.9s ease-out forwards;
+        }
+        @keyframes coinFloat {
+            0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(0.7); }
+            30% { opacity: 1; transform: translateX(-50%) translateY(-10px) scale(1.1); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-40px) scale(1); }
+        }
+        .coin-pulse { animation: coinPulse 0.35s ease; }
+        @keyframes coinPulse { 0% { transform: scale(1); } 50% { transform: scale(1.35); color: #FFD700; } 100% { transform: scale(1); } }
+
+        /* ==== MEDIA QUERIES ==== */
+
+        /* Portrait phones up to 540px — quests below score to avoid overlap */
+        @media (max-width: 540px) and (orientation: portrait) {
+            #quests { top: max(calc(var(--safe-top) + 145px), 158px); max-width: min(140px, 40vw); }
+            .quest-chip { font-size: 10px; padding: 3px 7px; }
+        }
+
+        /* Small phones (< 360px) */
+        @media (max-width: 360px) {
+            #score-container { padding: 4px 18px; }
+            #score { font-size: 42px; }
+            .btn-group button { font-size: 11px; padding: 10px 6px; }
+            .skin-item button { font-size: 10px; padding: 4px 7px; }
+        }
+
+        /* Landscape phones */
+        @media (orientation: landscape) and (max-height: 520px) {
+            #ui-layer { padding-top: max(calc(var(--safe-top) + 42px), 50px); padding-bottom: calc(var(--safe-bottom) + 10px); }
+            #score-container { padding: 3px 20px; border-radius: 18px; }
+            #score { font-size: clamp(28px, 7vh, 44px); }
+            #high-score { font-size: 9px; }
+            #game-coins { font-size: 10px; }
+            #mode-label { font-size: 8px; }
+            #quests { top: max(calc(var(--safe-top) + 46px), 54px); }
+            .quest-chip { font-size: 9px; padding: 3px 6px; }
+            #top-right-controls { top: max(calc(var(--safe-top) + 46px), 54px); gap: 5px; }
+            #top-right-controls button { width: 36px; height: 36px; font-size: 15px; }
+            #start-screen h1 { font-size: clamp(22px, 5.5vh, 32px); margin-bottom: 4px; }
+            #menu-coins { font-size: 14px; padding: 4px 14px; margin-bottom: 8px; }
+            #start-screen p { font-size: 12px; margin-bottom: 8px; }
+            .mode-buttons { gap: 6px; max-width: min(340px, 60vw); }
+            .mode-btn { padding: 8px 12px; }
+            .mode-btn .mode-icon { font-size: 22px; }
+            .mode-btn .mode-name { font-size: 14px; }
+            .mode-btn .mode-desc { font-size: 10px; }
+            .menu-footer { margin-top: 8px; max-width: min(340px, 60vw); }
+            .menu-footer button { padding: 8px; font-size: 12px; }
+            .modal { max-height: 94dvh; padding: 12px 16px; width: min(94vw, 480px); }
+            #game-over h1 { font-size: 18px; margin-bottom: 3px; }
+            .final-score { font-size: 36px; margin: 3px 0; }
+            #game-coins-earned { font-size: 12px; margin: 2px 0 4px 0; }
+            .btn-group { flex-direction: row; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+            .btn-row { flex: 1 1 100%; gap: 6px; }
+            .btn-group > button:last-child { flex: 1 1 100%; }
+            .btn-group button { padding: 8px 6px; font-size: 11px; }
+            .shop-header h2 { font-size: 16px; }
+            .skin-item { padding: 5px 8px; }
+            .skin-item .skin-preview { font-size: 20px; }
+            .skin-item .skin-name { font-size: 11px; }
+            .skin-item button { font-size: 10px; padding: 4px 6px; }
+            #next-block-ui { padding: 5px 10px; bottom: 8px; left: 8px; }
+            #next-block-emoji { font-size: 22px; }
+            #next-block-ui .label { font-size: 8px; }
+            #perfect-text { top: 18%; }
+            #combo-text { top: 8%; font-size: 32px; }
+            #milestone-text { top: 25%; }
+            #bonus-text { top: 30%; }
+        }
+
+        /* Tablets */
+        @media (min-width: 768px) {
+            #score-container { padding: 8px 40px; }
+            #score { font-size: 72px; }
+            .mode-buttons { max-width: 380px; }
+            .mode-btn { padding: 16px 24px; }
+            .mode-btn .mode-icon { font-size: 36px; }
+            .mode-btn .mode-name { font-size: 20px; }
+            .mode-btn .mode-desc { font-size: 14px; }
+            .modal { max-width: 440px; }
+        }
+
+        /* Wide desktop */
+        @media (min-width: 1200px) {
+            .modal { max-width: 460px; }
+            .mode-buttons { max-width: 400px; }
+        }
+
+        /* Short portrait */
+        @media (max-height: 500px) and (orientation: portrait) {
+            #start-screen h1 { font-size: 24px; }
+            #menu-coins { font-size: 14px; margin-bottom: 8px; }
+            .mode-btn { padding: 8px 12px; }
+            .mode-btn .mode-icon { font-size: 22px; }
+            .mode-btn .mode-name { font-size: 14px; }
+            .mode-btn .mode-desc { font-size: 10px; }
+            .menu-footer { margin-top: 8px; }
+            .menu-footer button { padding: 8px; font-size: 12px; }
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
     </style>
     
     <script type="importmap">
@@ -177,8 +457,9 @@
         <h2>🛍️ Магазин</h2>
         <div class="coins-balance" id="coins-balance">🪙 0</div>
     </div>
+    <div class="shop-progress" id="shop-progress">Скины: 1/8</div>
     <div class="skin-list" id="skin-list"></div>
-    <button id="close-shop" style="margin-top:20px; width:100%; padding:15px; border-radius:15px; border:none; background:#8A84A0; color:white; font-weight:900; font-size:16px;">ЗАКРЫТЬ</button>
+    <button id="close-shop" style="margin-top:15px; width:100%; padding:clamp(10px,2.8vw,14px); border-radius:15px; border:none; background:#8A84A0; color:white; font-weight:900; font-size:clamp(12px,3.4vw,16px);">ЗАКРЫТЬ</button>
 </div>
 
 <div id="rules-screen" class="screen modal">
@@ -187,6 +468,7 @@
         <p><strong>🎯 Цель:</strong> Построй самую высокую башню!</p>
         <p><strong>👆 Управление:</strong> Тапай, когда движущийся блок ровно над башней.</p>
         <p><strong>✂️ Обрезка:</strong> Промахнулся — блок обрежется. Полностью мимо — конец!</p>
+        <p><strong>🪙 Монеты:</strong> +1 за блок, +1 за идеал, бонус за спецблоки и майлстоуны.</p>
         <p style="margin-top: 15px;"><strong>🧱 Типы блоков:</strong></p>
         <div class="rule-block"><span class="emoji">🍕</span><span><b>Обычный.</b> +1 очко.</span></div>
         <div class="rule-block"><span class="emoji">👑</span><span><b>Золотой.</b> +3 очка за идеал. Ярко светится!</span></div>
@@ -195,9 +477,8 @@
         <div class="rule-block"><span class="emoji">🧱</span><span><b>Хрупкий.</b> НЕ ставь идеально — разобьётся!</span></div>
         <p style="margin-top: 15px;"><strong>🔥 Ярость:</strong> 5 идеалов подряд → x2 очки на 3 хода.</p>
         <p><strong>📐 Диагональ:</strong> После 30 очков блоки летают по диагонали.</p>
-        <p><strong>🪙 Монеты:</strong> Выполняй квесты, чтобы заработать на скины.</p>
     </div>
-    <button id="close-rules" style="margin-top:20px; width:100%; padding:15px; border-radius:15px; border:none; background:#8A84A0; color:white; font-weight:900; font-size:16px;">ПОНЯТНО</button>
+    <button id="close-rules" style="margin-top:15px; width:100%; padding:clamp(10px,2.8vw,14px); border-radius:15px; border:none; background:#8A84A0; color:white; font-weight:900; font-size:clamp(12px,3.4vw,16px);">ПОНЯТНО</button>
 </div>
 
 <div id="start-screen" class="screen">
@@ -223,7 +504,13 @@
 import * as THREE from 'three';
 
 const tg = window.Telegram?.WebApp;
-if (tg) { try { tg.ready(); tg.expand(); if (tg.isVersionAtLeast('7.7')) tg.disableVerticalSwipes(); tg.onEvent('viewportChanged', () => { if (typeof onResize === 'function') onResize(); }); } catch (err) {} }
+if (tg) {
+    try {
+        tg.ready(); tg.expand();
+        if (tg.isVersionAtLeast('7.7')) tg.disableVerticalSwipes();
+        tg.onEvent('viewportChanged', () => { if (typeof onResize === 'function') onResize(); });
+    } catch (err) {}
+}
 
 function triggerHaptic(type = 'light') {
     try {
@@ -239,21 +526,20 @@ function safeClick(el, handler) {
     el.addEventListener('click', wrapped); el.addEventListener('touchend', wrapped, { passive: true });
 }
 
-// НАСЫЩЕННЫЕ ЦВЕТА (Material 400-500)
+// ============ КОНТЕНТ ============
 const BASE_COLORS = ['#FF1744', '#F50057', '#D500F9', '#651FFF', '#2979FF', '#00B0FF', '#00E5FF', '#1DE9B6', '#00E676', '#FFEA00', '#FF9100', '#FF3D00'];
 const BASE_EMOJIS = ['🥟', '🥛', '🌭', '💩', '🤡', '👽', '😭', '🍕', '🍔', '🍩', '🔥', '🥴', '🐷', '🎉', '🦄', '🍦', '🧠', '💀', '🤮', '👻', '🦍', '🍆', '💸'];
-const BASE_TEXTS = ['ВАЙБ', 'ИМБА', 'КРИПОВО', 'СОСИС', 'КРИНЖ', 'ЖИЗА', 'СЛЭЙ', 'ТУПЕЕ', 'БАТЯ', 'МАТЬ', 'ХАЙП', 'СКУФ', 'ИПОТЕКА', 'ЧИНАЗЕС', 'ДЕДЛАЙН', 'СПАТЬ', 'ПИВО', 'ДРАТУТИ', 'АЛЛО', 'ПРИВЕТ'];
-
-
-const CAT_EMOJIS = ['🐱', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'];
-const SPACE_EMOJIS = ['🌍', '🌕', '🚀', '👾', '🛸', '⭐', '🪐', '🌌', '☄️', '👨‍🚀'];
-const RETRO_EMOJIS = ['👾', '🕹️', '💾', '📼', '📟', '📺', '🎮', '🖥️', '💿', '🎧'];
+const BASE_TEXTS = ['БОРЩ', 'КЕФИР', 'ПЕЛЬМЕНИ', 'СОСИС', 'КРИНЖ', 'ЖИЗА', 'ПОХУДЕТЬ', 'ТУПЕЕ', 'БАТЯ', 'МАТЬ', 'ХАЙП', 'СКУФ', 'ИПОТЕКА', 'ЗАРПЛАТА', 'ДЕДЛАЙН', 'СПАТЬ', 'ПИВО', 'ДРАТУТИ', 'АЛЛО', 'ПРИВЕТ'];
 
 const SKINS = {
-    default: { name: 'Классика', emojis: BASE_EMOJIS, colors: BASE_COLORS, texts: BASE_TEXTS, price: 0 },
-    cats: { name: 'Котики', emojis: CAT_EMOJIS, colors: ['#FF4081', '#F06292', '#E91E63', '#C2185B', '#AB47BC', '#CE93D8'], texts: ['МЯУ', 'МУР', 'КОТИК', 'ЛАПКИ', 'ХВОСТ', 'УСЫ', 'КОРМ', 'РЫБА', 'СОН', 'МЯСО'], price: 100 },
-    space: { name: 'Космос', emojis: SPACE_EMOJIS, colors: ['#1A237E', '#283593', '#311B92', '#4527A0', '#512DA8', '#01579B'], texts: ['МАРС', 'ЛУНА', 'САТУРН', 'НЛО', 'ЗВЕЗДА', 'КОСМОС', 'ОРБИТА', 'ГРАВИТАЦИЯ', 'ВАКУУМ', 'СКАФАНДР'], price: 250 },
-    retro: { name: 'Ретро 8-бит', emojis: RETRO_EMOJIS, colors: ['#00C853', '#00B248', '#00897B', '#00BFA5', '#76FF03', '#AA00FF'], texts: ['PIXEL', 'GAME', 'RETRO', '8-BIT', 'ATARI', 'NINTENDO', 'SEGA', 'TETRIS', 'JOYSTICK', 'CRT'], price: 500 }
+    default: { name: 'Классика', price: 0, emojis: BASE_EMOJIS, colors: BASE_COLORS, texts: BASE_TEXTS },
+    food: { name: 'Еда', price: 80, emojis: ['🍕','🍔','🍟','🌮','🌯','🍣','🍤','🍜','🍝','🍞','🥐','🧀','🥞','🥓','🍗','🍖','🥩','🍰','🧁','🍫'], colors: ['#FF5722','#FF9800','#FFC107','#E64A19','#FF6F00','#D84315','#F57C00'], texts: ['ПИЦЦА','БУРГЕР','СУШИ','ПАСТА','ХЛЕБ','СЫР','БЕКОН','КУРИЦА','СТЕЙК','ШАУРМА','БЛИНЫ','КОТЛЕТА','КЕКС','ШОКОЛАД'] },
+    cats: { name: 'Котики', price: 120, emojis: ['🐱','😺','😸','😹','😻','😼','😽','🙀','😿','😾'], colors: ['#FF4081','#F06292','#E91E63','#C2185B','#AB47BC','#CE93D8'], texts: ['МЯУ','МУР','КОТИК','ЛАПКИ','ХВОСТ','УСЫ','КОРМ','РЫБА','СОН','МЯСО'] },
+    animals: { name: 'Звери', price: 180, emojis: ['🦁','🐯','🐻','🐼','🐨','🐸','🐵','🦊','🐺','🦝','🦔','🐹','🐰','🐿️','🦇','🐗','🦒','🦓'], colors: ['#8D6E63','#6D4C41','#795548','#5D4037','#8BC34A','#689F38','#558B2F'], texts: ['ЛЕВ','ТИГР','МЕДВЕДЬ','ПАНДА','ЛИСА','ВОЛК','ЗАЯЦ','ЁЖ','СЛОН','ЖИРАФ','КРОКОДИЛ','ЗЕБРА','ОБЕЗЬЯНА'] },
+    space: { name: 'Космос', price: 250, emojis: ['🌍','🌕','🚀','👾','🛸','⭐','🪐','🌌','☄️','👨‍🚀','🌟','✨','💫','🌠'], colors: ['#1A237E','#283593','#311B92','#4527A0','#512DA8','#01579B','#0D47A1'], texts: ['МАРС','ЛУНА','САТУРН','НЛО','ЗВЕЗДА','КОСМОС','ОРБИТА','ГРАВИТАЦИЯ','ВАКУУМ','СКАФАНДР','ГАЛАКТИКА'] },
+    ocean: { name: 'Океан', price: 320, emojis: ['🐠','🐟','🐡','🦈','🐬','🐳','🐋','🦑','🐙','🦀','🦞','🦐','🐚','🌊'], colors: ['#0288D1','#0277BD','#01579B','#006064','#00838F','#0097A7','#26C6DA'], texts: ['РЫБА','АКУЛА','ДЕЛЬФИН','КИТ','ОСЬМИНОГ','КРАБ','РАК','КРЕВЕТКА','РАКОВИНА','ВОЛНА','МЕДУЗА','КОРАЛЛ'] },
+    retro: { name: 'Ретро 8-бит', price: 400, emojis: ['👾','🕹️','💾','📼','📟','📺','🎮','🖥️','💿','🎧'], colors: ['#00C853','#00B248','#00897B','#00BFA5','#76FF03','#AA00FF'], texts: ['PIXEL','GAME','RETRO','8-BIT','ATARI','NINTENDO','SEGA','TETRIS','JOYSTICK','CRT','ARCADE'] },
+    neon: { name: 'Неон', price: 500, emojis: ['💎','🔮','🎆','🎇','✨','💫','🌟','⚡','🌈','🎊'], colors: ['#E91E63','#9C27B0','#3F51B5','#00BCD4','#8BC34A','#FFEB3B','#FF4081','#00E5FF'], texts: ['НЕОН','СВЕТ','ЛАЗЕР','РАДУГА','БЛЕСК','СИЯНИЕ','ФЛЭШ','ИМПУЛЬС','ЭНЕРГИЯ','ВСПЫШКА'] }
 };
 
 const BIOMES = [{ bg: '#FDE2E4' }, { bg: '#E2ECE9' }, { bg: '#D0E6F9' }, { bg: '#F9E2D0' }, { bg: '#2B2D42' }];
@@ -264,7 +550,7 @@ let blocks = [], debris = [], confetti = [];
 let currentBlock, nextBlockData, direction = 1;
 let score = 0, combo = 0;
 let coins = parseInt(localStorage.getItem('towerCoins')) || 0;
-let sessionCoins = 0; // монеты за текущую игру
+let sessionCoins = 0;
 let highScore = parseInt(localStorage.getItem('towerHighScore')) || 0;
 let currentSkin = localStorage.getItem('towerSkin') || 'default';
 let unlockedSkins = JSON.parse(localStorage.getItem('towerSkins') || '["default"]');
@@ -280,14 +566,41 @@ let isFury = false, furyBlocksLeft = 0;
 let glowTexture = null;
 
 const QUESTS_POOL = [
-    { type: 'perfect', target: 5, text: '🎯 Точность x5', reward: 20 },
-    { type: 'perfect', target: 10, text: '🎯 Точность x10', reward: 40 },
-    { type: 'stack', target: 15, text: '🏗️ Высота 15', reward: 30 },
-    { type: 'stack', target: 25, text: '🏗️ Высота 25', reward: 50 },
-    { type: 'combo', target: 3, text: '🔥 Комбо x3', reward: 20 },
-    { type: 'combo', target: 5, text: '🔥 Комбо x5', reward: 40 },
-    { type: 'cut', target: 10, text: '✂️ 10 срезов', reward: 20 },
-    { type: 'games', target: 3, text: '🎮 3 игры', reward: 15 },
+    { type: 'perfect', target: 3, text: '🎯 Точность x3', reward: 15 },
+    { type: 'perfect', target: 5, text: '🎯 Точность x5', reward: 25 },
+    { type: 'perfect', target: 8, text: '🎯 Точность x8', reward: 35 },
+    { type: 'perfect', target: 10, text: '🎯 Точность x10', reward: 45 },
+    { type: 'perfect', target: 15, text: '🎯 Точность x15', reward: 60 },
+    { type: 'perfect', target: 20, text: '🎯 Точность x20', reward: 80 },
+    { type: 'stack', target: 10, text: '🏗️ Высота 10', reward: 25 },
+    { type: 'stack', target: 15, text: '🏗️ Высота 15', reward: 35 },
+    { type: 'stack', target: 20, text: '🏗️ Высота 20', reward: 50 },
+    { type: 'stack', target: 25, text: '🏗️ Высота 25', reward: 70 },
+    { type: 'stack', target: 30, text: '🏗️ Высота 30', reward: 90 },
+    { type: 'stack', target: 40, text: '🏗️ Высота 40', reward: 130 },
+    { type: 'combo', target: 2, text: '🔥 Комбо x2', reward: 15 },
+    { type: 'combo', target: 3, text: '🔥 Комбо x3', reward: 25 },
+    { type: 'combo', target: 5, text: '🔥 Комбо x5', reward: 45 },
+    { type: 'combo', target: 7, text: '🔥 Комбо x7', reward: 70 },
+    { type: 'cut', target: 5, text: '✂️ 5 срезов', reward: 15 },
+    { type: 'cut', target: 10, text: '✂️ 10 срезов', reward: 30 },
+    { type: 'cut', target: 15, text: '✂️ 15 срезов', reward: 45 },
+    { type: 'cut', target: 20, text: '✂️ 20 срезов', reward: 60 },
+    { type: 'games', target: 2, text: '🎮 2 игры', reward: 15 },
+    { type: 'games', target: 3, text: '🎮 3 игры', reward: 20 },
+    { type: 'games', target: 5, text: '🎮 5 игр', reward: 30 },
+    { type: 'games', target: 10, text: '🎮 10 игр', reward: 60 },
+    { type: 'golden', target: 1, text: '👑 1 золотой', reward: 20 },
+    { type: 'golden', target: 2, text: '👑 2 золотых', reward: 35 },
+    { type: 'golden', target: 3, text: '👑 3 золотых', reward: 50 },
+    { type: 'bomb', target: 1, text: '💣 1 бомба', reward: 20 },
+    { type: 'bomb', target: 2, text: '💣 2 бомбы', reward: 40 },
+    { type: 'ice', target: 1, text: '❄️ 1 лёд', reward: 20 },
+    { type: 'ice', target: 2, text: '❄️ 2 льда', reward: 35 },
+    { type: 'fury', target: 1, text: '💥 1 ярость', reward: 40 },
+    { type: 'fury', target: 2, text: '💥 2 ярости', reward: 80 },
+    { type: 'time_game', target: 1, text: '⏱️ 1 на время', reward: 20 },
+    { type: 'time_game', target: 3, text: '⏱️ 3 на время', reward: 60 },
 ];
 
 const $ = id => document.getElementById(id);
@@ -298,11 +611,34 @@ const finalScoreVal = $('final-score-val'), gameCoinsEarnedEl = $('game-coins-ea
 const questsEl = $('quests'), muteBtn = $('mute-btn'), pauseBtn = $('pause-btn'), menuToggleBtn = $('menu-toggle-btn');
 const tutorialEl = $('tutorial'), nextBlockEmoji = $('next-block-emoji');
 const screenFlash = $('screen-flash'), coinsBalanceEl = $('coins-balance'), skinListEl = $('skin-list'), menuCoinsEl = $('menu-coins');
+const shopProgressEl = $('shop-progress');
 
 highScoreEl.innerText = `РЕКОРД: ${highScore}`;
 updateCoinUI();
 
-// AUDIO
+// ============ МОНЕТЫ ============
+function addCoins(amount) {
+    if (amount <= 0) return;
+    coins += amount; sessionCoins += amount;
+    localStorage.setItem('towerCoins', coins);
+    updateCoinUI(); showCoinPopup(amount);
+    gameCoinsEl.classList.remove('coin-pulse');
+    void gameCoinsEl.offsetWidth;
+    gameCoinsEl.classList.add('coin-pulse');
+}
+
+function showCoinPopup(amount) {
+    const popup = document.createElement('div');
+    popup.className = 'coin-popup';
+    popup.textContent = `+${amount} 🪙`;
+    const rect = gameCoinsEl.getBoundingClientRect();
+    popup.style.left = (rect.left + rect.width / 2) + 'px';
+    popup.style.top = (rect.bottom + 4) + 'px';
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 900);
+}
+
+// ============ AUDIO ============
 let audioCtx = null, noiseBuffer = null;
 let musicPlaying = false, musicBeat = 0, musicTempo = 110, musicTimeout = null;
 
@@ -349,7 +685,6 @@ function playSound(type, level = 0) {
         else if (type === 'gameover') { tone(200, 80, 'triangle', 0.8, 0.25); tone(150, 60, 'triangle', 0.8, 0.18, 0.1); }
         else if (type === 'quest') { tone(659.25, null, 'sine', 0.2, 0.2); tone(783.99, null, 'sine', 0.3, 0.2, 0.1); tone(1046.5, null, 'sine', 0.4, 0.2, 0.2); }
         else if (type === 'fury') { tone(440, 880, 'sawtooth', 0.5, 0.15); tone(554, 1108, 'sawtooth', 0.5, 0.1); }
-        else if (type === 'coin') { tone(1200, null, 'sine', 0.15, 0.2); tone(1600, null, 'sine', 0.2, 0.15, 0.05); }
     } catch(e) {}
 }
 
@@ -369,7 +704,7 @@ function musicTick() {
 function startMusic() { if (musicPlaying || isMuted) return; initAudio(); if (!audioCtx) return; musicPlaying = true; musicBeat = 0; musicTempo = 110; musicTick(); }
 function stopMusic() { musicPlaying = false; if (musicTimeout) { clearTimeout(musicTimeout); musicTimeout = null; } }
 
-// QUESTS
+// ============ QUESTS ============
 function generateNewQuests() {
     const pool = [...QUESTS_POOL]; quests = [];
     for (let i = 0; i < 3; i++) {
@@ -395,13 +730,10 @@ function updateQuest(type, value, isMax = false) {
         else { q.current = Math.min(q.target, q.current + value); changed = true; }
         if (q.current >= q.target && !q.done) {
             q.done = true;
-            coins += q.reward;
-            sessionCoins += q.reward;
-            localStorage.setItem('towerCoins', coins);
+            addCoins(q.reward);
             playSound('quest');
-            showPopup(bonusText, `🎁 +${q.reward} 🪙`, 1500);
+            showPopup(bonusText, `🎁 КВЕСТ +${q.reward} 🪙`, 1500);
             triggerHaptic('success');
-            updateCoinUI();
         }
     });
     if (changed) { saveQuests(); renderQuests(); }
@@ -427,24 +759,38 @@ function updateCoinUI() {
     gameCoinsEl.innerText = `🪙 ${coins}`;
 }
 
-// SHOP
+// ============ SHOP ============
 function renderShop() {
     skinListEl.innerHTML = '';
+    shopProgressEl.innerText = `Открыто скинов: ${unlockedSkins.length}/${Object.keys(SKINS).length}`;
     for (const [key, skin] of Object.entries(SKINS)) {
         const isUnlocked = unlockedSkins.includes(key);
         const isEquipped = currentSkin === key;
+        const canBuy = coins >= skin.price;
         const div = document.createElement('div'); div.className = 'skin-item';
         let btnHtml = '';
         if (isEquipped) btnHtml = `<button class="equipped">НАДЕТО</button>`;
         else if (isUnlocked) btnHtml = `<button class="equip" data-skin="${key}">НАДЕТЬ</button>`;
-        else btnHtml = `<button class="buy" data-skin="${key}" data-price="${skin.price}">КУПИТЬ (${skin.price} 🪙)</button>`;
-        div.innerHTML = `<div class="skin-info"><span>${skin.emojis[0]}</span> ${skin.name}</div> ${btnHtml}`;
+        else if (canBuy) btnHtml = `<button class="buy" data-skin="${key}" data-price="${skin.price}">${skin.price} 🪙</button>`;
+        else btnHtml = `<button class="buy locked" disabled>${skin.price} 🪙</button>`;
+        const colorDots = skin.colors.slice(0, 5).map(c => `<span style="background:${c}"></span>`).join('');
+        div.innerHTML = `
+            <div class="skin-info">
+                <span class="skin-preview">${skin.emojis[0]}</span>
+                <div class="skin-details">
+                    <span class="skin-name">${skin.name}</span>
+                    <div class="skin-colors">${colorDots}</div>
+                </div>
+            </div>
+            ${btnHtml}
+        `;
         skinListEl.appendChild(div);
     }
     skinListEl.querySelectorAll('button.equip').forEach(btn => {
         safeClick(btn, () => { currentSkin = btn.dataset.skin; localStorage.setItem('towerSkin', currentSkin); renderShop(); });
     });
     skinListEl.querySelectorAll('button.buy').forEach(btn => {
+        if (btn.disabled) return;
         safeClick(btn, () => {
             const price = parseInt(btn.dataset.price);
             if (coins >= price) {
@@ -453,30 +799,37 @@ function renderShop() {
                 unlockedSkins.push(skin); localStorage.setItem('towerSkins', JSON.stringify(unlockedSkins));
                 currentSkin = skin; localStorage.setItem('towerSkin', currentSkin);
                 updateCoinUI(); renderShop(); triggerHaptic('success');
-            } else {
-                triggerHaptic('error'); btn.innerText = 'НЕ ХВАТАЕТ 🪙'; setTimeout(() => renderShop(), 1500);
-            }
+            } else { triggerHaptic('error'); }
         });
     });
 }
 
-// THREE.JS
+// ============ THREE.JS ============
+function getAdaptiveD(aspect) {
+    if (aspect < 0.6) return 16;
+    if (aspect < 0.8) return 13;
+    if (aspect < 1.0) return 11;
+    return 10;
+}
+
 function initThree() {
     scene = new THREE.Scene(); scene.background = new THREE.Color(BIOMES[0].bg); scene.fog = new THREE.FogExp2(BIOMES[0].bg, 0.02);
-    const aspect = window.innerWidth / window.innerHeight; const d = 10;
+    const aspect = window.innerWidth / window.innerHeight;
+    const d = getAdaptiveD(aspect);
     camera = new THREE.OrthographicCamera(-d*aspect, d*aspect, d, -d, 1, 1000);
     camera.position.set(20, 25, 20); camera.lookAt(0, 0, 0);
     renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-    renderer.setSize(window.innerWidth, window.innerHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
-    // Меньше ambient, чтобы цвета были ярче и насыщеннее
     scene.add(new THREE.HemisphereLight(0xffffff, 0x222222, 0.6));
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.2); dirLight.position.set(10, 20, 10);
     dirLight.castShadow = true; dirLight.shadow.camera.left = -20; dirLight.shadow.camera.right = 20;
     dirLight.shadow.camera.top = 20; dirLight.shadow.camera.bottom = -20;
     dirLight.shadow.mapSize.set(1024, 1024); scene.add(dirLight);
     window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', () => setTimeout(onResize, 100));
     glowTexture = createGlowTexture();
 }
 
@@ -499,33 +852,27 @@ function createGlowTexture() {
     return new THREE.CanvasTexture(c);
 }
 
-// TEXTURES
+// ============ TEXTURES ============
 function createTexture(emoji, text, color, type = 'normal') {
     const c = document.createElement('canvas'); c.width = c.height = 512;
     const ctx = c.getContext('2d');
-    
     if (type === 'golden') {
-        // Яркий металлический градиент
         const grad = ctx.createLinearGradient(0, 0, 512, 512);
         grad.addColorStop(0, '#FFE082'); grad.addColorStop(0.3, '#FFD700'); grad.addColorStop(0.6, '#FFC107'); grad.addColorStop(1, '#FF8F00');
         ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
-        // Блики
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
         ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(150,0); ctx.lineTo(0,150); ctx.closePath(); ctx.fill();
         ctx.beginPath(); ctx.moveTo(512,512); ctx.lineTo(362,512); ctx.lineTo(512,362); ctx.closePath(); ctx.fill();
         ctx.strokeStyle = '#8D6E00'; ctx.lineWidth = 20; ctx.strokeRect(10,10,492,492);
     } else if (type === 'bomb') {
-        // Контрастный чёрно-красный
         ctx.fillStyle = '#1A0000'; ctx.fillRect(0,0,512,512);
         ctx.save(); ctx.beginPath(); ctx.rect(0,0,512,512); ctx.clip();
         ctx.strokeStyle = '#FF1744'; ctx.lineWidth = 80;
         for(let i=-512; i<1024; i+=140) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i+512,512); ctx.stroke(); }
         ctx.restore();
         ctx.strokeStyle = '#FF5252'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
-        // Подсветка изнутри
         ctx.fillStyle = 'rgba(255,82,82,0.3)'; ctx.fillRect(0,0,512,512);
     } else if (type === 'ice') {
-        // Яркий голубой
         ctx.fillStyle = '#00E5FF'; ctx.fillRect(0,0,512,512);
         ctx.fillStyle = 'rgba(255,255,255,0.4)';
         ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(200,0); ctx.lineTo(0,200); ctx.closePath(); ctx.fill();
@@ -538,86 +885,64 @@ function createTexture(emoji, text, color, type = 'normal') {
         for(let i=0; i<15; i++) { ctx.beginPath(); ctx.moveTo(Math.random()*512, Math.random()*512); ctx.lineTo(Math.random()*512, Math.random()*512); ctx.stroke(); }
         ctx.strokeStyle = '#8D6E63'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
     } else {
-        // Обычные блоки — насыщенный цвет
         ctx.fillStyle = color; ctx.fillRect(0,0,512,512);
-        // Тонкая тёмная рамка для контраста
         ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 15; ctx.strokeRect(7.5,7.5,497,497);
-        // Лёгкий градиент для объёма
         const grad = ctx.createLinearGradient(0,0,0,512);
         grad.addColorStop(0, 'rgba(255,255,255,0.15)');
         grad.addColorStop(1, 'rgba(0,0,0,0.15)');
         ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
     }
-
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    // Убираем размывающий белый круг — только лёгкая подложка
     if (type !== 'golden') {
-        ctx.fillStyle = 'rgba(0,0,0,0.15)';
-        ctx.beginPath(); ctx.arc(256, 220, 155, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.18)';
+        ctx.beginPath(); ctx.arc(256, 200, 155, 0, Math.PI*2); ctx.fill();
     }
-    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 15; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 5;
-    ctx.font = '230px Arial'; ctx.fillText(emoji, 256, 210);
-    
-    // Жирный контрастный текст
+    ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 20; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 10;
+    ctx.font = '270px Arial'; ctx.fillText(emoji, 256, 200);
+    ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 6; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 4;
+    ctx.font = '900 100px "Rubik", sans-serif';
+    ctx.lineWidth = 20;
+    ctx.strokeStyle = type === 'golden' ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.6)';
+    ctx.strokeText(text, 256, 440);
     ctx.fillStyle = type === 'golden' ? '#3E2723' : '#FFFFFF';
-    ctx.font = '900 80px "Rubik", sans-serif';
-    ctx.lineWidth = 14;
-    ctx.strokeStyle = type === 'golden' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)';
-    ctx.strokeText(text, 256, 430); 
-    ctx.fillText(text, 256, 430);
-    
+    ctx.fillText(text, 256, 440);
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter; tex.generateMipmaps = false; 
+    tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter; tex.generateMipmaps = false;
     return tex;
 }
 
 function createBlockMesh(w, h, d, color, emoji, text, type = 'normal') {
     const geo = new THREE.BoxGeometry(w, h, d); const tex = createTexture(emoji, text, color, type);
-    // Пониженная roughness = насыщенный цвет
     let sideOpts = { map: tex, roughness: 0.45, metalness: 0.1 };
     let topOpts = { color: color, roughness: 0.5 };
-
     if (type === 'golden') {
         sideOpts.emissive = new THREE.Color(0xFFB300); sideOpts.emissiveIntensity = 0.5;
-        topOpts.emissive = new THREE.Color(0xFFB300); topOpts.emissiveIntensity = 0.5;
-        topOpts.color = new THREE.Color(0xFFC107);
+        topOpts.emissive = new THREE.Color(0xFFB300); topOpts.emissiveIntensity = 0.5; topOpts.color = new THREE.Color(0xFFC107);
     } else if (type === 'bomb') {
         sideOpts.emissive = new THREE.Color(0xFF0000); sideOpts.emissiveIntensity = 0.6;
-        topOpts.emissive = new THREE.Color(0xFF0000); topOpts.emissiveIntensity = 0.6;
-        topOpts.color = new THREE.Color(0x330000);
+        topOpts.emissive = new THREE.Color(0xFF0000); topOpts.emissiveIntensity = 0.6; topOpts.color = new THREE.Color(0x330000);
     } else if (type === 'ice') {
-        sideOpts.transparent = true; sideOpts.opacity = 0.9;
-        topOpts.transparent = true; topOpts.opacity = 0.9;
+        sideOpts.transparent = true; sideOpts.opacity = 0.9; topOpts.transparent = true; topOpts.opacity = 0.9;
         sideOpts.emissive = new THREE.Color(0x00E5FF); sideOpts.emissiveIntensity = 0.5;
         topOpts.emissive = new THREE.Color(0x00E5FF); topOpts.emissiveIntensity = 0.5;
     } else if (type === 'crumble') {
         sideOpts.emissive = new THREE.Color(0x5D4037); sideOpts.emissiveIntensity = 0.3;
         topOpts.emissive = new THREE.Color(0x5D4037); topOpts.emissiveIntensity = 0.3;
     } else {
-        // Лёгкое свечение обычных блоков для насыщенности
         sideOpts.emissive = new THREE.Color(color); sideOpts.emissiveIntensity = 0.12;
         topOpts.emissive = new THREE.Color(color); topOpts.emissiveIntensity = 0.12;
     }
-
     const side = new THREE.MeshStandardMaterial(sideOpts); const top = new THREE.MeshStandardMaterial(topOpts);
     const mesh = new THREE.Mesh(geo, [side, side, top, top, side, side]);
     mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.blockType = type;
-
-    // ДОБАВЛЯЕМ ГАЛО для спецблоков
     if (type !== 'normal' && type !== 'crumble') {
         const glowColors = { golden: 0xFFD700, bomb: 0xFF1744, ice: 0x00E5FF };
-        const spriteMat = new THREE.SpriteMaterial({
-            map: glowTexture, color: glowColors[type], transparent: true,
-            blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.7
-        });
+        const spriteMat = new THREE.SpriteMaterial({ map: glowTexture, color: glowColors[type], transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.7 });
         const sprite = new THREE.Sprite(spriteMat);
-        sprite.scale.set(5.5, 5.5, 1);
-        sprite.renderOrder = -1;
-        mesh.add(sprite);
-        mesh.userData.glowSprite = sprite;
+        sprite.scale.set(5.5, 5.5, 1); sprite.renderOrder = -1;
+        mesh.add(sprite); mesh.userData.glowSprite = sprite;
     }
-
     return mesh;
 }
 
@@ -676,7 +1001,7 @@ function spawnNewBlock() {
     scene.add(currentBlock);
 }
 
-// GAME LOGIC
+// ============ GAME LOGIC ============
 function showPopup(el, text, duration = 800) { if (!el) return; if (text) el.innerText = text; el.classList.add('show-popup'); setTimeout(() => el.classList.remove('show-popup'), duration); }
 function flashScreen() { if(screenFlash){screenFlash.style.opacity = '0.6'; setTimeout(() => screenFlash.style.opacity = '0', 100);} }
 
@@ -685,6 +1010,7 @@ function dropBlock() {
     if (showTutorialHint) { tutorialEl.style.display = 'none'; localStorage.setItem('towerTutorialShown', 'true'); showTutorialHint = false; }
     currentBlock.userData.moving = false;
     const top = blocks[blocks.length - 1];
+    const bType = currentBlock.userData.blockType;
     let diffX = 0, diffZ = 0, sizeX = currentBlock.geometry.parameters.width, sizeZ = currentBlock.geometry.parameters.depth;
     if (movingAxis === 'x') diffX = currentBlock.position.x - top.position.x;
     else if (movingAxis === 'z') diffZ = currentBlock.position.z - top.position.z;
@@ -694,28 +1020,33 @@ function dropBlock() {
     
     if ((movingAxis === 'x' || movingAxis === 'diag') && absDiffX >= sizeX / 2) { currentBlock.userData.falling = true; triggerGameOver(); return; }
     if ((movingAxis === 'z' || movingAxis === 'diag') && absDiffZ >= sizeZ / 2) { currentBlock.userData.falling = true; triggerGameOver(); return; }
-    if (currentBlock.userData.blockType === 'crumble' && maxDiff < 0.15) { currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z; spawnBombParticles(); triggerGameOver(); return; }
+    if (bType === 'crumble' && maxDiff < 0.15) { currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z; spawnBombParticles(); triggerGameOver(); return; }
 
     if (maxDiff < 0.15) {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         combo++;
         let points = 1;
-        if (currentBlock.userData.blockType === 'golden') points = 3;
-        else if (currentBlock.userData.blockType === 'bomb') points = 2;
-        else if (currentBlock.userData.blockType === 'ice') points = 2;
-        if (currentBlock.userData.blockType === 'bomb') { playSound('bomb'); showPopup(bonusText, '💥 БУМ! +2', 1000); shakeIntensity = 0.5; }
-        else { playSound('perfect', combo); if (currentBlock.userData.blockType === 'golden') showPopup(bonusText, '👑 ЗОЛОТО +3', 900); else if (currentBlock.userData.blockType === 'ice') showPopup(bonusText, '❄️ ЛЕД +2', 900); else showPopup(perfectText, null, 600); }
+        if (bType === 'golden') { points = 3; updateQuest('golden', 1); }
+        else if (bType === 'bomb') { points = 2; updateQuest('bomb', 1); }
+        else if (bType === 'ice') { points = 2; updateQuest('ice', 1); }
+        if (bType === 'bomb') { playSound('bomb'); showPopup(bonusText, '💥 БУМ! +2', 1000); shakeIntensity = 0.5; }
+        else { playSound('perfect', combo); if (bType === 'golden') showPopup(bonusText, '👑 ЗОЛОТО +3', 900); else if (bType === 'ice') showPopup(bonusText, '❄️ ЛЕД +2', 900); else showPopup(perfectText, null, 600); }
         flashScreen();
         if (gameMode === 'time') { timeLeft += 2; updateTimerDisplay(); }
-        if (combo >= 5 && !isFury) { isFury = true; furyBlocksLeft = 3; document.body.classList.add('fury-active'); playSound('fury'); showPopup(milestoneText, '🔥 ЯРОСТЬ! x2 ОЧКИ', 2000); }
+        if (combo >= 5 && !isFury) { isFury = true; furyBlocksLeft = 3; document.body.classList.add('fury-active'); playSound('fury'); showPopup(milestoneText, '🔥 ЯРОСТЬ! x2', 2000); updateQuest('fury', 1); }
         if (combo > 1 && !isFury) showPopup(comboText, `КОМБО x${combo}`, 800);
         if (isFury) points *= 2;
         updateQuest('perfect', 1); updateQuest('combo', combo, true); triggerHaptic('light');
         const oldScore = score; score += points;
         checkMilestone(oldScore, score); triggerPerfectParticles();
+        let coinReward = 2;
+        if (bType === 'golden') coinReward += 2;
+        else if (bType === 'bomb') coinReward += 1;
+        else if (bType === 'ice') coinReward += 1;
+        addCoins(coinReward);
     } else {
         combo = 0; updateQuest('cut', 1);
-        if (currentBlock.userData.blockType === 'bomb') { score = Math.max(0, score - 1); playSound('bomb'); shakeIntensity = 0.5; showPopup(bonusText, '💣 -1 ОЧКО', 900); spawnBombParticles(); triggerHaptic('error'); }
+        if (bType === 'bomb') { score = Math.max(0, score - 1); playSound('bomb'); shakeIntensity = 0.5; showPopup(bonusText, '💣 -1 ОЧКО', 900); spawnBombParticles(); triggerHaptic('error'); }
         else { playSound('drop'); triggerHaptic('light'); }
         let cutAxis = movingAxis === 'diag' ? (absDiffX > absDiffZ ? 'x' : 'z') : movingAxis;
         let cutDiff = cutAxis === 'x' ? diffX : diffZ;
@@ -733,7 +1064,8 @@ function dropBlock() {
         nm.position.set(targetX, currentBlock.position.y, targetZ);
         nm.userData = { w, d, color: prevColor, emoji: prevEmoji, text: prevText, blockType: 'normal', squash: 1 };
         currentBlock = nm;
-        if (nm.userData.blockType !== 'bomb') score++;
+        if (bType !== 'bomb') score++;
+        addCoins(1);
     }
     currentBlock.userData.squash = 0;
     if (isFury) { furyBlocksLeft--; if (furyBlocksLeft <= 0) { isFury = false; document.body.classList.remove('fury-active'); } }
@@ -767,6 +1099,7 @@ function triggerMilestone(points) {
     const newBiome = Math.floor(points / 10) % BIOMES.length; currentBiomeIndex = newBiome;
     targetBgColor.set(BIOMES[newBiome].bg); document.body.style.background = BIOMES[newBiome].bg;
     showPopup(milestoneText, `${points} ЭТАЖЕЙ!`, 1500);
+    addCoins(5);
     const topPos = blocks[blocks.length - 1].position;
     for (let i = 0; i < 40; i++) {
         const piece = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.02), new THREE.MeshBasicMaterial({ color: BASE_COLORS[Math.floor(Math.random() * BASE_COLORS.length)] }));
@@ -793,7 +1126,9 @@ function updateCamera() {
     if (!blocks.length) return;
     const top = blocks[blocks.length - 1];
     const ty = top.position.y, tx = top.position.x * 0.5, tz = top.position.z * 0.5;
-    camera.position.x += (tx + 20 - camera.position.x) * 0.1; camera.position.y += (ty + 25 - camera.position.y) * 0.1; camera.position.z += (tz + 20 - camera.position.z) * 0.1;
+    camera.position.x += (tx + 20 - camera.position.x) * 0.1;
+    camera.position.y += (ty + 25 - camera.position.y) * 0.1;
+    camera.position.z += (tz + 20 - camera.position.z) * 0.1;
     camera.lookAt(tx, ty + 2, tz);
     if (shakeIntensity > 0.01) { camera.position.x += (Math.random()-0.5) * shakeIntensity; camera.position.y += (Math.random()-0.5) * shakeIntensity; camera.position.z += (Math.random()-0.5) * shakeIntensity; shakeIntensity *= 0.85; }
 }
@@ -807,19 +1142,14 @@ function animate() {
     } else if (windGain && audioCtx) {
         try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); } catch(e) {}
     }
-
-    // Пульсация свечения ВСЕХ спецблоков (даже размещённых)
     blocks.forEach(b => {
         const bt = b.userData.blockType;
         if (bt === 'golden' || bt === 'bomb' || bt === 'ice') {
             const pulse = bt === 'bomb' ? (0.5 + Math.sin(time * 6) * 0.3) : (0.4 + Math.sin(time * 4) * 0.2);
             b.material.forEach(m => { if (m.emissive) m.emissiveIntensity = pulse; });
-            if (b.userData.glowSprite) {
-                b.userData.glowSprite.material.opacity = 0.4 + Math.sin(time * 4) * 0.3;
-            }
+            if (b.userData.glowSprite) b.userData.glowSprite.material.opacity = 0.4 + Math.sin(time * 4) * 0.3;
         }
     });
-
     if (gameState === 'playing' && currentBlock?.userData.moving) {
         let speed = currentSpeed;
         if (isFury) speed *= 0.6;
@@ -861,10 +1191,11 @@ function animate() {
 }
 
 function clearScene() {
-    blocks.forEach(b => { scene.remove(b); disposeMesh(b); }); debris.forEach(d => { scene.remove(d); disposeMesh(d); }); confetti.forEach(c => { scene.remove(c); disposeMesh(c); });
+    blocks.forEach(b => { scene.remove(b); disposeMesh(b); });
+    debris.forEach(d => { scene.remove(d); disposeMesh(d); });
+    confetti.forEach(c => { scene.remove(c); disposeMesh(c); });
     blocks = []; debris = []; confetti = []; currentBlock = null;
 }
-
 function saveCurrentScoreIfNeeded() {
     if (score > 0 && score > highScore) { highScore = score; localStorage.setItem('towerHighScore', highScore); highScoreEl.innerText = `РЕКОРД: ${highScore}`; }
 }
@@ -902,6 +1233,7 @@ function goToMenu() {
     scene.background.set(BIOMES[0].bg); document.body.style.background = BIOMES[0].bg;
     camera.position.set(20, 25, 20); camera.lookAt(0, 0, 0);
     if (windGain && audioCtx) try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); } catch(e) {}
+    updateCoinUI();
 }
 
 function triggerGameOver() {
@@ -909,14 +1241,12 @@ function triggerGameOver() {
     gameState = 'gameover'; playSound('gameover'); stopMusic(); shakeIntensity = 0.8;
     document.body.classList.remove('in-game', 'fury-active');
     if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
+    if (gameMode === 'time' && score > 0) updateQuest('time_game', 1);
     finalScoreVal.innerText = score;
-    // Показываем заработанные монеты
     if (sessionCoins > 0) {
-        gameCoinsEarnedEl.innerText = `+${sessionCoins} 🪙 за квесты`;
+        gameCoinsEarnedEl.innerText = `+${sessionCoins} 🪙 за игру`;
         gameCoinsEarnedEl.style.display = 'block';
-    } else {
-        gameCoinsEarnedEl.style.display = 'none';
-    }
+    } else { gameCoinsEarnedEl.style.display = 'none'; }
     setTimeout(() => { gameOverEl.style.display = 'flex'; }, 800);
     triggerHaptic('error');
 }
@@ -986,9 +1316,12 @@ muteBtn.innerText = isMuted ? '🔇' : '🔊';
 
 function onResize() {
     if (!camera || !renderer) return;
-    const aspect = window.innerWidth / window.innerHeight; const d = 10;
-    camera.left = -d * aspect; camera.right = d * aspect; camera.top = d; camera.bottom = -d;
-    camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+    const aspect = window.innerWidth / window.innerHeight;
+    const d = getAdaptiveD(aspect);
+    camera.left = -d * aspect; camera.right = d * aspect;
+    camera.top = d; camera.bottom = -d;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
 function updateTimerDisplay() { timerEl.innerText = `⏱ ${timeLeft}`; timerEl.style.color = timeLeft <= 10 ? '#EF476F' : '#06D6A0'; }
 
