@@ -10,9 +10,7 @@
     
     <style>
         :root { 
-            --bg: #FDE2E4; 
-            --text: #5D576B; 
-            --accent: #FF9F1C; 
+            --bg: #FDE2E4; --text: #5D576B; --accent: #FF9F1C; 
             --safe-top: env(safe-area-inset-top, 0px);
             --safe-right: env(safe-area-inset-right, 0px);
             --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -22,23 +20,17 @@
         html { height: 100%; overscroll-behavior: none; }
         body {
             margin: 0; padding: 0; overflow: hidden;
-            width: 100%;
-            height: 100vh;
-            height: 100dvh;
-            background: var(--bg);
-            font-family: 'Rubik', sans-serif;
+            width: 100%; height: 100vh; height: 100dvh;
+            background: var(--bg); font-family: 'Rubik', sans-serif;
             touch-action: none; user-select: none; -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
-            overscroll-behavior: none;
-            transition: background 1s ease;
+            overscroll-behavior: none; transition: background 1s ease;
         }
         canvas { display: block; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; }
         button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; cursor: pointer; font-family: 'Rubik', sans-serif; }
 
-        /* UI Layer */
         #ui-layer {
-            position: fixed; inset: 0;
-            pointer-events: none;
+            position: fixed; inset: 0; pointer-events: none;
             display: flex; flex-direction: column; align-items: center;
             padding-top: max(calc(var(--safe-top) + 50px), 64px);
             padding-right: calc(var(--safe-right) + 8px);
@@ -46,7 +38,6 @@
             padding-left: calc(var(--safe-left) + 8px);
             z-index: 10;
         }
-
         #score-container {
             display: flex; flex-direction: column; align-items: center;
             background: rgba(255,255,255,0.65);
@@ -55,8 +46,7 @@
             border-radius: clamp(18px, 4vw, 26px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.08);
             border: 1px solid rgba(255,255,255,0.8);
-            max-width: 90vw;
-            position: relative;
+            max-width: 90vw; position: relative;
         }
         #score { color: var(--text); font-size: clamp(42px, 11vw, 68px); font-weight: 900; line-height: 1; transition: transform 0.1s, color 0.2s; }
         #high-score { color: #8A84A0; font-size: clamp(9px, 2.6vw, 13px); font-weight: 700; margin-top: 2px; letter-spacing: 1px; }
@@ -65,10 +55,8 @@
         #mode-label { color: #8A84A0; font-size: clamp(8px, 2.2vw, 10px); font-weight: 700; letter-spacing: 2px; margin-top: 2px; text-transform: uppercase; }
         .score-pop { transform: scale(1.18); color: var(--accent) !important; }
 
-        /* Quests */
         #quests {
-            position: absolute;
-            top: max(calc(var(--safe-top) + 54px), 68px);
+            position: absolute; top: max(calc(var(--safe-top) + 54px), 68px);
             left: max(calc(var(--safe-left) + 8px), 10px);
             display: flex; flex-direction: column; gap: 5px;
             max-width: min(160px, 42vw);
@@ -77,8 +65,7 @@
             background: rgba(255,255,255,0.75);
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
             padding: clamp(3px, 0.9vw, 5px) clamp(6px, 1.8vw, 10px);
-            border-radius: 10px;
-            font-size: clamp(9px, 2.4vw, 11px);
+            border-radius: 10px; font-size: clamp(9px, 2.4vw, 11px);
             font-weight: 700; color: var(--text);
             display: flex; align-items: center; gap: 4px;
             border: 1px solid rgba(255,255,255,0.8);
@@ -86,19 +73,15 @@
         }
         .quest-chip.done { background: rgba(6,214,160,0.95); color: white; }
 
-        /* Top Right Controls */
         #top-right-controls {
-            position: absolute;
-            top: max(calc(var(--safe-top) + 54px), 68px);
+            position: absolute; top: max(calc(var(--safe-top) + 54px), 68px);
             right: max(calc(var(--safe-right) + 8px), 10px);
             display: flex; flex-direction: column; gap: 8px;
             pointer-events: auto; z-index: 12;
         }
         #top-right-controls button {
-            width: clamp(38px, 10vw, 46px);
-            height: clamp(38px, 10vw, 46px);
-            border-radius: 50%;
-            background: rgba(255,255,255,0.75);
+            width: clamp(38px, 10vw, 46px); height: clamp(38px, 10vw, 46px);
+            border-radius: 50%; background: rgba(255,255,255,0.75);
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(255,255,255,0.8);
             font-size: clamp(16px, 4.5vw, 21px);
@@ -109,31 +92,24 @@
         #menu-toggle-btn, #pause-btn { display: none; }
         body.in-game #menu-toggle-btn, body.in-game #pause-btn { display: flex; }
 
-        /* Next Block */
         #next-block-ui {
-            position: absolute;
-            bottom: max(calc(var(--safe-bottom) + 12px), 16px);
+            position: absolute; bottom: max(calc(var(--safe-bottom) + 12px), 16px);
             left: max(calc(var(--safe-left) + 12px), 16px);
-            pointer-events: none;
-            background: rgba(255,255,255,0.7);
+            pointer-events: none; background: rgba(255,255,255,0.7);
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
             padding: clamp(6px, 1.5vw, 10px) clamp(10px, 2.5vw, 15px);
-            border-radius: 15px;
-            border: 1px solid rgba(255,255,255,0.8);
+            border-radius: 15px; border: 1px solid rgba(255,255,255,0.8);
             display: flex; flex-direction: column; align-items: center; gap: 3px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 10;
         }
         #next-block-ui .label { font-size: clamp(8px, 2vw, 10px); color: #8A84A0; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
         #next-block-emoji { font-size: clamp(24px, 6vw, 32px); line-height: 1; }
 
-        /* Fury & Flash */
         #fury-overlay { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 50px rgba(255, 0, 100, 0.5); opacity: 0; transition: opacity 0.5s; z-index: 5; }
         .fury-active #fury-overlay { opacity: 1; animation: furyPulse 1s infinite alternate; }
         @keyframes furyPulse { from { box-shadow: inset 0 0 30px rgba(255, 0, 100, 0.4); } to { box-shadow: inset 0 0 80px rgba(255, 0, 100, 0.8); } }
         #screen-flash { position: absolute; inset: 0; background: white; opacity: 0; pointer-events: none; z-index: 50; transition: opacity 0.1s; }
 
-        /* Popups */
         .popup-text {
             position: absolute; font-weight: 900; text-align: center;
             opacity: 0; pointer-events: none; text-transform: uppercase;
@@ -148,61 +124,45 @@
         #bonus-text { color: #FF9F1C; font-size: clamp(20px, 6vw, 34px); top: 40%; }
         .show-popup { opacity: 1 !important; transform: translateX(-50%) translateY(0) scale(1.1) !important; }
 
-        /* Screens & Modals */
         .screen {
-            position: absolute; inset: 0; z-index: 100;
-            pointer-events: auto;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            padding: clamp(14px, 3.5vw, 24px);
-            text-align: center; color: var(--text);
-            overflow-y: auto; overscroll-behavior: contain;
-            -webkit-overflow-scrolling: touch;
+            position: absolute; inset: 0; z-index: 100; pointer-events: auto;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: clamp(14px, 3.5vw, 24px); text-align: center; color: var(--text);
+            overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
         }
         #start-screen { background: linear-gradient(135deg, #FDE2E4 0%, #E2ECE9 100%); }
         .modal {
-            inset: auto; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            display: none;
-            background: rgba(255,255,255,0.98);
+            inset: auto; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            display: none; background: rgba(255,255,255,0.98);
             padding: clamp(16px, 4vw, 24px) clamp(14px, 3.5vw, 20px);
             border-radius: clamp(20px, 5vw, 30px);
             box-shadow: 0 20px 60px rgba(0,0,0,0.2);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 2px solid white;
-            width: min(92vw, 400px);
-            max-height: 88vh; max-height: 88dvh;
-            overflow-y: auto; overscroll-behavior: contain;
-            -webkit-overflow-scrolling: touch;
+            width: min(92vw, 400px); max-height: 88vh; max-height: 88dvh;
+            overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
             z-index: 110;
         }
 
         #start-screen h1 { font-size: clamp(26px, 8vw, 42px); margin: 0 0 8px 0; font-weight: 900; line-height: 1.1; }
         #start-screen p { font-size: clamp(13px, 3.5vw, 16px); color: #8A84A0; margin: 0 0 15px 0; }
-
         #menu-coins {
             background: #FFF3E0; color: #F57C00;
             padding: clamp(6px, 1.6vw, 9px) clamp(14px, 4vw, 22px);
             border-radius: 20px; font-weight: 900;
-            font-size: clamp(16px, 4.5vw, 21px);
-            margin-bottom: 15px;
+            font-size: clamp(16px, 4.5vw, 21px); margin-bottom: 15px;
             box-shadow: 0 4px 15px rgba(245,124,0,0.2);
             border: 2px solid #FFE0B2;
         }
-
         .mode-buttons {
-            display: flex; flex-direction: column;
-            gap: clamp(7px, 1.8vw, 10px);
-            width: 100%; max-width: min(320px, 88vw);
-            pointer-events: auto;
+            display: flex; flex-direction: column; gap: clamp(7px, 1.8vw, 10px);
+            width: 100%; max-width: min(320px, 88vw); pointer-events: auto;
         }
         .mode-btn {
-            background: white; color: var(--text);
-            border: 2px solid transparent;
+            background: white; color: var(--text); border: 2px solid transparent;
             padding: clamp(10px, 2.5vw, 14px) clamp(14px, 4vw, 20px);
             border-radius: clamp(14px, 3.5vw, 20px);
-            display: flex; align-items: center;
-            gap: clamp(10px, 2.5vw, 14px);
+            display: flex; align-items: center; gap: clamp(10px, 2.5vw, 14px);
             box-shadow: 0 6px 20px rgba(0,0,0,0.08);
             transition: all 0.2s; text-align: left;
             width: 100%; pointer-events: auto;
@@ -212,16 +172,13 @@
         .mode-btn .mode-info { display: flex; flex-direction: column; text-align: left; flex: 1; min-width: 0; }
         .mode-btn .mode-name { font-size: clamp(14px, 4vw, 18px); font-weight: 900; display: block; }
         .mode-btn .mode-desc { font-size: clamp(10px, 2.8vw, 12px); color: #8A84A0; display: block; }
-
         .menu-footer {
-            display: flex; gap: clamp(7px, 2vw, 10px);
-            margin-top: 15px;
+            display: flex; gap: clamp(7px, 2vw, 10px); margin-top: 15px;
             width: 100%; max-width: min(320px, 88vw);
         }
         .menu-footer button {
             flex: 1; background: white; border: none;
-            padding: clamp(10px, 2.5vw, 12px);
-            border-radius: 15px;
+            padding: clamp(10px, 2.5vw, 12px); border-radius: 15px;
             font-weight: 900; font-size: clamp(12px, 3.2vw, 14px);
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             display: flex; align-items: center; justify-content: center; gap: 5px;
@@ -233,15 +190,13 @@
         #game-over p, #pause-screen p { margin: 0; font-size: clamp(13px, 3.5vw, 15px); color: #8A84A0; }
         .final-score { font-size: clamp(44px, 12vw, 64px); color: var(--text); font-weight: 900; margin: 6px 0; }
         #game-coins-earned { color: #F57C00; font-weight: 900; font-size: clamp(13px, 3.5vw, 16px); margin: 4px 0 8px 0; }
-
         .btn-group { display: flex; flex-direction: column; gap: clamp(7px, 2vw, 10px); margin-top: 20px; width: 100%; }
         .btn-row { display: flex; gap: clamp(7px, 2vw, 10px); }
         .btn-group button {
             flex: 1; border: none;
             padding: clamp(10px, 2.8vw, 14px) clamp(10px, 3vw, 16px);
             font-weight: 900; font-size: clamp(11px, 3.2vw, 14px);
-            border-radius: clamp(12px, 3vw, 15px);
-            transition: all 0.2s; white-space: nowrap;
+            border-radius: clamp(12px, 3vw, 15px); transition: all 0.2s; white-space: nowrap;
         }
         #restart-btn, #pause-resume { background: #06D6A0; color: white; box-shadow: 0 6px 15px rgba(6,214,160,0.3); }
         #menu-btn, #pause-menu { background: #8A84A0; color: white; box-shadow: 0 6px 15px rgba(138,132,160,0.3); }
@@ -299,23 +254,16 @@
         .coin-pulse { animation: coinPulse 0.35s ease; }
         @keyframes coinPulse { 0% { transform: scale(1); } 50% { transform: scale(1.35); color: #FFD700; } 100% { transform: scale(1); } }
 
-        /* ==== MEDIA QUERIES ==== */
-
-        /* Portrait phones up to 540px — quests below score to avoid overlap */
         @media (max-width: 540px) and (orientation: portrait) {
             #quests { top: max(calc(var(--safe-top) + 145px), 158px); max-width: min(140px, 40vw); }
             .quest-chip { font-size: 10px; padding: 3px 7px; }
         }
-
-        /* Small phones (< 360px) */
         @media (max-width: 360px) {
             #score-container { padding: 4px 18px; }
             #score { font-size: 42px; }
             .btn-group button { font-size: 11px; padding: 10px 6px; }
             .skin-item button { font-size: 10px; padding: 4px 7px; }
         }
-
-        /* Landscape phones */
         @media (orientation: landscape) and (max-height: 520px) {
             #ui-layer { padding-top: max(calc(var(--safe-top) + 42px), 50px); padding-bottom: calc(var(--safe-bottom) + 10px); }
             #score-container { padding: 3px 20px; border-radius: 18px; }
@@ -358,8 +306,6 @@
             #milestone-text { top: 25%; }
             #bonus-text { top: 30%; }
         }
-
-        /* Tablets */
         @media (min-width: 768px) {
             #score-container { padding: 8px 40px; }
             #score { font-size: 72px; }
@@ -370,14 +316,10 @@
             .mode-btn .mode-desc { font-size: 14px; }
             .modal { max-width: 440px; }
         }
-
-        /* Wide desktop */
         @media (min-width: 1200px) {
             .modal { max-width: 460px; }
             .mode-buttons { max-width: 400px; }
         }
-
-        /* Short portrait */
         @media (max-height: 500px) and (orientation: portrait) {
             #start-screen h1 { font-size: 24px; }
             #menu-coins { font-size: 14px; margin-bottom: 8px; }
@@ -388,8 +330,6 @@
             .menu-footer { margin-top: 8px; }
             .menu-footer button { padding: 8px; font-size: 12px; }
         }
-
-        /* Reduced motion */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         }
@@ -626,7 +566,6 @@ function addCoins(amount) {
     void gameCoinsEl.offsetWidth;
     gameCoinsEl.classList.add('coin-pulse');
 }
-
 function showCoinPopup(amount) {
     const popup = document.createElement('div');
     popup.className = 'coin-popup';
@@ -852,10 +791,12 @@ function createGlowTexture() {
     return new THREE.CanvasTexture(c);
 }
 
-// ============ TEXTURES ============
+// ============ ТЕКСТУРЫ С ЯРКИМИ НАКЛЕЙКАМИ ============
 function createTexture(emoji, text, color, type = 'normal') {
     const c = document.createElement('canvas'); c.width = c.height = 512;
     const ctx = c.getContext('2d');
+    
+    // === ФОН БЛОКА ===
     if (type === 'golden') {
         const grad = ctx.createLinearGradient(0, 0, 512, 512);
         grad.addColorStop(0, '#FFE082'); grad.addColorStop(0.3, '#FFD700'); grad.addColorStop(0.6, '#FFC107'); grad.addColorStop(1, '#FF8F00');
@@ -871,7 +812,7 @@ function createTexture(emoji, text, color, type = 'normal') {
         for(let i=-512; i<1024; i+=140) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i+512,512); ctx.stroke(); }
         ctx.restore();
         ctx.strokeStyle = '#FF5252'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
-        ctx.fillStyle = 'rgba(255,82,82,0.3)'; ctx.fillRect(0,0,512,512);
+        ctx.fillStyle = 'rgba(255,82,82,0.25)'; ctx.fillRect(0,0,512,512);
     } else if (type === 'ice') {
         ctx.fillStyle = '#00E5FF'; ctx.fillRect(0,0,512,512);
         ctx.fillStyle = 'rgba(255,255,255,0.4)';
@@ -892,23 +833,56 @@ function createTexture(emoji, text, color, type = 'normal') {
         grad.addColorStop(1, 'rgba(0,0,0,0.15)');
         ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
     }
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    if (type !== 'golden') {
-        ctx.fillStyle = 'rgba(0,0,0,0.18)';
-        ctx.beginPath(); ctx.arc(256, 200, 155, 0, Math.PI*2); ctx.fill();
+
+    ctx.textAlign = 'center'; 
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.miterLimit = 2;
+
+    // === ЭМОJИ: БЕЛЫЙ КОНТУР (эффект яркой наклейки поверх цвета) ===
+    // Убрана тёмная подложка-круг, убрана тяжёлая тень вниз
+    // Белый контур рисуется через multi-shadow (обводка вокруг символа)
+    ctx.font = '260px Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+    
+    // Многопроходный белый контур
+    ctx.shadowColor = '#FFFFFF';
+    ctx.shadowBlur = 0;
+    const outlineOffsets = [
+        [-12,0],[12,0],[0,-12],[0,12],
+        [-9,-9],[9,-9],[-9,9],[9,9],
+        [-6,0],[6,0],[0,-6],[0,6]
+    ];
+    for (const [dx, dy] of outlineOffsets) {
+        ctx.shadowOffsetX = dx;
+        ctx.shadowOffsetY = dy;
+        ctx.fillText(emoji, 256, 195);
     }
-    ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 20; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 10;
-    ctx.font = '270px Arial'; ctx.fillText(emoji, 256, 200);
-    ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 6; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 4;
+    // Чистый эмодзи поверх (без тени) — как будто наклейка на цвете
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillText(emoji, 256, 195);
+
+    // === ТЕКСТ: ТОЛСТАЯ БЕЛАЯ ОБВОДКА + ТЁМНАЯ ЗАЛИВКА ===
+    // Максимальный контраст на любом цвете фона
     ctx.font = '900 100px "Rubik", sans-serif';
-    ctx.lineWidth = 20;
-    ctx.strokeStyle = type === 'golden' ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.6)';
-    ctx.strokeText(text, 256, 440);
-    ctx.fillStyle = type === 'golden' ? '#3E2723' : '#FFFFFF';
-    ctx.fillText(text, 256, 440);
+    
+    // Толстый белый контур
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 26;
+    ctx.strokeText(text, 256, 445);
+    
+    // Тёмная заливка (или свой цвет для золотого)
+    ctx.fillStyle = type === 'golden' ? '#3E2723' : '#1A0A00';
+    ctx.fillText(text, 256, 445);
+    
     const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter; tex.generateMipmaps = false;
+    tex.colorSpace = THREE.SRGBColorSpace; 
+    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    tex.minFilter = THREE.LinearFilter; 
+    tex.magFilter = THREE.LinearFilter; 
+    tex.generateMipmaps = false;
     return tex;
 }
 
