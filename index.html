@@ -24,56 +24,35 @@
         canvas { display: block; }
         button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; cursor: pointer; font-family: 'Rubik', sans-serif; }
 
-        /* UI Layer */
-        #ui-layer {
-            position: absolute; inset: 0; pointer-events: none; display: flex;
-            flex-direction: column; align-items: center;
-            padding: max(60px, calc(var(--safe-top) + 50px)) 0 20px 0; z-index: 10;
-        }
-        #score-container {
-            display: flex; flex-direction: column; align-items: center;
-            background: rgba(255,255,255,0.6); backdrop-filter: blur(12px);
-            padding: 6px 30px; border-radius: 24px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.8);
-        }
-        #score { color: var(--text); font-size: 64px; font-weight: 900; line-height: 1; transition: transform 0.1s, color 0.2s; }
-        #high-score { color: #8A84A0; font-size: 13px; font-weight: 700; margin-top: 2px; letter-spacing: 1px; }
-        #timer { color: #EF476F; font-size: 24px; font-weight: 900; display: none; margin-top: 2px; }
+        #ui-layer { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; padding: max(60px, calc(var(--safe-top) + 50px)) 0 20px 0; z-index: 10; }
+        #score-container { display: flex; flex-direction: column; align-items: center; background: rgba(255,255,255,0.65); backdrop-filter: blur(12px); padding: 6px 28px; border-radius: 24px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.8); }
+        #score { color: var(--text); font-size: 60px; font-weight: 900; line-height: 1; transition: transform 0.1s, color 0.2s; }
+        #high-score { color: #8A84A0; font-size: 12px; font-weight: 700; margin-top: 2px; letter-spacing: 1px; }
+        #game-coins { font-size: 14px; color: #F57C00; font-weight: 900; margin-top: 3px; }
+        #timer { color: #EF476F; font-size: 22px; font-weight: 900; display: none; margin-top: 2px; }
         #mode-label { color: #8A84A0; font-size: 10px; font-weight: 700; letter-spacing: 2px; margin-top: 2px; text-transform: uppercase; }
         .score-pop { transform: scale(1.18); color: var(--accent) !important; }
 
-        /* Quests */
         #quests { position: absolute; top: max(70px, calc(var(--safe-top) + 60px)); left: 12px; display: flex; flex-direction: column; gap: 6px; max-width: 170px; }
         .quest-chip { background: rgba(255,255,255,0.75); backdrop-filter: blur(8px); padding: 5px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.8); white-space: nowrap; }
         .quest-chip.done { background: rgba(6,214,160,0.95); color: white; }
 
-        /* Top Right Controls */
         #top-right-controls { position: absolute; top: max(70px, calc(var(--safe-top) + 60px)); right: 12px; display: flex; flex-direction: column; gap: 8px; pointer-events: auto; z-index: 12; }
-        #top-right-controls button { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.75); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.8); font-size: 20px; display: flex; align-items: center; justify-content: center; transition: transform 0.15s, background 0.2s; }
-        #top-right-controls button:active { transform: scale(0.92); background: rgba(255,255,255,0.95); }
+        #top-right-controls button { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.75); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.8); font-size: 20px; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
+        #top-right-controls button:active { transform: scale(0.92); }
         #menu-toggle-btn, #pause-btn { display: none; }
         body.in-game #menu-toggle-btn, body.in-game #pause-btn { display: flex; }
 
-        /* Next Block Indicator */
-        #next-block-ui {
-            position: absolute; bottom: 20px; left: 20px; pointer-events: none;
-            background: rgba(255,255,255,0.7); backdrop-filter: blur(8px);
-            padding: 10px 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.8);
-            display: flex; flex-direction: column; align-items: center; gap: 4px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 10;
-        }
+        #next-block-ui { position: absolute; bottom: 20px; left: 20px; pointer-events: none; background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); padding: 10px 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.8); display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 10; }
         #next-block-ui .label { font-size: 10px; color: #8A84A0; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
         #next-block-emoji { font-size: 32px; line-height: 1; }
 
-        /* Fury Mode Overlay */
         #fury-overlay { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 50px rgba(255, 0, 100, 0.5); opacity: 0; transition: opacity 0.5s; z-index: 5; }
         .fury-active #fury-overlay { opacity: 1; animation: furyPulse 1s infinite alternate; }
         @keyframes furyPulse { from { box-shadow: inset 0 0 30px rgba(255, 0, 100, 0.4); } to { box-shadow: inset 0 0 80px rgba(255, 0, 100, 0.8); } }
 
-        /* Flash Effect */
         #screen-flash { position: absolute; inset: 0; background: white; opacity: 0; pointer-events: none; z-index: 50; transition: opacity 0.1s; }
 
-        /* Popups */
         .popup-text { position: absolute; font-weight: 900; text-align: center; opacity: 0; pointer-events: none; text-transform: uppercase; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-shadow: 0 4px 15px rgba(0,0,0,0.2); left: 50%; transform: translateX(-50%) translateY(20px) scale(0.8); width: 100%; z-index: 15; }
         #perfect-text { color: #06D6A0; font-size: 38px; top: 25%; }
         #combo-text { color: #EF476F; font-size: 55px; top: 12%; }
@@ -81,14 +60,15 @@
         #bonus-text { color: #FF9F1C; font-size: 32px; top: 40%; }
         .show-popup { opacity: 1 !important; transform: translateX(-50%) translateY(0) scale(1.1) !important; }
 
-        /* Screens & Modals */
         .screen { position: absolute; inset: 0; z-index: 100; pointer-events: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center; color: var(--text); }
         #start-screen { background: linear-gradient(135deg, #FDE2E4 0%, #E2ECE9 100%); }
         .modal { inset: auto; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; background: rgba(255,255,255,0.98); padding: 25px 20px; border-radius: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); backdrop-filter: blur(20px); border: 2px solid white; width: 92%; max-width: 380px; max-height: 85vh; overflow-y: auto; z-index: 110; }
         
         #start-screen h1 { font-size: 40px; margin: 0 0 8px 0; font-weight: 900; line-height: 1.1;}
-        #start-screen p { font-size: 16px; color: #8A84A0; margin: 0 0 20px 0; }
-        
+        #start-screen p { font-size: 16px; color: #8A84A0; margin: 0 0 15px 0; }
+
+        #menu-coins { background: #FFF3E0; color: #F57C00; padding: 8px 20px; border-radius: 20px; font-weight: 900; font-size: 20px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(245,124,0,0.2); border: 2px solid #FFE0B2; }
+
         .mode-buttons { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 300px; pointer-events: auto; }
         .mode-btn { background: white; color: var(--text); border: 2px solid transparent; padding: 12px 20px; border-radius: 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: all 0.2s; text-align: left; width: 100%; pointer-events: auto; }
         .mode-btn:active { transform: scale(0.98); }
@@ -102,10 +82,10 @@
         #shop-btn { background: #FFD740 !important; color: #5D576B; }
         #rules-btn { background: #B2EBF2 !important; color: #00838F; }
 
-        /* Game Over & Pause */
         #game-over h1, #pause-screen h1, #rules-screen h1 { margin: 0 0 6px 0; font-size: 26px; color: #EF476F; font-weight: 900;}
         #game-over p, #pause-screen p { margin: 0; font-size: 15px; color: #8A84A0; }
         .final-score { font-size: 60px; color: var(--text); font-weight: 900; margin: 6px 0; }
+        #game-coins-earned { color: #F57C00; font-weight: 900; font-size: 16px; margin: 4px 0 8px 0; }
         
         .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
         .btn-row { display: flex; gap: 10px; }
@@ -114,7 +94,6 @@
         #menu-btn, #pause-menu { background: #8A84A0; color: white; box-shadow: 0 6px 15px rgba(138,132,160,0.3); }
         #challenge-btn { background: #0088cc; color: white; box-shadow: 0 6px 15px rgba(0,136,204,0.3); }
 
-        /* Shop & Rules */
         .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .shop-header h2 { margin: 0; font-size: 22px; font-weight: 900; }
         .coins-balance { background: #FFF3E0; color: #F57C00; padding: 5px 12px; border-radius: 12px; font-weight: 900; font-size: 16px; }
@@ -126,7 +105,6 @@
         .skin-item button.equip { background: #FF9F1C; color: white; }
         .skin-item button.equipped { background: #CBF3F0; color: #2EC4B6; }
 
-        /* Rules Content */
         .rules-content { text-align: left; font-size: 14px; line-height: 1.4; color: var(--text); }
         .rules-content p { margin: 8px 0; }
         .rules-content strong { color: #EF476F; }
@@ -153,6 +131,7 @@
     <div id="score-container">
         <div id="score">0</div>
         <div id="high-score">РЕКОРД: 0</div>
+        <div id="game-coins">🪙 0</div>
         <div id="timer">⏱ 60</div>
         <div id="mode-label">КЛАССИКА</div>
     </div>
@@ -171,9 +150,10 @@
 
 <div id="game-over" class="screen modal">
     <h1>БАШНЯ РУХНУЛА</h1>
-    <div id="new-record" style="color:var(--accent); font-size:16px; font-weight:900; display:none; margin-bottom:6px; text-transform:uppercase; animation:pulse 1s infinite;">🏆 НОВЫЙ РЕКОРД!</div>
+    <div id="new-record" style="color:var(--accent); font-size:16px; font-weight:900; display:none; margin-bottom:6px; text-transform:uppercase;">🏆 НОВЫЙ РЕКОРД!</div>
     <p>Твой результат:</p>
     <div class="final-score" id="final-score-val">0</div>
+    <div id="game-coins-earned"></div>
     <div class="btn-group">
         <div class="btn-row">
             <button id="challenge-btn">📣 ВЫЗВАТЬ ДРУГА</button>
@@ -202,59 +182,35 @@
 </div>
 
 <div id="rules-screen" class="screen modal">
-    <h1>📖 ПРАВИЛА ИГРЫ</h1>
+    <h1>📖 ПРАВИЛА</h1>
     <div class="rules-content">
         <p><strong>🎯 Цель:</strong> Построй самую высокую башню!</p>
-        <p><strong>👆 Управление:</strong> Тапай по экрану, когда движущийся блок находится ровно над башней.</p>
-        <p><strong>✂️ Обрезка:</strong> Если ты промахнулся, блок обрежется. Если промахнулся полностью — игра окончена!</p>
-        
+        <p><strong>👆 Управление:</strong> Тапай, когда движущийся блок ровно над башней.</p>
+        <p><strong>✂️ Обрезка:</strong> Промахнулся — блок обрежется. Полностью мимо — конец!</p>
         <p style="margin-top: 15px;"><strong>🧱 Типы блоков:</strong></p>
-        
-        <div class="rule-block">
-            <span class="emoji">🍕</span>
-            <span><b>Обычный.</b> Дает 1 очко.</span>
-        </div>
-        <div class="rule-block">
-            <span class="emoji">👑</span>
-            <span><b>Золотой.</b> Дает 3 очка за идеальное попадание. Светится!</span>
-        </div>
-        <div class="rule-block">
-            <span class="emoji">💣</span>
-            <span><b>Бомба.</b> Идеальное попадание: +2 очка. Обрезка: -1 очко. Очень контрастный!</span>
-        </div>
-        <div class="rule-block">
-            <span class="emoji">❄️</span>
-            <span><b>Лед.</b> Двигается в 2 раза быстрее. +2 очка за идеал.</span>
-        </div>
-        <div class="rule-block">
-            <span class="emoji">🧱</span>
-            <span><b>Хрупкий.</b> НЕ ставь его идеально! Если попадешь ровно — он разобьется, и ты проиграешь. Специально обрежь его!</span>
-        </div>
-
-        <p style="margin-top: 15px;"><strong>🔥 Режим Ярости:</strong> Сделай 5 идеальных бросков подряд. Блоки замедлятся, а очки удвоятся на 3 хода!</p>
-        <p><strong>📐 Диагональ:</strong> После 30 очков блоки начнут летать по диагонали. Хардкор!</p>
-        <p><strong>🪙 Монеты:</strong> Выполняй ежедневные квесты (слева на экране), чтобы получать монеты и покупать скины в магазине.</p>
+        <div class="rule-block"><span class="emoji">🍕</span><span><b>Обычный.</b> +1 очко.</span></div>
+        <div class="rule-block"><span class="emoji">👑</span><span><b>Золотой.</b> +3 очка за идеал. Ярко светится!</span></div>
+        <div class="rule-block"><span class="emoji">💣</span><span><b>Бомба.</b> Идеал: +2. Обрезка: -1. Красное свечение!</span></div>
+        <div class="rule-block"><span class="emoji">❄️</span><span><b>Лед.</b> x2 скорость. +2 за идеал. Голубое гало.</span></div>
+        <div class="rule-block"><span class="emoji">🧱</span><span><b>Хрупкий.</b> НЕ ставь идеально — разобьётся!</span></div>
+        <p style="margin-top: 15px;"><strong>🔥 Ярость:</strong> 5 идеалов подряд → x2 очки на 3 хода.</p>
+        <p><strong>📐 Диагональ:</strong> После 30 очков блоки летают по диагонали.</p>
+        <p><strong>🪙 Монеты:</strong> Выполняй квесты, чтобы заработать на скины.</p>
     </div>
     <button id="close-rules" style="margin-top:20px; width:100%; padding:15px; border-radius:15px; border:none; background:#8A84A0; color:white; font-weight:900; font-size:16px;">ПОНЯТНО</button>
 </div>
 
 <div id="start-screen" class="screen">
     <h1>🏗️ БАШНЯ<br>ХАЙПА</h1>
-    <p>Строй, зарабатывай монеты, покупай скины!</p>
+    <div id="menu-coins">🪙 0</div>
     <div class="mode-buttons">
         <button class="mode-btn" data-mode="classic" id="btn-classic">
             <span class="mode-icon">🎮</span>
-            <span class="mode-info">
-                <span class="mode-name">Классика</span>
-                <span class="mode-desc">Без ограничений по времени</span>
-            </span>
+            <span class="mode-info"><span class="mode-name">Классика</span><span class="mode-desc">Без ограничений по времени</span></span>
         </button>
         <button class="mode-btn" data-mode="time" id="btn-time">
             <span class="mode-icon">⏱</span>
-            <span class="mode-info">
-                <span class="mode-name">На время</span>
-                <span class="mode-desc">60 сек, +2 сек за идеал</span>
-            </span>
+            <span class="mode-info"><span class="mode-name">На время</span><span class="mode-desc">60 сек, +2 сек за идеал</span></span>
         </button>
     </div>
     <div class="menu-footer">
@@ -266,22 +222,16 @@
 <script type="module">
 import * as THREE from 'three';
 
-// ==========================================
-// TELEGRAM INIT & HAPTICS
-// ==========================================
 const tg = window.Telegram?.WebApp;
-if (tg) {
-    try { tg.ready(); tg.expand(); if (tg.isVersionAtLeast('7.7')) tg.disableVerticalSwipes(); tg.onEvent('viewportChanged', () => { if (typeof onResize === 'function') onResize(); }); } catch (err) {}
-}
+if (tg) { try { tg.ready(); tg.expand(); if (tg.isVersionAtLeast('7.7')) tg.disableVerticalSwipes(); tg.onEvent('viewportChanged', () => { if (typeof onResize === 'function') onResize(); }); } catch (err) {} }
+
 function triggerHaptic(type = 'light') {
     try {
-        if (tg?.HapticFeedback) {
-            if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
-            else if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
-            else tg.HapticFeedback.impactOccurred(type);
-        } else if (navigator.vibrate) { if (type === 'error') navigator.vibrate([100, 50, 100]); else navigator.vibrate(50); }
+        if (tg?.HapticFeedback) { if (type === 'error') tg.HapticFeedback.notificationOccurred('error'); else if (type === 'success') tg.HapticFeedback.notificationOccurred('success'); else tg.HapticFeedback.impactOccurred(type); }
+        else if (navigator.vibrate) { if (type === 'error') navigator.vibrate([100, 50, 100]); else navigator.vibrate(50); }
     } catch (err) {}
 }
+
 function safeClick(el, handler) {
     if (!el) return;
     let lastFire = 0;
@@ -289,15 +239,11 @@ function safeClick(el, handler) {
     el.addEventListener('click', wrapped); el.addEventListener('touchend', wrapped, { passive: true });
 }
 
-// ==========================================
-// НАСТРОЙКИ И КОНТЕНТ
-// ==========================================
-const BLOCK_SIZE = 4, BLOCK_HEIGHT = 1;
-const BASE_SPEED = 0.16, MAX_SPEED = 0.45;
-
-const BASE_COLORS = ['#FF5252', '#FF4081', '#E040FB', '#7C4DFF', '#536DFE', '#448AFF', '#18FFFF', '#64FFDA', '#69F0AE', '#FFD740', '#FFAB40', '#FF6E40'];
+// НАСЫЩЕННЫЕ ЦВЕТА (Material 400-500)
+const BASE_COLORS = ['#FF1744', '#F50057', '#D500F9', '#651FFF', '#2979FF', '#00B0FF', '#00E5FF', '#1DE9B6', '#00E676', '#FFEA00', '#FF9100', '#FF3D00'];
 const BASE_EMOJIS = ['🥟', '🥛', '🌭', '💩', '🤡', '👽', '😭', '🍕', '🍔', '🍩', '🔥', '🥴', '🐷', '🎉', '🦄', '🍦', '🧠', '💀', '🤮', '👻', '🦍', '🍆', '💸'];
-const BASE_TEXTS = ['БОРЩ', 'КЕФИР', 'ПЕЛЬМЕНИ', 'СОСИС', 'КРИНЖ', 'ЖИЗА', 'ПОХУДЕТЬ', 'ТУПЕЕ', 'БАТЯ', 'МАТЬ', 'ХАЙП', 'СКУФ', 'ИПОТЕКА', 'ЗАРПЛАТА', 'ДЕДЛАЙН', 'СПАТЬ', 'ПИВО', 'ДРАТУТИ', 'АЛЛО', 'ПРИВЕТ'];
+const BASE_TEXTS = ['ВАЙБ', 'ИМБА', 'КРИПОВО', 'СОСИС', 'КРИНЖ', 'ЖИЗА', 'СЛЭЙ', 'ТУПЕЕ', 'БАТЯ', 'МАТЬ', 'ХАЙП', 'СКУФ', 'ИПОТЕКА', 'ЧИНАЗЕС', 'ДЕДЛАЙН', 'СПАТЬ', 'ПИВО', 'ДРАТУТИ', 'АЛЛО', 'ПРИВЕТ'];
+
 
 const CAT_EMOJIS = ['🐱', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'];
 const SPACE_EMOJIS = ['🌍', '🌕', '🚀', '👾', '🛸', '⭐', '🪐', '🌌', '☄️', '👨‍🚀'];
@@ -305,31 +251,36 @@ const RETRO_EMOJIS = ['👾', '🕹️', '💾', '📼', '📟', '📺', '🎮',
 
 const SKINS = {
     default: { name: 'Классика', emojis: BASE_EMOJIS, colors: BASE_COLORS, texts: BASE_TEXTS, price: 0 },
-    cats: { name: 'Котики', emojis: CAT_EMOJIS, colors: ['#FFCDD2', '#F8BBD0', '#E1BEE7', '#D1C4E9', '#C5CAE9', '#BBDEFB'], texts: ['МЯУ', 'МУР', 'КОТИК', 'ЛАПКИ', 'ХВОСТ', 'УСЫ', 'КОРМ', 'РЫБА', 'СОН', 'МЯСО'], price: 100 },
-    space: { name: 'Космос', emojis: SPACE_EMOJIS, colors: ['#311B92', '#4527A0', '#512DA8', '#1A237E', '#283593', '#0D47A1'], texts: ['МАРС', 'ЛУНА', 'САТУРН', 'НЛО', 'ЗВЕЗДА', 'КОСМОС', 'ОРБИТА', 'ГРАВИТАЦИЯ', 'ВАКУУМ', 'СКАФАНДР'], price: 250 },
-    retro: { name: 'Ретро 8-бит', emojis: RETRO_EMOJIS, colors: ['#00E676', '#00B248', '#009624', '#69F0AE', '#B9F6CA', '#D500F9'], texts: ['PIXEL', 'GAME', 'RETRO', '8-BIT', 'ATARI', 'NINTENDO', 'SEGA', 'TETRIS', 'JOYSTICK', 'CRT'], price: 500 }
+    cats: { name: 'Котики', emojis: CAT_EMOJIS, colors: ['#FF4081', '#F06292', '#E91E63', '#C2185B', '#AB47BC', '#CE93D8'], texts: ['МЯУ', 'МУР', 'КОТИК', 'ЛАПКИ', 'ХВОСТ', 'УСЫ', 'КОРМ', 'РЫБА', 'СОН', 'МЯСО'], price: 100 },
+    space: { name: 'Космос', emojis: SPACE_EMOJIS, colors: ['#1A237E', '#283593', '#311B92', '#4527A0', '#512DA8', '#01579B'], texts: ['МАРС', 'ЛУНА', 'САТУРН', 'НЛО', 'ЗВЕЗДА', 'КОСМОС', 'ОРБИТА', 'ГРАВИТАЦИЯ', 'ВАКУУМ', 'СКАФАНДР'], price: 250 },
+    retro: { name: 'Ретро 8-бит', emojis: RETRO_EMOJIS, colors: ['#00C853', '#00B248', '#00897B', '#00BFA5', '#76FF03', '#AA00FF'], texts: ['PIXEL', 'GAME', 'RETRO', '8-BIT', 'ATARI', 'NINTENDO', 'SEGA', 'TETRIS', 'JOYSTICK', 'CRT'], price: 500 }
 };
 
+const BIOMES = [{ bg: '#FDE2E4' }, { bg: '#E2ECE9' }, { bg: '#D0E6F9' }, { bg: '#F9E2D0' }, { bg: '#2B2D42' }];
+
+const BLOCK_SIZE = 4, BLOCK_HEIGHT = 1, BASE_SPEED = 0.16, MAX_SPEED = 0.45;
 let scene, camera, renderer, musicGain, windGain;
 let blocks = [], debris = [], confetti = [];
 let currentBlock, nextBlockData, direction = 1;
-let score = 0, combo = 0, coins = parseInt(localStorage.getItem('towerCoins')) || 0;
+let score = 0, combo = 0;
+let coins = parseInt(localStorage.getItem('towerCoins')) || 0;
+let sessionCoins = 0; // монеты за текущую игру
 let highScore = parseInt(localStorage.getItem('towerHighScore')) || 0;
 let currentSkin = localStorage.getItem('towerSkin') || 'default';
 let unlockedSkins = JSON.parse(localStorage.getItem('towerSkins') || '["default"]');
-
 let gameState = 'menu', gameMode = 'classic';
 let movingAxis = 'x', currentSpeed = BASE_SPEED;
-let currentBiomeIndex = 0, targetBgColor = new THREE.Color('#FDE2E4'), shakeIntensity = 0;
+let currentBiomeIndex = 0, targetBgColor = new THREE.Color(BIOMES[0].bg), shakeIntensity = 0;
 let timeLeft = 60, timeAttackTimer = null;
 let showTutorialHint = !localStorage.getItem('towerTutorialShown');
 let isMuted = localStorage.getItem('towerMuted') === 'true';
 let clock = new THREE.Clock();
 let newQuestsTimeout = null, quests = [];
 let isFury = false, furyBlocksLeft = 0;
+let glowTexture = null;
 
 const QUESTS_POOL = [
-    { type: 'perfect', target: 5,  text: '🎯 Точность x5', reward: 20 },
+    { type: 'perfect', target: 5, text: '🎯 Точность x5', reward: 20 },
     { type: 'perfect', target: 10, text: '🎯 Точность x10', reward: 40 },
     { type: 'stack', target: 15, text: '🏗️ Высота 15', reward: 30 },
     { type: 'stack', target: 25, text: '🏗️ Высота 25', reward: 50 },
@@ -339,23 +290,19 @@ const QUESTS_POOL = [
     { type: 'games', target: 3, text: '🎮 3 игры', reward: 15 },
 ];
 
-// ==========================================
-// UI ELEMENTS
-// ==========================================
 const $ = id => document.getElementById(id);
-const scoreEl = $('score'), highScoreEl = $('high-score');
+const scoreEl = $('score'), highScoreEl = $('high-score'), gameCoinsEl = $('game-coins');
 const gameOverEl = $('game-over'), pauseScreen = $('pause-screen'), shopScreen = $('shop-screen'), rulesScreen = $('rules-screen'), startScreen = $('start-screen');
 const perfectText = $('perfect-text'), comboText = $('combo-text'), milestoneText = $('milestone-text'), bonusText = $('bonus-text');
-const finalScoreVal = $('final-score-val'), timerEl = $('timer'), modeLabel = $('mode-label');
+const finalScoreVal = $('final-score-val'), gameCoinsEarnedEl = $('game-coins-earned'), timerEl = $('timer'), modeLabel = $('mode-label');
 const questsEl = $('quests'), muteBtn = $('mute-btn'), pauseBtn = $('pause-btn'), menuToggleBtn = $('menu-toggle-btn');
 const tutorialEl = $('tutorial'), nextBlockEmoji = $('next-block-emoji');
-const screenFlash = $('screen-flash'), coinsBalanceEl = $('coins-balance'), skinListEl = $('skin-list');
-highScoreEl.innerText = `РЕКОРД: ${highScore}`;
-coinsBalanceEl.innerText = `🪙 ${coins}`;
+const screenFlash = $('screen-flash'), coinsBalanceEl = $('coins-balance'), skinListEl = $('skin-list'), menuCoinsEl = $('menu-coins');
 
-// ==========================================
-// AUDIO ENGINE
-// ==========================================
+highScoreEl.innerText = `РЕКОРД: ${highScore}`;
+updateCoinUI();
+
+// AUDIO
 let audioCtx = null, noiseBuffer = null;
 let musicPlaying = false, musicBeat = 0, musicTempo = 110, musicTimeout = null;
 
@@ -372,7 +319,7 @@ function initAudio() {
             const windOsc = audioCtx.createBufferSource(); windOsc.buffer = noiseBuffer; windOsc.loop = true;
             const windFilter = audioCtx.createBiquadFilter(); windFilter.type = 'lowpass'; windFilter.frequency.value = 400;
             windOsc.connect(windFilter); windFilter.connect(windGain); windOsc.start();
-        } catch(e) { console.warn('Audio init failed:', e); }
+        } catch(e) {}
     }
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
 }
@@ -402,6 +349,7 @@ function playSound(type, level = 0) {
         else if (type === 'gameover') { tone(200, 80, 'triangle', 0.8, 0.25); tone(150, 60, 'triangle', 0.8, 0.18, 0.1); }
         else if (type === 'quest') { tone(659.25, null, 'sine', 0.2, 0.2); tone(783.99, null, 'sine', 0.3, 0.2, 0.1); tone(1046.5, null, 'sine', 0.4, 0.2, 0.2); }
         else if (type === 'fury') { tone(440, 880, 'sawtooth', 0.5, 0.15); tone(554, 1108, 'sawtooth', 0.5, 0.1); }
+        else if (type === 'coin') { tone(1200, null, 'sine', 0.15, 0.2); tone(1600, null, 'sine', 0.2, 0.15, 0.05); }
     } catch(e) {}
 }
 
@@ -421,9 +369,7 @@ function musicTick() {
 function startMusic() { if (musicPlaying || isMuted) return; initAudio(); if (!audioCtx) return; musicPlaying = true; musicBeat = 0; musicTempo = 110; musicTick(); }
 function stopMusic() { musicPlaying = false; if (musicTimeout) { clearTimeout(musicTimeout); musicTimeout = null; } }
 
-// ==========================================
-// QUEST & SHOP LOGIC
-// ==========================================
+// QUESTS
 function generateNewQuests() {
     const pool = [...QUESTS_POOL]; quests = [];
     for (let i = 0; i < 3; i++) {
@@ -440,6 +386,7 @@ function loadQuests() {
     else { generateNewQuests(); }
 }
 function saveQuests() { localStorage.setItem('towerQuests', JSON.stringify({ date: new Date().toDateString(), quests })); }
+
 function updateQuest(type, value, isMax = false) {
     let changed = false;
     quests.forEach(q => {
@@ -447,8 +394,13 @@ function updateQuest(type, value, isMax = false) {
         if (isMax) { if (value > q.current) { q.current = Math.min(q.target, value); changed = true; } }
         else { q.current = Math.min(q.target, q.current + value); changed = true; }
         if (q.current >= q.target && !q.done) {
-            q.done = true; coins += q.reward; localStorage.setItem('towerCoins', coins);
-            playSound('quest'); showPopup(bonusText, `🎁 +${q.reward} 🪙`, 1200); triggerHaptic('success');
+            q.done = true;
+            coins += q.reward;
+            sessionCoins += q.reward;
+            localStorage.setItem('towerCoins', coins);
+            playSound('quest');
+            showPopup(bonusText, `🎁 +${q.reward} 🪙`, 1500);
+            triggerHaptic('success');
             updateCoinUI();
         }
     });
@@ -469,20 +421,23 @@ function renderQuests() {
         questsEl.appendChild(chip);
     });
 }
-function updateCoinUI() { coinsBalanceEl.innerText = `🪙 ${coins}`; }
+function updateCoinUI() {
+    coinsBalanceEl.innerText = `🪙 ${coins}`;
+    menuCoinsEl.innerText = `🪙 ${coins}`;
+    gameCoinsEl.innerText = `🪙 ${coins}`;
+}
 
+// SHOP
 function renderShop() {
     skinListEl.innerHTML = '';
     for (const [key, skin] of Object.entries(SKINS)) {
         const isUnlocked = unlockedSkins.includes(key);
         const isEquipped = currentSkin === key;
         const div = document.createElement('div'); div.className = 'skin-item';
-        
         let btnHtml = '';
         if (isEquipped) btnHtml = `<button class="equipped">НАДЕТО</button>`;
         else if (isUnlocked) btnHtml = `<button class="equip" data-skin="${key}">НАДЕТЬ</button>`;
         else btnHtml = `<button class="buy" data-skin="${key}" data-price="${skin.price}">КУПИТЬ (${skin.price} 🪙)</button>`;
-
         div.innerHTML = `<div class="skin-info"><span>${skin.emojis[0]}</span> ${skin.name}</div> ${btnHtml}`;
         skinListEl.appendChild(div);
     }
@@ -505,11 +460,7 @@ function renderShop() {
     });
 }
 
-// ==========================================
-// THREE.JS INIT
-// ==========================================
-const BIOMES = [{ bg: '#FDE2E4' }, { bg: '#E2ECE9' }, { bg: '#D0E6F9' }, { bg: '#F9E2D0' }, { bg: '#2B2D42' }];
-
+// THREE.JS
 function initThree() {
     scene = new THREE.Scene(); scene.background = new THREE.Color(BIOMES[0].bg); scene.fog = new THREE.FogExp2(BIOMES[0].bg, 0.02);
     const aspect = window.innerWidth / window.innerHeight; const d = 10;
@@ -519,12 +470,14 @@ function initThree() {
     renderer.setSize(window.innerWidth, window.innerHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 0.9));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0); dirLight.position.set(10, 20, 10);
+    // Меньше ambient, чтобы цвета были ярче и насыщеннее
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x222222, 0.6));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2); dirLight.position.set(10, 20, 10);
     dirLight.castShadow = true; dirLight.shadow.camera.left = -20; dirLight.shadow.camera.right = 20;
     dirLight.shadow.camera.top = 20; dirLight.shadow.camera.bottom = -20;
     dirLight.shadow.mapSize.set(1024, 1024); scene.add(dirLight);
     window.addEventListener('resize', onResize);
+    glowTexture = createGlowTexture();
 }
 
 function disposeMesh(mesh) {
@@ -534,39 +487,84 @@ function disposeMesh(mesh) {
     else if (mesh.material) { if (mesh.material.map) mesh.material.map.dispose(); mesh.material.dispose(); }
 }
 
-// ==========================================
-// TEXTURES & BLOCKS
-// ==========================================
+function createGlowTexture() {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const ctx = c.getContext('2d');
+    const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    grad.addColorStop(0, 'rgba(255,255,255,1)');
+    grad.addColorStop(0.3, 'rgba(255,255,255,0.6)');
+    grad.addColorStop(0.7, 'rgba(255,255,255,0.15)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(c);
+}
+
+// TEXTURES
 function createTexture(emoji, text, color, type = 'normal') {
     const c = document.createElement('canvas'); c.width = c.height = 512;
     const ctx = c.getContext('2d');
     
     if (type === 'golden') {
-        const grad = ctx.createLinearGradient(0, 0, 512, 512); grad.addColorStop(0, '#FFD700'); grad.addColorStop(0.5, '#FFF8DC'); grad.addColorStop(1, '#B8860B');
-        ctx.fillStyle = grad; ctx.fillRect(0,0,512,512); ctx.strokeStyle = '#DAA520'; ctx.lineWidth = 25; ctx.strokeRect(12.5, 12.5, 487, 487);
+        // Яркий металлический градиент
+        const grad = ctx.createLinearGradient(0, 0, 512, 512);
+        grad.addColorStop(0, '#FFE082'); grad.addColorStop(0.3, '#FFD700'); grad.addColorStop(0.6, '#FFC107'); grad.addColorStop(1, '#FF8F00');
+        ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
+        // Блики
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(150,0); ctx.lineTo(0,150); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(512,512); ctx.lineTo(362,512); ctx.lineTo(512,362); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#8D6E00'; ctx.lineWidth = 20; ctx.strokeRect(10,10,492,492);
     } else if (type === 'bomb') {
-        ctx.fillStyle = '#111'; ctx.fillRect(0,0,512,512); ctx.save(); ctx.beginPath(); ctx.rect(0,0,512,512); ctx.clip();
-        ctx.strokeStyle = '#FF0000'; ctx.lineWidth = 60; for(let i=-512; i<1024; i+=120) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i+512,512); ctx.stroke(); }
-        ctx.restore(); ctx.strokeStyle = '#FF0000'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
+        // Контрастный чёрно-красный
+        ctx.fillStyle = '#1A0000'; ctx.fillRect(0,0,512,512);
+        ctx.save(); ctx.beginPath(); ctx.rect(0,0,512,512); ctx.clip();
+        ctx.strokeStyle = '#FF1744'; ctx.lineWidth = 80;
+        for(let i=-512; i<1024; i+=140) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i+512,512); ctx.stroke(); }
+        ctx.restore();
+        ctx.strokeStyle = '#FF5252'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
+        // Подсветка изнутри
+        ctx.fillStyle = 'rgba(255,82,82,0.3)'; ctx.fillRect(0,0,512,512);
     } else if (type === 'ice') {
-        ctx.fillStyle = '#00E5FF'; ctx.fillRect(0,0,512,512); ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 8;
-        for(let i=0; i<8; i++) { ctx.beginPath(); ctx.moveTo(Math.random()*512, 0); ctx.lineTo(Math.random()*512, 512); ctx.stroke(); }
-        ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
-    } else if (type === 'crumble') {
-        ctx.fillStyle = '#795548'; ctx.fillRect(0,0,512,512); ctx.strokeStyle = '#3E2723'; ctx.lineWidth = 15;
+        // Яркий голубой
+        ctx.fillStyle = '#00E5FF'; ctx.fillRect(0,0,512,512);
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(200,0); ctx.lineTo(0,200); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.lineWidth = 10;
         for(let i=0; i<10; i++) { ctx.beginPath(); ctx.moveTo(Math.random()*512, Math.random()*512); ctx.lineTo(Math.random()*512, Math.random()*512); ctx.stroke(); }
-        ctx.strokeStyle = '#5D4037'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
+        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
+    } else if (type === 'crumble') {
+        ctx.fillStyle = '#5D4037'; ctx.fillRect(0,0,512,512);
+        ctx.strokeStyle = '#1A0A00'; ctx.lineWidth = 20;
+        for(let i=0; i<15; i++) { ctx.beginPath(); ctx.moveTo(Math.random()*512, Math.random()*512); ctx.lineTo(Math.random()*512, Math.random()*512); ctx.stroke(); }
+        ctx.strokeStyle = '#8D6E63'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
     } else {
-        ctx.fillStyle = color; ctx.fillRect(0,0,512,512); ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 20; ctx.strokeRect(10,10,492,492);
+        // Обычные блоки — насыщенный цвет
+        ctx.fillStyle = color; ctx.fillRect(0,0,512,512);
+        // Тонкая тёмная рамка для контраста
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 15; ctx.strokeRect(7.5,7.5,497,497);
+        // Лёгкий градиент для объёма
+        const grad = ctx.createLinearGradient(0,0,0,512);
+        grad.addColorStop(0, 'rgba(255,255,255,0.15)');
+        grad.addColorStop(1, 'rgba(0,0,0,0.15)');
+        ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
     }
 
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.beginPath(); ctx.arc(256, 220, 150, 0, Math.PI*2); ctx.fill();
-    ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 10; ctx.shadowOffsetX = 4; ctx.shadowOffsetY = 4;
-    ctx.font = '220px Arial'; ctx.fillText(emoji, 256, 210);
-    ctx.fillStyle = type === 'golden' ? '#5C4033' : '#ffffff'; ctx.font = '900 72px "Rubik", sans-serif';
-    ctx.lineWidth = 10; ctx.strokeStyle = type === 'golden' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.2)';
-    ctx.strokeText(text, 256, 430); ctx.fillText(text, 256, 430);
+    // Убираем размывающий белый круг — только лёгкая подложка
+    if (type !== 'golden') {
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.beginPath(); ctx.arc(256, 220, 155, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 15; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 5;
+    ctx.font = '230px Arial'; ctx.fillText(emoji, 256, 210);
+    
+    // Жирный контрастный текст
+    ctx.fillStyle = type === 'golden' ? '#3E2723' : '#FFFFFF';
+    ctx.font = '900 80px "Rubik", sans-serif';
+    ctx.lineWidth = 14;
+    ctx.strokeStyle = type === 'golden' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)';
+    ctx.strokeText(text, 256, 430); 
+    ctx.fillText(text, 256, 430);
     
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -576,14 +574,50 @@ function createTexture(emoji, text, color, type = 'normal') {
 
 function createBlockMesh(w, h, d, color, emoji, text, type = 'normal') {
     const geo = new THREE.BoxGeometry(w, h, d); const tex = createTexture(emoji, text, color, type);
-    let sideOpts = { map: tex, roughness: 0.7 }; let topOpts = { color: color, roughness: 0.8 };
-    if (type === 'golden') { sideOpts.emissive = new THREE.Color(0xFFAA00); sideOpts.emissiveIntensity = 0.4; topOpts.emissive = new THREE.Color(0xFFAA00); topOpts.emissiveIntensity = 0.4; topOpts.color = new THREE.Color(0xFFD700); }
-    else if (type === 'bomb') { sideOpts.emissive = new THREE.Color(0x550000); sideOpts.emissiveIntensity = 0.5; topOpts.emissive = new THREE.Color(0x550000); topOpts.emissiveIntensity = 0.5; topOpts.color = new THREE.Color(0x222222); }
-    else if (type === 'ice') { sideOpts.transparent = true; sideOpts.opacity = 0.85; topOpts.transparent = true; topOpts.opacity = 0.85; sideOpts.emissive = new THREE.Color(0x00FFFF); sideOpts.emissiveIntensity = 0.2; topOpts.emissive = new THREE.Color(0x00FFFF); topOpts.emissiveIntensity = 0.2; }
-    else if (type === 'crumble') { sideOpts.emissive = new THREE.Color(0x3E2723); sideOpts.emissiveIntensity = 0.3; topOpts.emissive = new THREE.Color(0x3E2723); topOpts.emissiveIntensity = 0.3; }
+    // Пониженная roughness = насыщенный цвет
+    let sideOpts = { map: tex, roughness: 0.45, metalness: 0.1 };
+    let topOpts = { color: color, roughness: 0.5 };
+
+    if (type === 'golden') {
+        sideOpts.emissive = new THREE.Color(0xFFB300); sideOpts.emissiveIntensity = 0.5;
+        topOpts.emissive = new THREE.Color(0xFFB300); topOpts.emissiveIntensity = 0.5;
+        topOpts.color = new THREE.Color(0xFFC107);
+    } else if (type === 'bomb') {
+        sideOpts.emissive = new THREE.Color(0xFF0000); sideOpts.emissiveIntensity = 0.6;
+        topOpts.emissive = new THREE.Color(0xFF0000); topOpts.emissiveIntensity = 0.6;
+        topOpts.color = new THREE.Color(0x330000);
+    } else if (type === 'ice') {
+        sideOpts.transparent = true; sideOpts.opacity = 0.9;
+        topOpts.transparent = true; topOpts.opacity = 0.9;
+        sideOpts.emissive = new THREE.Color(0x00E5FF); sideOpts.emissiveIntensity = 0.5;
+        topOpts.emissive = new THREE.Color(0x00E5FF); topOpts.emissiveIntensity = 0.5;
+    } else if (type === 'crumble') {
+        sideOpts.emissive = new THREE.Color(0x5D4037); sideOpts.emissiveIntensity = 0.3;
+        topOpts.emissive = new THREE.Color(0x5D4037); topOpts.emissiveIntensity = 0.3;
+    } else {
+        // Лёгкое свечение обычных блоков для насыщенности
+        sideOpts.emissive = new THREE.Color(color); sideOpts.emissiveIntensity = 0.12;
+        topOpts.emissive = new THREE.Color(color); topOpts.emissiveIntensity = 0.12;
+    }
+
     const side = new THREE.MeshStandardMaterial(sideOpts); const top = new THREE.MeshStandardMaterial(topOpts);
     const mesh = new THREE.Mesh(geo, [side, side, top, top, side, side]);
     mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.blockType = type;
+
+    // ДОБАВЛЯЕМ ГАЛО для спецблоков
+    if (type !== 'normal' && type !== 'crumble') {
+        const glowColors = { golden: 0xFFD700, bomb: 0xFF1744, ice: 0x00E5FF };
+        const spriteMat = new THREE.SpriteMaterial({
+            map: glowTexture, color: glowColors[type], transparent: true,
+            blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.7
+        });
+        const sprite = new THREE.Sprite(spriteMat);
+        sprite.scale.set(5.5, 5.5, 1);
+        sprite.renderOrder = -1;
+        mesh.add(sprite);
+        mesh.userData.glowSprite = sprite;
+    }
+
     return mesh;
 }
 
@@ -603,10 +637,10 @@ function getBlockVisuals(type, skinKey) {
     const rndEmoji = skin.emojis[Math.floor(Math.random() * skin.emojis.length)];
     const rndText = skin.texts[Math.floor(Math.random() * skin.texts.length)];
     switch(type) {
-        case 'golden': return { color: '#FFD700', emoji: '👑', text: 'ЗОЛОТО' };
-        case 'bomb': return { color: '#2C3E50', emoji: '💣', text: 'БУМ' };
+        case 'golden': return { color: '#FFC107', emoji: '👑', text: 'ЗОЛОТО' };
+        case 'bomb': return { color: '#FF1744', emoji: '💣', text: 'БУМ' };
         case 'ice': return { color: '#00E5FF', emoji: '❄️', text: 'ЛЕД' };
-        case 'crumble': return { color: '#795548', emoji: '🧱', text: 'ХРУПКИЙ' };
+        case 'crumble': return { color: '#5D4037', emoji: '🧱', text: 'ХРУПКИЙ' };
         default: return { color: rndColor, emoji: rndEmoji, text: rndText };
     }
 }
@@ -619,7 +653,7 @@ function generateNextBlockData() {
 
 function createBaseBlock() {
     nextBlockData = generateNextBlockData();
-    const base = createBlockMesh(BLOCK_SIZE, BLOCK_HEIGHT, BLOCK_SIZE, '#FF5252', '🏗️', 'БАЗА', 'normal');
+    const base = createBlockMesh(BLOCK_SIZE, BLOCK_HEIGHT, BLOCK_SIZE, '#FF1744', '🏗️', 'БАЗА', 'normal');
     base.position.set(0, 0, 0); scene.add(base); blocks.push(base);
     spawnNewBlock();
 }
@@ -642,9 +676,7 @@ function spawnNewBlock() {
     scene.add(currentBlock);
 }
 
-// ==========================================
 // GAME LOGIC
-// ==========================================
 function showPopup(el, text, duration = 800) { if (!el) return; if (text) el.innerText = text; el.classList.add('show-popup'); setTimeout(() => el.classList.remove('show-popup'), duration); }
 function flashScreen() { if(screenFlash){screenFlash.style.opacity = '0.6'; setTimeout(() => screenFlash.style.opacity = '0', 100);} }
 
@@ -671,8 +703,8 @@ function dropBlock() {
         if (currentBlock.userData.blockType === 'golden') points = 3;
         else if (currentBlock.userData.blockType === 'bomb') points = 2;
         else if (currentBlock.userData.blockType === 'ice') points = 2;
-        if (currentBlock.userData.blockType === 'bomb') { playSound('bomb'); showPopup(bonusText, '💥 БУМ! +2', 1000); shakeIntensity = 0.5; updateQuest('bomb', 1); }
-        else { playSound('perfect', combo); if (currentBlock.userData.blockType === 'golden') { showPopup(bonusText, '👑 ЗОЛОТО +3', 900); updateQuest('golden', 1); } else if (currentBlock.userData.blockType === 'ice') { showPopup(bonusText, '❄️ ЛЕД +2', 900); updateQuest('ice', 1); } else showPopup(perfectText, null, 600); }
+        if (currentBlock.userData.blockType === 'bomb') { playSound('bomb'); showPopup(bonusText, '💥 БУМ! +2', 1000); shakeIntensity = 0.5; }
+        else { playSound('perfect', combo); if (currentBlock.userData.blockType === 'golden') showPopup(bonusText, '👑 ЗОЛОТО +3', 900); else if (currentBlock.userData.blockType === 'ice') showPopup(bonusText, '❄️ ЛЕД +2', 900); else showPopup(perfectText, null, 600); }
         flashScreen();
         if (gameMode === 'time') { timeLeft += 2; updateTimerDisplay(); }
         if (combo >= 5 && !isFury) { isFury = true; furyBlocksLeft = 3; document.body.classList.add('fury-active'); playSound('fury'); showPopup(milestoneText, '🔥 ЯРОСТЬ! x2 ОЧКИ', 2000); }
@@ -692,15 +724,16 @@ function dropBlock() {
         createDebris(cutDiff, origSize, newSize, cutAxis, top);
         const w = cutAxis === 'x' ? newSize : currentBlock.userData.w;
         const d = cutAxis === 'z' ? newSize : currentBlock.userData.d;
+        const prevColor = currentBlock.userData.color, prevEmoji = currentBlock.userData.emoji, prevText = currentBlock.userData.text;
         scene.remove(currentBlock); disposeMesh(currentBlock);
-        const nm = createBlockMesh(w, BLOCK_HEIGHT, d, currentBlock.userData.color, currentBlock.userData.emoji, currentBlock.userData.text, 'normal');
+        const nm = createBlockMesh(w, BLOCK_HEIGHT, d, prevColor, prevEmoji, prevText, 'normal');
         let targetX = top.position.x, targetZ = top.position.z;
         if (cutAxis === 'x') targetX = top.position.x + (diffX > 0 ? (origSize-newSize)/2 : -(origSize-newSize)/2);
         if (cutAxis === 'z') targetZ = top.position.z + (diffZ > 0 ? (origSize-newSize)/2 : -(origSize-newSize)/2);
         nm.position.set(targetX, currentBlock.position.y, targetZ);
-        nm.userData = { ...currentBlock.userData, w, d, blockType: 'normal', squash: 1 };
+        nm.userData = { w, d, color: prevColor, emoji: prevEmoji, text: prevText, blockType: 'normal', squash: 1 };
         currentBlock = nm;
-        if (currentBlock.userData.blockType !== 'bomb') score++;
+        if (nm.userData.blockType !== 'bomb') score++;
     }
     currentBlock.userData.squash = 0;
     if (isFury) { furyBlocksLeft--; if (furyBlocksLeft <= 0) { isFury = false; document.body.classList.remove('fury-active'); } }
@@ -713,11 +746,7 @@ function dropBlock() {
 function updateScoreUI() { scoreEl.innerText = score; scoreEl.classList.add('score-pop'); setTimeout(() => scoreEl.classList.remove('score-pop'), 150); updateQuest('stack', score, true); }
 function checkMilestone(oldScore, newScore) { const oldM = Math.floor(oldScore / 10); const newM = Math.floor(newScore / 10); if (newM > oldM) triggerMilestone(newM * 10); }
 
-// ==========================================
-// EFFECTS
-// ==========================================
 function triggerPerfectParticles() {
-    currentBlock.material.forEach(m => { if (m.emissive) { m.emissive.setHex(0x444444); setTimeout(() => m.emissive.setHex(0x000000), 200); } });
     for (let i = 0; i < 12; i++) {
         const p = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), new THREE.MeshBasicMaterial({ color: 0x06D6A0 }));
         p.position.copy(currentBlock.position); p.position.y += 0.5;
@@ -727,7 +756,7 @@ function triggerPerfectParticles() {
 }
 function spawnBombParticles() {
     for (let i = 0; i < 20; i++) {
-        const p = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshBasicMaterial({ color: i % 2 ? 0xFF0000 : 0xFFAA00 }));
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshBasicMaterial({ color: i % 2 ? 0xFF1744 : 0xFFC107 }));
         p.position.copy(currentBlock.position);
         p.userData = { vel: new THREE.Vector3((Math.random()-0.5)*1.2, Math.random()*0.8+0.3, (Math.random()-0.5)*1.2), life: 1.0 };
         scene.add(p); debris.push(p);
@@ -740,7 +769,7 @@ function triggerMilestone(points) {
     showPopup(milestoneText, `${points} ЭТАЖЕЙ!`, 1500);
     const topPos = blocks[blocks.length - 1].position;
     for (let i = 0; i < 40; i++) {
-        const piece = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.02), new THREE.MeshBasicMaterial({ color: SKINS[currentSkin].colors[Math.floor(Math.random() * SKINS[currentSkin].colors.length)] }));
+        const piece = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.02), new THREE.MeshBasicMaterial({ color: BASE_COLORS[Math.floor(Math.random() * BASE_COLORS.length)] }));
         piece.position.set(topPos.x + (Math.random()-0.5)*2, topPos.y + 2, topPos.z + (Math.random()-0.5)*2);
         const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 0.3 + 0.1;
         piece.userData = { vel: new THREE.Vector3(Math.cos(angle)*speed, Math.random()*0.6+0.3, Math.sin(angle)*speed), rotSpeed: new THREE.Vector3(Math.random()*0.3, Math.random()*0.3, Math.random()*0.3) };
@@ -750,7 +779,7 @@ function triggerMilestone(points) {
 function createDebris(diff, origSize, newSize, axis, top) {
     const dSize = origSize - newSize;
     const geo = new THREE.BoxGeometry(axis === 'x' ? dSize : currentBlock.userData.w, BLOCK_HEIGHT, axis === 'z' ? dSize : currentBlock.userData.d);
-    const mat = new THREE.MeshStandardMaterial({ color: currentBlock.userData.color, roughness: 0.9 });
+    const mat = new THREE.MeshStandardMaterial({ color: currentBlock.userData.color, roughness: 0.5 });
     const mesh = new THREE.Mesh(geo, mat); mesh.castShadow = true;
     let px = currentBlock.position.x, pz = currentBlock.position.z;
     if (axis === 'x') px = diff > 0 ? top.position.x + (origSize/2) + (dSize/2) : top.position.x - (origSize/2) - (dSize/2);
@@ -760,9 +789,6 @@ function createDebris(diff, origSize, newSize, axis, top) {
     scene.add(mesh); debris.push(mesh);
 }
 
-// ==========================================
-// CAMERA & LOOP
-// ==========================================
 function updateCamera() {
     if (!blocks.length) return;
     const top = blocks[blocks.length - 1];
@@ -781,6 +807,19 @@ function animate() {
     } else if (windGain && audioCtx) {
         try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); } catch(e) {}
     }
+
+    // Пульсация свечения ВСЕХ спецблоков (даже размещённых)
+    blocks.forEach(b => {
+        const bt = b.userData.blockType;
+        if (bt === 'golden' || bt === 'bomb' || bt === 'ice') {
+            const pulse = bt === 'bomb' ? (0.5 + Math.sin(time * 6) * 0.3) : (0.4 + Math.sin(time * 4) * 0.2);
+            b.material.forEach(m => { if (m.emissive) m.emissiveIntensity = pulse; });
+            if (b.userData.glowSprite) {
+                b.userData.glowSprite.material.opacity = 0.4 + Math.sin(time * 4) * 0.3;
+            }
+        }
+    });
+
     if (gameState === 'playing' && currentBlock?.userData.moving) {
         let speed = currentSpeed;
         if (isFury) speed *= 0.6;
@@ -793,13 +832,6 @@ function animate() {
             currentBlock.position.x += delta; currentBlock.position.z += delta * 0.8;
             if (currentBlock.position.x > 15 || currentBlock.position.z > 15) direction = -1;
             if (currentBlock.position.x < -15 || currentBlock.position.z < -15) direction = 1;
-        }
-        if (currentBlock.userData.blockType === 'golden' || currentBlock.userData.blockType === 'bomb') {
-            const pulse = 0.3 + (Math.sin(time * 8) * 0.2);
-            currentBlock.material.forEach(m => { if (m.emissive) m.emissiveIntensity = pulse; });
-        } else if (currentBlock.userData.blockType === 'ice') {
-            const pulse = 0.85 + (Math.sin(time * 4) * 0.1);
-            currentBlock.material.forEach(m => { if (m.transparent) m.opacity = pulse; });
         }
     }
     blocks.forEach(b => {
@@ -828,13 +860,11 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// ==========================================
-// STATE MANAGEMENT
-// ==========================================
 function clearScene() {
     blocks.forEach(b => { scene.remove(b); disposeMesh(b); }); debris.forEach(d => { scene.remove(d); disposeMesh(d); }); confetti.forEach(c => { scene.remove(c); disposeMesh(c); });
     blocks = []; debris = []; confetti = []; currentBlock = null;
 }
+
 function saveCurrentScoreIfNeeded() {
     if (score > 0 && score > highScore) { highScore = score; localStorage.setItem('towerHighScore', highScore); highScoreEl.innerText = `РЕКОРД: ${highScore}`; }
 }
@@ -843,7 +873,7 @@ function startGame(mode) {
     try {
         initAudio(); stopMusic(); clearScene();
         if (mode) gameMode = mode;
-        score = 0; combo = 0; isFury = false; furyBlocksLeft = 0; document.body.classList.remove('fury-active');
+        score = 0; combo = 0; sessionCoins = 0; isFury = false; furyBlocksLeft = 0; document.body.classList.remove('fury-active');
         scoreEl.innerText = score; direction = 1; currentSpeed = BASE_SPEED; musicTempo = 110; gameState = 'playing'; currentBiomeIndex = 0;
         targetBgColor.set(BIOMES[0].bg); scene.background.set(BIOMES[0].bg); document.body.style.background = BIOMES[0].bg;
         document.body.classList.add('in-game');
@@ -859,10 +889,7 @@ function startGame(mode) {
         createBaseBlock(); startMusic(); updateQuest('games', 1);
     } catch(err) {
         console.error('startGame error:', err);
-        gameState = 'menu';
-        startScreen.style.display = 'flex';
-        gameOverEl.style.display = 'none';
-        pauseScreen.style.display = 'none';
+        gameState = 'menu'; startScreen.style.display = 'flex'; gameOverEl.style.display = 'none'; pauseScreen.style.display = 'none';
     }
 }
 
@@ -883,6 +910,13 @@ function triggerGameOver() {
     document.body.classList.remove('in-game', 'fury-active');
     if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
     finalScoreVal.innerText = score;
+    // Показываем заработанные монеты
+    if (sessionCoins > 0) {
+        gameCoinsEarnedEl.innerText = `+${sessionCoins} 🪙 за квесты`;
+        gameCoinsEarnedEl.style.display = 'block';
+    } else {
+        gameCoinsEarnedEl.style.display = 'none';
+    }
     setTimeout(() => { gameOverEl.style.display = 'flex'; }, 800);
     triggerHaptic('error');
 }
@@ -901,9 +935,6 @@ function togglePause() {
     }
 }
 
-// ==========================================
-// INPUT & BUTTONS
-// ==========================================
 function handleInput(e) {
     const target = e.target;
     if (target && target.closest && target.closest('button, .mode-btn, #top-right-controls, .modal')) return;
@@ -916,13 +947,12 @@ function handleInput(e) {
 window.addEventListener('mousedown', handleInput);
 window.addEventListener('touchstart', handleInput, { passive: false });
 
-// ПРЯМЫЕ ОБРАБОТЧИКИ ДЛЯ КНОПОК РЕЖИМА (самый надёжный способ)
 function bindModeButton(id, mode) {
     const btn = document.getElementById(id);
     if (!btn) return;
     const handle = (e) => {
         if (e) { if (e.cancelable !== false) e.stopPropagation(); e.preventDefault(); }
-        if (gameState === 'playing') return; // уже играем, не перезапускаем
+        if (gameState === 'playing') return;
         startGame(mode);
     };
     btn.addEventListener('click', handle);
@@ -931,7 +961,6 @@ function bindModeButton(id, mode) {
 bindModeButton('btn-classic', 'classic');
 bindModeButton('btn-time', 'time');
 
-// Остальные кнопки через safeClick
 safeClick($('restart-btn'), () => startGame());
 safeClick($('menu-btn'), () => goToMenu());
 safeClick(pauseBtn, () => togglePause());
@@ -939,7 +968,7 @@ safeClick($('pause-resume'), () => togglePause());
 safeClick($('pause-menu'), () => goToMenu());
 safeClick(menuToggleBtn, () => { if (gameState === 'playing' || gameState === 'paused') goToMenu(); });
 safeClick($('shop-btn'), () => { renderShop(); shopScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
-safeClick($('close-shop'), () => { shopScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
+safeClick($('close-shop'), () => { shopScreen.style.display = 'none'; startScreen.style.display = 'flex'; updateCoinUI(); });
 safeClick($('rules-btn'), () => { rulesScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
 safeClick($('close-rules'), () => { rulesScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
 safeClick($('challenge-btn'), () => {
