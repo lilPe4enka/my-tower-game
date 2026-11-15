@@ -15,10 +15,10 @@
 </head>
 <body>
 
-<!-- Плавающая кнопка настроек (вне экранов) -->
+<!-- Плавающая кнопка настроек -->
 <button id="settings-btn" class="floating-settings" title="Настройки">⚙️</button>
 
-<!-- ==== UI LAYER ==== -->
+<!-- ==== UI LAYER (в игре) ==== -->
 <div id="ui-layer">
     <div id="quests"></div>
     <div id="top-right-controls">
@@ -83,8 +83,15 @@
         <h2>🛍️ Магазин</h2>
         <div class="coins-balance" id="coins-balance">🪙 0</div>
     </div>
+    <div class="shop-tabs">
+        <button class="shop-tab active" data-tab="skins">Скины</button>
+        <button class="shop-tab" data-tab="colors">Цвета</button>
+        <button class="shop-tab" data-tab="backgrounds">Фоны</button>
+    </div>
     <div class="shop-progress" id="shop-progress">Скины: 1/8</div>
     <div class="skin-list" id="skin-list"></div>
+    <div class="customize-list" id="colors-list" style="display:none"></div>
+    <div class="customize-list" id="backgrounds-list" style="display:none"></div>
     <button id="close-shop" class="close-modal-btn">ЗАКРЫТЬ</button>
 </div>
 
@@ -113,7 +120,11 @@
         <div class="rule-block"><span class="emoji">💰</span><span><b>Множитель</b> — x2 монет.</span></div>
         <p style="margin-top: 15px;"><strong>🔥 Ярость:</strong> 5 идеалов → x2 очки.</p>
         <p><strong>📐 Диагональ:</strong> После 30 очков блоки летают по диагонали.</p>
-        <p><strong>🏅 Уровни:</strong> XP за игру. Каждые 10 уровней — сундук!</p>
+        <p><strong>🏅 Уровни:</strong> XP за игру. Каждые 5 уровней — сундук!</p>
+        <p><strong>🎯 Челлендж дня:</strong> Уникальное испытание каждый день. Общее для всех!</p>
+        <p><strong>🎮 Доп. режимы:</strong> Precision (без обрезки), Speedrun (30 сек), Endless (блоки растут), Mirror (обратное управление).</p>
+        <p><strong>🍂 Сезоны:</strong> Бонусы к монетам и XP зависят от времени года.</p>
+        <p><strong>🎨 Кастомизация:</strong> Скины, палитры цветов и фоны в магазине.</p>
     </div>
     <button id="close-rules" class="close-modal-btn">ПОНЯТНО</button>
 </div>
@@ -128,10 +139,11 @@
     <button id="close-achievements" class="close-modal-btn">ЗАКРЫТЬ</button>
 </div>
 
-<!-- ==== LEADERBOARD ==== -->
+<!-- ==== LEADERBOARD + STATS ==== -->
 <div id="leaderboard-screen" class="screen modal">
     <h1>👑 Зал Славы</h1>
-    <p class="lb-sub">Твои лучшие результаты</p>
+    <div class="stats-grid" id="stats-grid"></div>
+    <p class="lb-sub">🏆 Твои лучшие результаты</p>
     <div class="lb-list" id="lb-list"></div>
     <button id="close-leaderboard" class="close-modal-btn">ЗАКРЫТЬ</button>
 </div>
@@ -194,29 +206,35 @@
 <!-- ==== START SCREEN ==== -->
 <div id="start-screen" class="screen">
     <div class="start-content">
+        <div id="season-pill" class="pill pill-season" style="display:none;">❄️ Зима +20% 🪙</div>
         <h1 class="start-title">
             <span class="title-emoji">🏗️</span>
             <span class="title-text">БАШНЯ<br>ХАЙПА</span>
         </h1>
-        
         <div id="start-top-info" class="top-info">
             <div id="menu-coins" class="pill pill-coin">🪙 0</div>
             <div id="menu-streak" class="pill pill-streak hidden">🔥 0</div>
         </div>
-        
         <div id="menu-level-box" class="level-box">
             <div class="level-badge">🏅 LVL <span id="menu-level-num">1</span></div>
             <div class="xp-bar"><div class="xp-fill" id="menu-xp-fill"></div></div>
             <div class="xp-text" id="menu-xp-text">0 / 100 XP</div>
         </div>
-        
         <div id="chest-btn-container" style="display:none;">
             <button id="chest-btn" class="chest-open-btn">
                 📦 Открыть сундуки
                 <span id="chest-count-badge" class="chest-badge">0</span>
             </button>
         </div>
-        
+        <div id="daily-challenge-banner" class="daily-challenge-banner">
+            <div class="daily-icon" id="daily-icon">🎯</div>
+            <div class="daily-info">
+                <div class="daily-label">ЧЕЛЛЕНДЖ ДНЯ</div>
+                <div class="daily-name" id="daily-name">...</div>
+                <div class="daily-desc" id="daily-desc">...</div>
+            </div>
+            <button id="daily-play-btn" class="daily-play-btn">ИГРАТЬ</button>
+        </div>
         <div class="mode-buttons">
             <button class="mode-btn" data-mode="classic" id="btn-classic">
                 <span class="mode-icon">🎮</span>
@@ -235,7 +253,24 @@
                 <span class="mode-arrow">›</span>
             </button>
         </div>
-        
+        <div class="more-modes">
+            <button class="mini-mode-btn" data-mode="precision">
+                <span class="mm-icon">🎯</span>
+                <span class="mm-name">Precision</span>
+            </button>
+            <button class="mini-mode-btn" data-mode="speedrun">
+                <span class="mm-icon">⚡</span>
+                <span class="mm-name">Speedrun</span>
+            </button>
+            <button class="mini-mode-btn" data-mode="endless">
+                <span class="mm-icon">♾️</span>
+                <span class="mm-name">Endless</span>
+            </button>
+            <button class="mini-mode-btn" data-mode="mirror">
+                <span class="mm-icon">🪞</span>
+                <span class="mm-name">Mirror</span>
+            </button>
+        </div>
         <div class="menu-footer">
             <button id="shop-btn" class="footer-btn">
                 <span class="footer-icon">🛍️</span>
@@ -256,6 +291,9 @@
         </div>
     </div>
 </div>
+
+<!-- ==== VICTORY CROWN ==== -->
+<div id="victory-crown">👑</div>
 
 <script type="module" src="game.js"></script>
 </body>
