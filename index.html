@@ -15,10 +15,8 @@
 </head>
 <body>
 
-<!-- Плавающая кнопка настроек -->
 <button id="settings-btn" class="floating-settings" title="Настройки">⚙️</button>
 
-<!-- ==== UI LAYER (в игре) ==== -->
 <div id="ui-layer">
     <div id="quests"></div>
     <div id="top-right-controls">
@@ -36,7 +34,7 @@
     <div id="active-powerups"></div>
     <div id="next-block-ui">
         <div class="label">Следующий</div>
-        <div id="next-block-emoji">🍕</div>
+        <div id="next-block-preview"></div>
     </div>
     <div id="fury-overlay"></div>
     <div id="combo-text" class="popup-text">КОМБО x2</div>
@@ -50,160 +48,181 @@
 
 <div id="screen-flash"></div>
 
-<!-- ==== GAME OVER ==== -->
 <div id="game-over" class="screen modal">
-    <h1>БАШНЯ РУХНУЛА</h1>
-    <div id="new-record">🏆 НОВЫЙ РЕКОРД!</div>
-    <p>Твой результат:</p>
-    <div class="final-score" id="final-score-val">0</div>
-    <div id="game-coins-earned"></div>
-    <div id="game-xp-earned"></div>
-    <div class="btn-group">
-        <div class="btn-row">
-            <button id="challenge-btn" class="btn-secondary">📣 ВЫЗВАТЬ ДРУГА</button>
-            <button id="restart-btn" class="btn-primary">🔄 ЗАНОВО</button>
+    <div class="modal-content">
+        <h1>БАШНЯ РУХНУЛА</h1>
+        <div id="new-record">🏆 НОВЫЙ РЕКОРД!</div>
+        <p>Твой результат:</p>
+        <div class="final-score" id="final-score-val">0</div>
+        <div id="game-coins-earned"></div>
+        <div id="game-xp-earned"></div>
+        <div class="btn-group">
+            <div class="btn-row">
+                <button id="challenge-btn" class="btn-secondary">📣 ВЫЗВАТЬ ДРУГА</button>
+                <button id="restart-btn" class="btn-primary">🔄 ЗАНОВО</button>
+            </div>
+            <button id="menu-btn" class="btn-ghost">🏠 В ГЛАВНОЕ МЕНЮ</button>
         </div>
-        <button id="menu-btn" class="btn-ghost">🏠 В ГЛАВНОЕ МЕНЮ</button>
     </div>
 </div>
 
-<!-- ==== PAUSE ==== -->
 <div id="pause-screen" class="screen modal">
-    <h1>ПАУЗА</h1>
-    <p>Отдохни немного</p>
-    <div class="btn-group">
-        <button id="pause-resume" class="btn-primary">▶ ПРОДОЛЖИТЬ</button>
-        <button id="pause-menu" class="btn-ghost">🏠 В МЕНЮ</button>
+    <div class="modal-content">
+        <h1>ПАУЗА</h1>
+        <p>Отдохни немного</p>
+        <div class="btn-group">
+            <button id="pause-resume" class="btn-primary">▶ ПРОДОЛЖИТЬ</button>
+            <button id="pause-menu" class="btn-ghost">🏠 В МЕНЮ</button>
+        </div>
     </div>
 </div>
 
-<!-- ==== SHOP ==== -->
 <div id="shop-screen" class="screen modal">
-    <div class="shop-header">
-        <h2>🛍️ Магазин</h2>
-        <div class="coins-balance" id="coins-balance">🪙 0</div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🛍️ Магазин</h2>
+            <div class="coins-balance" id="coins-balance">🪙 0</div>
+        </div>
+        <div class="shop-tabs">
+            <button class="shop-tab active" data-tab="skins">Скины</button>
+            <button class="shop-tab" data-tab="colors">Цвета</button>
+            <button class="shop-tab" data-tab="backgrounds">Фоны</button>
+        </div>
+        <div class="shop-progress" id="shop-progress">Скины: 1/8</div>
+        <div class="skin-list" id="skin-list"></div>
+        <div class="customize-list" id="colors-list" style="display:none"></div>
+        <div class="customize-list" id="backgrounds-list" style="display:none"></div>
+        <button id="close-shop" class="close-modal-btn">ЗАКРЫТЬ</button>
     </div>
-    <div class="shop-tabs">
-        <button class="shop-tab active" data-tab="skins">Скины</button>
-        <button class="shop-tab" data-tab="colors">Цвета</button>
-        <button class="shop-tab" data-tab="backgrounds">Фоны</button>
-    </div>
-    <div class="shop-progress" id="shop-progress">Скины: 1/8</div>
-    <div class="skin-list" id="skin-list"></div>
-    <div class="customize-list" id="colors-list" style="display:none"></div>
-    <div class="customize-list" id="backgrounds-list" style="display:none"></div>
-    <button id="close-shop" class="close-modal-btn">ЗАКРЫТЬ</button>
 </div>
 
-<!-- ==== RULES ==== -->
 <div id="rules-screen" class="screen modal">
-    <h1>📖 ПРАВИЛА</h1>
-    <div class="rules-content">
-        <p><strong>🎯 Цель:</strong> Построй самую высокую башню!</p>
-        <p><strong>👆 Управление:</strong> Тапай, когда движущийся блок ровно над башней.</p>
-        <p><strong>✂️ Обрезка:</strong> Промахнулся — блок обрежется. Полностью мимо — конец!</p>
-        <p><strong>🪙 Монеты:</strong> +1 за блок, +1 за идеал, бонус за спецблоки и майлстоуны.</p>
-        <p style="margin-top: 15px;"><strong>🧱 Типы блоков:</strong></p>
-        <div class="rule-block"><span class="emoji">🍕</span><span><b>Обычный.</b> +1 очко.</span></div>
-        <div class="rule-block"><span class="emoji">👑</span><span><b>Золотой.</b> +3 очка. Светится.</span></div>
-        <div class="rule-block"><span class="emoji">💣</span><span><b>Бомба.</b> Идеал: +2. Обрезка: -1.</span></div>
-        <div class="rule-block"><span class="emoji">❄️</span><span><b>Лед.</b> x2 скорость. +2.</span></div>
-        <div class="rule-block"><span class="emoji">🧱</span><span><b>Хрупкий.</b> НЕ ставь идеально!</span></div>
-        <p style="margin-top: 15px;"><strong>🌟 Секретные блоки (редкие):</strong></p>
-        <div class="rule-block"><span class="emoji">🌈</span><span><b>Радужный.</b> +10 очков.</span></div>
-        <div class="rule-block"><span class="emoji">🐉</span><span><b>Дракон.</b> +10 очков и огонь!</span></div>
-        <div class="rule-block"><span class="emoji">💎</span><span><b>Алмаз.</b> Прощает любую неточность. +5.</span></div>
-        <p style="margin-top: 15px;"><strong>⚡ Способности:</strong></p>
-        <div class="rule-block"><span class="emoji">🧲</span><span><b>Магнит</b> — 1 блок идеально.</span></div>
-        <div class="rule-block"><span class="emoji">❄️</span><span><b>Заморозка</b> — медленно 10 сек.</span></div>
-        <div class="rule-block"><span class="emoji">👻</span><span><b>Призрак</b> — прощает 1 промах.</span></div>
-        <div class="rule-block"><span class="emoji">💰</span><span><b>Множитель</b> — x2 монет.</span></div>
-        <p style="margin-top: 15px;"><strong>🔥 Ярость:</strong> 5 идеалов → x2 очки.</p>
-        <p><strong>📐 Диагональ:</strong> После 30 очков блоки летают по диагонали.</p>
-        <p><strong>🏅 Уровни:</strong> XP за игру. Каждые 5 уровней — сундук!</p>
-        <p><strong>🎯 Челлендж дня:</strong> Уникальное испытание каждый день. Общее для всех!</p>
-        <p><strong>🎮 Доп. режимы:</strong> Precision (без обрезки), Speedrun (30 сек), Endless (блоки растут), Mirror (обратное управление).</p>
-        <p><strong>🍂 Сезоны:</strong> Бонусы к монетам и XP зависят от времени года.</p>
-        <p><strong>🎨 Кастомизация:</strong> Скины, палитры цветов и фоны в магазине.</p>
+    <div class="modal-content">
+        <h1>📖 ПРАВИЛА</h1>
+        <div class="rules-content">
+            <p><strong>🎯 Цель:</strong> Построй самую высокую башню!</p>
+            <p><strong>👆 Управление:</strong> Тапай, когда движущийся блок ровно над башней.</p>
+            <p><strong>✂️ Обрезка:</strong> Промахнулся — блок обрежется. Полностью мимо — конец!</p>
+            <p><strong>🪙 Монеты:</strong> +1 за блок, +1 за идеал, бонус за спецблоки и майлстоуны.</p>
+            <p style="margin-top: 15px;"><strong>🧱 Типы блоков:</strong></p>
+            <div class="rule-block"><span class="rule-swatch" style="background:linear-gradient(135deg,#FF1744,#FF6B9D)"></span><span><b>Обычный.</b> +1 очко.</span></div>
+            <div class="rule-block"><span class="rule-swatch" style="background:linear-gradient(135deg,#FFE082,#FFC107)"></span><span><b>Золотой.</b> +3 очка. Светится.</span></div>
+            <div class="rule-block"><span class="rule-swatch" style="background:repeating-linear-gradient(45deg,#111,#111 8px,#FF1744 8px,#FF1744 16px)"></span><span><b>Бомба.</b> Идеал: +2. Обрезка: -1.</span></div>
+            <div class="rule-block"><span class="rule-swatch" style="background:linear-gradient(135deg,#00E5FF,#4FC3F7)"></span><span><b>Лед.</b> x2 скорость. +2.</span></div>
+            <div class="rule-block"><span class="rule-swatch" style="background:repeating-linear-gradient(45deg,#5D4037,#5D4037 6px,#3E2723 6px,#3E2723 12px)"></span><span><b>Хрупкий.</b> НЕ ставь идеально!</span></div>
+            <p style="margin-top: 15px;"><strong>🌟 Секретные блоки:</strong></p>
+            <div class="rule-block"><span class="rule-swatch" style="background:linear-gradient(90deg,#FF1744,#FF9100,#FFEA00,#00E676,#00B0FF,#651FFF,#D500F9)"></span><span><b>Радужный.</b> +10 очков.</span></div>
+            <div class="rule-block"><span class="rule-swatch" style="background:linear-gradient(135deg,#FFEB3B,#B71C1C)"></span><span><b>Дракон.</b> +10 очков и огонь!</span></div>
+            <div class="rule-block"><span class="rule-swatch" style="background:linear-gradient(135deg,#E0F7FA,#006064)"></span><span><b>Алмаз.</b> Прощает любую неточность. +5.</span></div>
+            <p style="margin-top: 15px;"><strong>⚡ Способности:</strong></p>
+            <div class="rule-block"><span class="rule-icon">🧲</span><span><b>Магнит</b> — 1 блок идеально.</span></div>
+            <div class="rule-block"><span class="rule-icon">❄️</span><span><b>Заморозка</b> — медленно 10 сек.</span></div>
+            <div class="rule-block"><span class="rule-icon">👻</span><span><b>Призрак</b> — прощает 1 промах.</span></div>
+            <div class="rule-block"><span class="rule-icon">💰</span><span><b>Множитель</b> — x2 монет.</span></div>
+            <p style="margin-top: 15px;"><strong>🔥 Ярость:</strong> 5 идеалов → x2 очки.</p>
+            <p><strong>📐 Диагональ:</strong> После 30 очков блоки летают по диагонали.</p>
+            <p><strong>🏅 Уровни:</strong> XP за игру. Каждые 5 уровней — сундук!</p>
+            <p><strong>🎯 Челлендж дня:</strong> Уникальное испытание каждый день.</p>
+            <p><strong>🎮 Доп. режимы:</strong> Precision, Speedrun, Endless, Mirror.</p>
+            <p><strong>🍂 Сезоны:</strong> Бонусы к монетам и XP зависят от времени года.</p>
+            <p><strong>🎨 Кастомизация:</strong> Скины, палитры и фоны.</p>
+        </div>
+        <button id="close-rules" class="close-modal-btn">ПОНЯТНО</button>
     </div>
-    <button id="close-rules" class="close-modal-btn">ПОНЯТНО</button>
 </div>
 
-<!-- ==== ACHIEVEMENTS ==== -->
 <div id="achievements-screen" class="screen modal">
-    <div class="shop-header">
-        <h2>🏆 Ачивки</h2>
-        <div class="coins-balance" id="ach-progress">0/22</div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🏆 Ачивки</h2>
+            <div class="coins-balance" id="ach-progress">0/22</div>
+        </div>
+        <div class="ach-list" id="ach-list"></div>
+        <button id="close-achievements" class="close-modal-btn">ЗАКРЫТЬ</button>
     </div>
-    <div class="ach-list" id="ach-list"></div>
-    <button id="close-achievements" class="close-modal-btn">ЗАКРЫТЬ</button>
 </div>
 
-<!-- ==== LEADERBOARD + STATS ==== -->
 <div id="leaderboard-screen" class="screen modal">
-    <h1>👑 Зал Славы</h1>
-    <div class="stats-grid" id="stats-grid"></div>
-    <p class="lb-sub">🏆 Твои лучшие результаты</p>
-    <div class="lb-list" id="lb-list"></div>
-    <button id="close-leaderboard" class="close-modal-btn">ЗАКРЫТЬ</button>
+    <div class="modal-content">
+        <h1>👑 Личная статистика</h1>
+        <div class="lb-mode-tabs" id="lb-mode-tabs">
+            <button class="lb-mode-tab active" data-mode="classic">🎮 Обычный</button>
+            <button class="lb-mode-tab" data-mode="time">⏱ На время</button>
+            <button class="lb-mode-tab" data-mode="precision">🎯 Precision</button>
+            <button class="lb-mode-tab" data-mode="speedrun">⚡ Speedrun</button>
+            <button class="lb-mode-tab" data-mode="endless">♾️ Endless</button>
+            <button class="lb-mode-tab" data-mode="mirror">🪞 Mirror</button>
+        </div>
+        <div class="lb-best">
+            <div class="lb-best-label">🏆 Лучший результат</div>
+            <div class="lb-best-value" id="lb-best-value">0</div>
+            <div class="lb-best-sub" id="lb-best-sub">Играй, чтобы установить рекорд</div>
+        </div>
+        <div class="lb-attempts-header">📋 Последние 5 попыток</div>
+        <div class="lb-attempts" id="lb-attempts"></div>
+        <button id="close-leaderboard" class="close-modal-btn">ЗАКРЫТЬ</button>
+    </div>
 </div>
 
-<!-- ==== SETTINGS ==== -->
 <div id="settings-screen" class="screen modal">
-    <h1>⚙️ Настройки</h1>
-    <div class="settings-list">
-        <div class="setting-row">
-            <span class="setting-label">🎵 Музыка</span>
-            <button class="toggle-btn" id="toggle-music" data-on="true">ВКЛ</button>
+    <div class="modal-content">
+        <h1>⚙️ Настройки</h1>
+        <div class="settings-list">
+            <div class="setting-row">
+                <span class="setting-label">🎵 Музыка</span>
+                <button class="toggle-btn" id="toggle-music" data-on="true">ВКЛ</button>
+            </div>
+            <div class="setting-row">
+                <span class="setting-label">🔊 Звуки</span>
+                <button class="toggle-btn" id="toggle-sfx" data-on="true">ВКЛ</button>
+            </div>
+            <div class="setting-row">
+                <span class="setting-label">📳 Вибрация</span>
+                <button class="toggle-btn" id="toggle-haptics" data-on="true">ВКЛ</button>
+            </div>
         </div>
-        <div class="setting-row">
-            <span class="setting-label">🔊 Звуки</span>
-            <button class="toggle-btn" id="toggle-sfx" data-on="true">ВКЛ</button>
-        </div>
-        <div class="setting-row">
-            <span class="setting-label">📳 Вибрация</span>
-            <button class="toggle-btn" id="toggle-haptics" data-on="true">ВКЛ</button>
-        </div>
+        <button id="close-settings" class="close-modal-btn">ЗАКРЫТЬ</button>
     </div>
-    <button id="close-settings" class="close-modal-btn">ЗАКРЫТЬ</button>
 </div>
 
-<!-- ==== DAILY ==== -->
 <div id="daily-screen" class="screen modal">
-    <h1>🎁 Ежедневный вход!</h1>
-    <p id="daily-streak-text">День 1</p>
-    <div class="daily-coins" id="daily-coins-reward">+10 🪙</div>
-    <p class="daily-sub" id="daily-sub-text">Заходи каждый день — награда растёт!</p>
-    <button id="claim-daily" class="claim-btn">ЗАБРАТЬ</button>
+    <div class="modal-content">
+        <h1>🎁 Ежедневный вход!</h1>
+        <p id="daily-streak-text">День 1</p>
+        <div class="daily-coins" id="daily-coins-reward">+10 🪙</div>
+        <p class="daily-sub" id="daily-sub-text">Заходи каждый день — награда растёт!</p>
+        <button id="claim-daily" class="claim-btn">ЗАБРАТЬ</button>
+    </div>
 </div>
 
-<!-- ==== POWERUPS ==== -->
 <div id="powerups-screen" class="screen modal">
-    <h1>⚡ Способности</h1>
-    <p class="lb-sub">Выбери бустеры на эту игру</p>
-    <div class="powerup-list" id="powerup-list"></div>
-    <div class="btn-group">
-        <button id="start-with-powerups" class="btn-primary">🚀 НАЧАТЬ ИГРУ</button>
-        <button id="close-powerups" class="close-modal-btn">ОТМЕНА</button>
+    <div class="modal-content">
+        <h1>⚡ Способности</h1>
+        <p class="lb-sub">Выбери бустеры на эту игру</p>
+        <div class="powerup-list" id="powerup-list"></div>
+        <div class="btn-group">
+            <button id="start-with-powerups" class="btn-primary">🚀 НАЧАТЬ ИГРУ</button>
+            <button id="close-powerups" class="close-modal-btn">ОТМЕНА</button>
+        </div>
     </div>
 </div>
 
-<!-- ==== CHEST ==== -->
 <div id="chest-screen" class="screen modal">
-    <h1 id="chest-title">🎁 Сундук!</h1>
-    <p class="lb-sub" id="chest-sub">Что же внутри?</p>
-    <div class="chest-container">
-        <div class="chest-icon" id="chest-icon">📦</div>
-        <div class="chest-rays" id="chest-rays"></div>
-        <div class="chest-reward" id="chest-reward"></div>
-    </div>
-    <div class="btn-group">
-        <button id="open-chest-btn" class="claim-btn">ОТКРЫТЬ</button>
-        <button id="close-chest" class="close-modal-btn" style="display:none">ЗАБРАТЬ</button>
+    <div class="modal-content">
+        <h1 id="chest-title">🎁 Сундук!</h1>
+        <p class="lb-sub" id="chest-sub">Что же внутри?</p>
+        <div class="chest-container">
+            <div class="chest-icon" id="chest-icon">📦</div>
+            <div class="chest-rays" id="chest-rays"></div>
+            <div class="chest-reward" id="chest-reward"></div>
+        </div>
+        <div class="btn-group">
+            <button id="open-chest-btn" class="claim-btn">ОТКРЫТЬ</button>
+            <button id="close-chest" class="close-modal-btn" style="display:none">ЗАБРАТЬ</button>
+        </div>
     </div>
 </div>
 
-<!-- ==== START SCREEN ==== -->
 <div id="start-screen" class="screen">
     <div class="start-content">
         <div id="season-pill" class="pill pill-season" style="display:none;">❄️ Зима +20% 🪙</div>
@@ -292,7 +311,6 @@
     </div>
 </div>
 
-<!-- ==== VICTORY CROWN ==== -->
 <div id="victory-crown">👑</div>
 
 <script type="module" src="game.js"></script>
