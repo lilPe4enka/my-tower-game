@@ -38,24 +38,26 @@ function safeClick(el, handler) {
     el.addEventListener('touchend', wrapped, { passive: true });
 }
 
+// ============ ХЕЛПЕРЫ МОДАЛОК ============
+function showModal(el) { if (el) el.classList.add('open'); }
+function hideModal(el) { if (el) el.classList.remove('open'); }
+
 // ============ КОНТЕНТ ============
 const BASE_COLORS = ['#FF1744', '#F50057', '#D500F9', '#651FFF', '#2979FF', '#00B0FF', '#00E5FF', '#1DE9B6', '#00E676', '#FFEA00', '#FF9100', '#FF3D00'];
-const BASE_EMOJIS = ['🥟', '🥛', '🌭', '💩', '🤡', '👽', '😭', '🍕', '🍔', '🍩', '🔥', '🥴', '🐷', '🎉', '🦄', '🍦', '🧠', '💀', '🤮', '👻', '🦍', '🍆', '💸'];
-const BASE_TEXTS = ['БОРЩ', 'КЕФИР', 'ПЕЛЬМЕНИ', 'СОСИС', 'КРИНЖ', 'ЖИЗА', 'ПОХУДЕТЬ', 'ТУПЕЕ', 'БАТЯ', 'МАТЬ', 'ХАЙП', 'СКУФ', 'ИПОТЕКА', 'ЗАРПЛАТА', 'ДЕДЛАЙН', 'СПАТЬ', 'ПИВО', 'ДРАТУТИ', 'АЛЛО', 'ПРИВЕТ'];
 
 const SKINS = {
-    default: { name: 'Классика', price: 0, emojis: BASE_EMOJIS, colors: BASE_COLORS, texts: BASE_TEXTS },
-    food: { name: 'Еда', price: 80, emojis: ['🍕','🍔','🍟','🌮','🌯','🍣','🍤','🍜','🍝','🍞','🥐','🧀','🥞','🥓','🍗','🍖','🥩','🍰','🧁','🍫'], colors: ['#FF5722','#FF9800','#FFC107','#E64A19','#FF6F00','#D84315','#F57C00'], texts: ['ПИЦЦА','БУРГЕР','СУШИ','ПАСТА','ХЛЕБ','СЫР','БЕКОН','КУРИЦА','СТЕЙК','ШАУРМА','БЛИНЫ','КОТЛЕТА','КЕКС','ШОКОЛАД'] },
-    cats: { name: 'Котики', price: 120, emojis: ['🐱','😺','😸','😹','😻','😼','😽','🙀','😿','😾'], colors: ['#FF4081','#F06292','#E91E63','#C2185B','#AB47BC','#CE93D8'], texts: ['МЯУ','МУР','КОТИК','ЛАПКИ','ХВОСТ','УСЫ','КОРМ','РЫБА','СОН','МЯСО'] },
-    animals: { name: 'Звери', price: 180, emojis: ['🦁','🐯','🐻','🐼','🐨','🐸','🐵','🦊','🐺','🦝','🦔','🐹','🐰','🐿️','🦇','🐗','🦒','🦓'], colors: ['#8D6E63','#6D4C41','#795548','#5D4037','#8BC34A','#689F38','#558B2F'], texts: ['ЛЕВ','ТИГР','МЕДВЕДЬ','ПАНДА','ЛИСА','ВОЛК','ЗАЯЦ','ЁЖ','СЛОН','ЖИРАФ','КРОКОДИЛ','ЗЕБРА','ОБЕЗЬЯНА'] },
-    space: { name: 'Космос', price: 250, emojis: ['🌍','🌕','🚀','👾','🛸','⭐','🪐','🌌','☄️','👨‍🚀','🌟','✨','💫','🌠'], colors: ['#1A237E','#283593','#311B92','#4527A0','#512DA8','#01579B','#0D47A1'], texts: ['МАРС','ЛУНА','САТУРН','НЛО','ЗВЕЗДА','КОСМОС','ОРБИТА','ГРАВИТАЦИЯ','ВАКУУМ','СКАФАНДР','ГАЛАКТИКА'] },
-    ocean: { name: 'Океан', price: 320, emojis: ['🐠','🐟','🐡','🦈','🐬','🐳','🐋','🦑','🐙','🦀','🦞','🦐','🐚','🌊'], colors: ['#0288D1','#0277BD','#01579B','#006064','#00838F','#0097A7','#26C6DA'], texts: ['РЫБА','АКУЛА','ДЕЛЬФИН','КИТ','ОСЬМИНОГ','КРАБ','РАК','КРЕВЕТКА','РАКОВИНА','ВОЛНА','МЕДУЗА','КОРАЛЛ'] },
-    retro: { name: 'Ретро 8-бит', price: 400, emojis: ['👾','🕹️','💾','📼','📟','📺','🎮','🖥️','💿','🎧'], colors: ['#00C853','#00B248','#00897B','#00BFA5','#76FF03','#AA00FF'], texts: ['PIXEL','GAME','RETRO','8-BIT','ATARI','NINTENDO','SEGA','TETRIS','JOYSTICK','CRT','ARCADE'] },
-    neon: { name: 'Неон', price: 500, emojis: ['💎','🔮','🎆','🎇','✨','💫','🌟','⚡','🌈','🎊'], colors: ['#E91E63','#9C27B0','#3F51B5','#00BCD4','#8BC34A','#FFEB3B','#FF4081','#00E5FF'], texts: ['НЕОН','СВЕТ','ЛАЗЕР','РАДУГА','БЛЕСК','СИЯНИЕ','ФЛЭШ','ИМПУЛЬС','ЭНЕРГИЯ','ВСПЫШКА'] },
-    ice: { name: 'Лёд', price: 200, emojis: ['❄️','🧊','⛷️','🏔️','🌨️','🌬️','💧','🥶','🐧','🐻‍❄️'], colors: ['#81D4FA','#4FC3F7','#29B6F6','#03A9F4','#039BE5','#0288D1'], texts: ['ЛЁД','СНЕГ','МОРОЗ','СТУЖА','ХОЛОД','ЗИМА','СНЕЖИНКА','ВЬЮГА','ГРАД','НАСТ'], modifiers: { speedMult: 1.3, coinMult: 1.2 } },
-    stone: { name: 'Камень', price: 200, emojis: ['🪨','🏔️','⛰️','🗿','💎','🧱','🏛️','⚓','🔩','🪙'], colors: ['#757575','#616161','#424242','#546E7A','#455A64','#37474F'], texts: ['КАМЕНЬ','ГРАНИТ','БАЗАЛЬТ','РУДА','МРАМОР','КИРПИЧ','СТЕНА','СКАЛА','ГЛЫБА','ОПОРА'], modifiers: { speedMult: 0.85, scoreMult: 1.2 } },
-    fire: { name: 'Огонь', price: 250, emojis: ['🔥','🌋','☄️','💥','🎇','🚒','🌶️','⚡','🎆','🌟'], colors: ['#FF5722','#FF3D00','#E64A19','#F4511E','#D84315','#BF360C'], texts: ['ОГОНЬ','ПЛАМЯ','ЖАР','ИСКРА','ВЗРЫВ','ВУЛКАН','ЛАВА','ФАКЕЛ','ПОЖАР','БУРЯ'], modifiers: { fireChance: 0.05 } },
-    legend: { name: 'Легенда', price: 999999, notBuyable: true, emojis: ['👑','🏆','🥇','⭐','💫','✨','🌟','💎','🎖️','🏅'], colors: ['#FFD700','#FFA000','#FF6F00','#F57C00','#FFEB3B','#FFC107'], texts: ['ЛЕГЕНДА','ЧЕМПИОН','БОСС','ТОП','КРАШ','ФЛЕКС','ГИГАЧАД','ХАЙП','ИМБА','ОГОНЬ'] }
+    default: { name: 'Классика', price: 0, colors: BASE_COLORS },
+    food: { name: 'Еда', price: 80, colors: ['#FF5722','#FF9800','#FFC107','#E64A19','#FF6F00','#D84315','#F57C00'] },
+    cats: { name: 'Котики', price: 120, colors: ['#FF4081','#F06292','#E91E63','#C2185B','#AB47BC','#CE93D8'] },
+    animals: { name: 'Звери', price: 180, colors: ['#8D6E63','#6D4C41','#795548','#5D4037','#8BC34A','#689F38','#558B2F'] },
+    space: { name: 'Космос', price: 250, colors: ['#1A237E','#283593','#311B92','#4527A0','#512DA8','#01579B','#0D47A1'] },
+    ocean: { name: 'Океан', price: 320, colors: ['#0288D1','#0277BD','#01579B','#006064','#00838F','#0097A7','#26C6DA'] },
+    retro: { name: 'Ретро 8-бит', price: 400, colors: ['#00C853','#00B248','#00897B','#00BFA5','#76FF03','#AA00FF'] },
+    neon: { name: 'Неон', price: 500, colors: ['#E91E63','#9C27B0','#3F51B5','#00BCD4','#8BC34A','#FFEB3B','#FF4081','#00E5FF'] },
+    ice: { name: 'Лёд', price: 200, colors: ['#81D4FA','#4FC3F7','#29B6F6','#03A9F4','#039BE5','#0288D1'], modifiers: { speedMult: 1.3, coinMult: 1.2 } },
+    stone: { name: 'Камень', price: 200, colors: ['#757575','#616161','#424242','#546E7A','#455A64','#37474F'], modifiers: { speedMult: 0.85, scoreMult: 1.2 } },
+    fire: { name: 'Огонь', price: 250, colors: ['#FF5722','#FF3D00','#E64A19','#F4511E','#D84315','#BF360C'], modifiers: { fireChance: 0.05 } },
+    legend: { name: 'Легенда', price: 999999, notBuyable: true, colors: ['#FFD700','#FFA000','#FF6F00','#F57C00','#FFEB3B','#FFC107'] }
 };
 
 const PALETTES = {
@@ -64,6 +66,14 @@ const PALETTES = {
     neon: { name: 'Неон', price: 80, colors: ['#FF0080', '#FF8C00', '#FFD700', '#00FF88', '#00D4FF', '#0080FF', '#8B00FF', '#FF00FF'] },
     dark: { name: 'Тёмная', price: 100, colors: ['#212121', '#424242', '#616161', '#1A237E', '#283593', '#4A148C', '#311B92', '#004D40'] },
     rainbow: { name: 'Радуга', price: 150, colors: ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3', '#FF1493'] },
+    sunset: { name: 'Закат', price: 90, colors: ['#FF6B6B', '#FF8A65', '#FFB74D', '#FFD54F', '#FFA726', '#F4511E', '#D84315', '#FF7043'] },
+    forest: { name: 'Лес', price: 70, colors: ['#2E7D32', '#388E3C', '#43A047', '#4CAF50', '#66BB6A', '#81C784', '#A5D6A7', '#1B5E20'] },
+    candy: { name: 'Конфета', price: 110, colors: ['#F48FB1', '#F06292', '#BA68C8', '#CE93D8', '#E1BEE7', '#F8BBD0', '#FCE4EC', '#FFCDD2'] },
+    mono: { name: 'Монохром', price: 60, colors: ['#F5F5F5', '#E0E0E0', '#BDBDBD', '#9E9E9E', '#757575', '#616161', '#424242', '#212121'] },
+    cyber: { name: 'Кибер', price: 130, colors: ['#00E5FF', '#00B8D4', '#0091EA', '#6200EA', '#AA00FF', '#D500F9', '#FF1744', '#F50057'] },
+    winter: { name: 'Зима', price: 100, colors: ['#E1F5FE', '#B3E5FC', '#81D4FA', '#4FC3F7', '#29B6F6', '#03A9F4', '#0288D1', '#01579B'] },
+    fire_pal: { name: 'Пламя', price: 120, colors: ['#FFEB3B', '#FFC107', '#FF9800', '#FF5722', '#F44336', '#E91E63', '#C2185B', '#880E4F'] },
+    galaxy: { name: 'Галактика', price: 160, colors: ['#311B92', '#4527A0', '#512DA8', '#5E35B1', '#7B1FA2', '#8E24AA', '#9C27B0', '#4A148C'] },
 };
 
 const BACKGROUNDS = {
@@ -73,6 +83,13 @@ const BACKGROUNDS = {
     ocean: { name: 'Океан', price: 120, colors: ['#87CEEB', '#4A90E2', '#2E5C8A', '#1E3A5F', '#0A1E3F'] },
     city: { name: 'Город', price: 150, colors: ['#B0B0C0', '#9090A0', '#707080', '#505060', '#303040'] },
     space: { name: 'Космос', price: 200, colors: ['#0a0020', '#200040', '#300060', '#400080', '#050010'], stars: true },
+    aurora: { name: 'Сияние', price: 180, colors: ['#0B3A5C', '#155E75', '#0E7490', '#4A1D96', '#1E1B4B'], stars: true },
+    desert: { name: 'Пустыня', price: 90, colors: ['#FDE68A', '#FCD34D', '#F59E0B', '#B45309', '#78350F'] },
+    forest: { name: 'Лес', price: 100, colors: ['#D9F99D', '#A3E635', '#65A30D', '#365314', '#1A2E05'] },
+    snow: { name: 'Снега', price: 110, colors: ['#F0F9FF', '#E0F2FE', '#BAE6FD', '#7DD3FC', '#0C4A6E'] },
+    lava: { name: 'Лава', price: 160, colors: ['#450A0A', '#7F1D1D', '#991B1B', '#B91C1C', '#1C0A0A'] },
+    cyber: { name: 'Кибер', price: 170, colors: ['#0A0118', '#1E1B4B', '#4C1D95', '#7C3AED', '#2E1065'], stars: true },
+    sakura: { name: 'Сакура', price: 130, colors: ['#FDF2F8', '#FCE7F3', '#FBCFE8', '#F9A8D4', '#BE185D'] },
 };
 
 const SEASONS = [
@@ -82,6 +99,7 @@ const SEASONS = [
     { months: [9, 10, 11], name: 'Осень', icon: '🍂', coinMult: 1.15, xpMult: 1.0 },
 ];
 
+// ============ 50 ЧЕЛЛЕНДЖЕЙ ДНЯ ============
 const DAILY_CHALLENGES = [
     { id: 'golden_only', name: 'Золотой дождь', desc: 'Только золотые блоки', icon: '👑', modifiers: { onlyType: 'golden' } },
     { id: 'bomb_only', name: 'Минное поле', desc: 'Только бомбы', icon: '💣', modifiers: { onlyType: 'bomb' } },
@@ -113,6 +131,27 @@ const DAILY_CHALLENGES = [
     { id: 'hardcore', name: 'Хардкор', desc: 'Быстро + 1 промах', icon: '☠️', modifiers: { speedMult: 1.5, noCut: true } },
     { id: 'rush', name: 'Спешка', desc: 'Быстро + x2 очки', icon: '🔥', modifiers: { speedMult: 1.3, scoreMult: 2 } },
     { id: 'rich', name: 'Богатый день', desc: 'x3 монеты + x2 очки', icon: '🤑', modifiers: { coinMult: 3, scoreMult: 2 } },
+    // 20 новых
+    { id: 'no_bombs', name: 'Без бомб', desc: 'Бомбы не выпадают', icon: '🚫', modifiers: { noBombs: true } },
+    { id: 'no_golden', name: 'Без золота', desc: 'Золотые не выпадают', icon: '💤', modifiers: { noGolden: true } },
+    { id: 'no_specials', name: 'Только база', desc: 'Только обычные блоки', icon: '⬜', modifiers: { noSpecials: true } },
+    { id: 'no_combo', name: 'Без комбо', desc: 'Комбо не работает', icon: '🧊', modifiers: { noCombo: true } },
+    { id: 'time_20', name: 'Спринт-20', desc: 'Таймер 20 сек', icon: '⏱', modifiers: { timeLimit: 20 } },
+    { id: 'time_45', name: 'Быстрый', desc: 'Таймер 45 сек', icon: '🕐', modifiers: { timeLimit: 45 } },
+    { id: 'time_120', name: 'Долгий', desc: 'Таймер 120 сек', icon: '⏳', modifiers: { timeLimit: 120 } },
+    { id: 'score_x5', name: 'x5 очки', desc: 'Все очки x5', icon: '💥', modifiers: { scoreMult: 5 } },
+    { id: 'score_x10', name: 'x10 очки', desc: 'Все очки x10', icon: '🌟', modifiers: { scoreMult: 10 } },
+    { id: 'coin_x5', name: 'x5 монеты', desc: 'Монеты x5', icon: '💰', modifiers: { coinMult: 5 } },
+    { id: 'xp_x3', name: 'x3 опыт', desc: 'Опыт x3', icon: '📈', modifiers: { xpMult: 3 } },
+    { id: 'tiny_blocks', name: 'Крохи', desc: 'Блоки 1.5', icon: '🐜', modifiers: { baseSize: 1.5 } },
+    { id: 'huge_blocks', name: 'Мастодонт', desc: 'Блоки 8', icon: '🐘', modifiers: { baseSize: 8 } },
+    { id: 'diag_fast', name: 'Диагональ+', desc: 'Диагональ + быстро', icon: '📐', modifiers: { diagFromStart: true, speedMult: 1.3 } },
+    { id: 'ice_skate', name: 'Скольжение', desc: 'Все блоки как лёд', icon: '⛸️', modifiers: { allIce: true } },
+    { id: 'tight_perfect', name: 'Строгий идеал', desc: 'Идеал 0.05 вместо 0.15', icon: '🔍', modifiers: { tightThreshold: 0.05 } },
+    { id: 'ultra_soft', name: 'Прощает', desc: 'Идеал 0.4 (легче)', icon: '🎪', modifiers: { tightThreshold: 0.4 } },
+    { id: 'night_mode', name: 'Ночной', desc: 'Тёмный фон', icon: '🌙', modifiers: { forceBg: 'night' } },
+    { id: 'rainbow_palace', name: 'Радужный', desc: 'Радужная палитра', icon: '🌈', modifiers: { forcePalette: 'rainbow' } },
+    { id: 'speed_accel_x4', name: 'Гипер-разгон', desc: 'Ускорение x4', icon: '🚀', modifiers: { accelMult: 4 } },
 ];
 
 const POWERUP_DEFS = {
@@ -182,6 +221,9 @@ let isFury = false, furyBlocksLeft = 0;
 let glowTexture = null;
 let dailyModifiers = {};
 let dailyChallengeActive = false;
+let savedBgBeforeDaily = null;
+let savedPaletteBeforeDaily = null;
+let currentLbMode = 'classic';
 
 let settings = JSON.parse(localStorage.getItem('towerSettings') || 'null') || { musicEnabled: true, sfxEnabled: true, hapticsEnabled: true };
 function saveSettings() { localStorage.setItem('towerSettings', JSON.stringify(settings)); }
@@ -281,13 +323,11 @@ const levelupPopup = $('levelup-popup'), achievementPopup = $('achievement-popup
 const finalScoreVal = $('final-score-val'), gameCoinsEarnedEl = $('game-coins-earned'), gameXPEarnedEl = $('game-xp-earned');
 const timerEl = $('timer'), modeLabel = $('mode-label');
 const questsEl = $('quests'), muteBtn = $('mute-btn'), pauseBtn = $('pause-btn'), menuToggleBtn = $('menu-toggle-btn');
-const tutorialEl = $('tutorial'), nextBlockEmoji = $('next-block-emoji');
+const tutorialEl = $('tutorial');
 const screenFlash = $('screen-flash'), coinsBalanceEl = $('coins-balance'), skinListEl = $('skin-list'), menuCoinsEl = $('menu-coins');
 const shopProgressEl = $('shop-progress');
 const colorsListEl = $('colors-list'), backgroundsListEl = $('backgrounds-list');
 const achListEl = $('ach-list'), achProgressEl = $('ach-progress');
-const lbListEl = $('lb-list');
-const statsGridEl = $('stats-grid');
 const menuLevelNum = $('menu-level-num'), menuXPFill = $('menu-xp-fill'), menuXPText = $('menu-xp-text');
 const menuStreakEl = $('menu-streak');
 const dailyStreakText = $('daily-streak-text'), dailyCoinsReward = $('daily-coins-reward'), dailySubText = $('daily-sub-text');
@@ -351,6 +391,17 @@ function startDailyChallenge() {
     markDailyChallengePlayed();
     renderDailyChallenge();
     startGame('classic');
+}
+function restoreDailyVisuals() {
+    if (savedBgBeforeDaily) {
+        currentBackground = savedBgBeforeDaily;
+        savedBgBeforeDaily = null;
+        applyBackground();
+    }
+    if (savedPaletteBeforeDaily) {
+        currentPalette = savedPaletteBeforeDaily;
+        savedPaletteBeforeDaily = null;
+    }
 }
 
 // ============ МОНЕТЫ ============
@@ -442,7 +493,7 @@ function showDailyReward() {
     if (streak === 1) dailySubText.innerText = 'Заходи каждый день — награда растёт!';
     else if (streak < 7) dailySubText.innerText = `Следующий день: +${Math.min(100, 10 + streak * 5)} 🪙`;
     else dailySubText.innerText = '🔥 Максимальная награда!';
-    dailyScreen.style.display = 'flex';
+    showModal(dailyScreen);
 }
 
 // ============ АЧИВКИ ============
@@ -488,36 +539,76 @@ function renderAchievements() {
 }
 
 // ============ LEADERBOARD ============
+const LB_MODE_NAMES = {
+    classic: '🎮 Обычный',
+    time: '⏱ На время',
+    precision: '🎯 Precision',
+    speedrun: '⚡ Speedrun',
+    endless: '♾️ Endless',
+    mirror: '🪞 Mirror'
+};
+
 function addToLeaderboard(scoreValue, mode) {
     if (scoreValue <= 0) return;
-    leaderboard.push({ score: scoreValue, mode, date: new Date().toLocaleDateString('ru-RU') });
-    leaderboard.sort((a, b) => b.score - a.score);
-    leaderboard = leaderboard.slice(0, 10);
+    leaderboard.push({
+        score: scoreValue,
+        mode,
+        date: new Date().toLocaleDateString('ru-RU'),
+        ts: Date.now()
+    });
+    if (leaderboard.length > 200) {
+        leaderboard.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+        leaderboard = leaderboard.slice(0, 200);
+    }
     saveLeaderboard();
 }
+
 function renderLeaderboard() {
-    lbListEl.innerHTML = '';
-    if (leaderboard.length === 0) { lbListEl.innerHTML = '<div class="lb-empty">Пока пусто — сыграй первую игру!</div>'; }
-    else {
-        leaderboard.forEach((entry, i) => {
-            const div = document.createElement('div');
-            div.className = 'lb-item' + (i === 0 ? ' top1' : i === 1 ? ' top2' : i === 2 ? ' top3' : '');
-            const modeName = entry.mode === 'time' ? '⏱' : entry.mode === 'precision' ? '🎯' : entry.mode === 'speedrun' ? '⚡' : entry.mode === 'endless' ? '♾️' : entry.mode === 'mirror' ? '🪞' : '🎮';
-            div.innerHTML = `<span><span class="lb-rank">#${i+1}</span>${entry.score} ${modeName}</span><span class="lb-date">${entry.date}</span>`;
-            lbListEl.appendChild(div);
-        });
+    document.querySelectorAll('.lb-mode-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.mode === currentLbMode);
+    });
+
+    const modeEntries = leaderboard.filter(e => e.mode === currentLbMode);
+    const bestValEl = document.getElementById('lb-best-value');
+    const bestSubEl = document.getElementById('lb-best-sub');
+
+    if (modeEntries.length > 0) {
+        const sorted = [...modeEntries].sort((a, b) => b.score - a.score);
+        const best = sorted[0];
+        bestValEl.innerText = best.score;
+        bestSubEl.innerText = `Установлен ${best.date}`;
+    } else {
+        bestValEl.innerText = '0';
+        bestSubEl.innerText = 'Играй, чтобы установить рекорд';
     }
-    if (statsGridEl) {
-        const avgScore = stats.totalGames > 0 ? Math.round(totalScoreAllTime / stats.totalGames) : 0;
-        statsGridEl.innerHTML = `
-            <div class="stat-card"><div class="stat-value">${stats.totalGames}</div><div class="stat-label">Игр</div></div>
-            <div class="stat-card"><div class="stat-value">${stats.maxScore}</div><div class="stat-label">Рекорд</div></div>
-            <div class="stat-card"><div class="stat-value">${avgScore}</div><div class="stat-label">Средний</div></div>
-            <div class="stat-card"><div class="stat-value">${stats.totalPerfect}</div><div class="stat-label">Идеалов</div></div>
-            <div class="stat-card"><div class="stat-value">${stats.maxCombo}</div><div class="stat-label">Комбо</div></div>
-            <div class="stat-card"><div class="stat-value">${stats.dailyCompleted || 0}</div><div class="stat-label">Челленджей</div></div>
+
+    const recentEntries = [...modeEntries]
+        .sort((a, b) => (b.ts || 0) - (a.ts || 0))
+        .slice(0, 5);
+
+    const attemptsEl = document.getElementById('lb-attempts');
+    attemptsEl.innerHTML = '';
+
+    if (recentEntries.length === 0) {
+        attemptsEl.innerHTML = '<div class="lb-empty-attempts">Пока нет попыток в этом режиме</div>';
+        return;
+    }
+
+    const bestScore = Math.max(...modeEntries.map(e => e.score));
+    let bestShown = false;
+
+    recentEntries.forEach((entry, i) => {
+        const isBest = !bestShown && entry.score === bestScore;
+        if (isBest) bestShown = true;
+        const div = document.createElement('div');
+        div.className = 'lb-attempt' + (isBest ? ' best' : '');
+        div.innerHTML = `
+            <span class="lb-attempt-rank">${i + 1}.</span>
+            <span class="lb-attempt-score">${entry.score}${isBest ? ' <span class="lb-attempt-badge">РЕКОРД</span>' : ''}</span>
+            <span class="lb-attempt-date">${entry.date}</span>
         `;
-    }
+        attemptsEl.appendChild(div);
+    });
 }
 
 // ============ SMART DIFFICULTY ============
@@ -710,8 +801,6 @@ function updateCoinUI() {
 }
 
 // ============ SHOP ============
-let currentShopTab = 'skins';
-
 function renderShop() {
     skinListEl.innerHTML = '';
     const buyableCount = Object.keys(SKINS).filter(k => !SKINS[k].notBuyable).length;
@@ -731,7 +820,7 @@ function renderShop() {
         else btnHtml = `<button class="buy locked" disabled>${skin.price} 🪙</button>`;
         const colorDots = skin.colors.slice(0, 5).map(c => `<span style="background:${c}"></span>`).join('');
         const modifierHint = skin.modifiers ? ` · <span style="color:var(--mint-dark);font-size:10px;font-weight:900">${skin.modifiers.speedMult ? (skin.modifiers.speedMult>1?'⚡ БЫСТРЕЕ':'🐌 МЕДЛЕННЕЕ') : ''} ${skin.modifiers.coinMult ? '+'+Math.round((skin.modifiers.coinMult-1)*100)+'%🪙' : ''} ${skin.modifiers.scoreMult ? '+'+Math.round((skin.modifiers.scoreMult-1)*100)+'%очк' : ''} ${skin.modifiers.fireChance ? '🔥 5%' : ''}</span>` : '';
-        div.innerHTML = `<div class="skin-info"><span class="skin-preview">${skin.emojis[0]}</span><div class="skin-details"><span class="skin-name">${skin.name}${modifierHint}</span><div class="skin-colors">${colorDots}</div></div></div>${btnHtml}`;
+        div.innerHTML = `<div class="skin-info"><span class="skin-preview" style="background:linear-gradient(135deg,${skin.colors[0]},${skin.colors[1] || skin.colors[0]});border-radius:8px;padding:4px;"></span><div class="skin-details"><span class="skin-name">${skin.name}${modifierHint}</span><div class="skin-colors">${colorDots}</div></div></div>${btnHtml}`;
         skinListEl.appendChild(div);
     }
     skinListEl.querySelectorAll('button.equip').forEach(btn => {
@@ -815,7 +904,6 @@ function renderCustomize(type) {
 }
 
 function switchShopTab(tab) {
-    currentShopTab = tab;
     document.querySelectorAll('.shop-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
     skinListEl.style.display = tab === 'skins' ? 'flex' : 'none';
     colorsListEl.style.display = tab === 'colors' ? 'flex' : 'none';
@@ -864,7 +952,7 @@ function showPowerupSelection(mode) {
     pendingGameMode = mode;
     activePowerups = { magnet: false, freeze: false, ghost: false, multiplier: false };
     startScreen.style.display = 'none';
-    powerupsScreen.style.display = 'flex';
+    showModal(powerupsScreen);
     renderPowerupList();
 }
 function renderPowerupList() {
@@ -896,7 +984,7 @@ function renderPowerupList() {
 function startGameWithPowerups() {
     for (const key in activePowerups) { if (activePowerups[key]) ownedPowerups[key] = Math.max(0, (ownedPowerups[key] || 0) - 1); }
     savePowerups();
-    powerupsScreen.style.display = 'none';
+    hideModal(powerupsScreen);
     const mode = pendingGameMode;
     pendingGameMode = null;
     startGame(mode);
@@ -954,7 +1042,7 @@ function rollChestReward(isRare = false) {
 function showChestOpening() {
     if (chests.length === 0) return;
     startScreen.style.display = 'none';
-    chestScreen.style.display = 'flex';
+    showModal(chestScreen);
     $('chest-icon').innerText = '📦';
     $('chest-icon').className = 'chest-icon shaking';
     $('chest-rays').className = 'chest-rays';
@@ -1044,16 +1132,33 @@ function createGlowTexture() {
     return new THREE.CanvasTexture(c);
 }
 
-function createTexture(emoji, text, color, type = 'normal') {
+function shadeColor(hex, percent) {
+    hex = hex.replace('#', '');
+    const num = parseInt(hex, 16);
+    let r = (num >> 16) + percent;
+    let g = ((num >> 8) & 0x00FF) + percent;
+    let b = (num & 0x0000FF) + percent;
+    r = Math.max(0, Math.min(255, r));
+    g = Math.max(0, Math.min(255, g));
+    b = Math.max(0, Math.min(255, b));
+    return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+}
+
+function createTexture(color, type = 'normal') {
     const c = document.createElement('canvas'); c.width = c.height = 512;
     const ctx = c.getContext('2d');
     if (type === 'golden') {
         const grad = ctx.createLinearGradient(0, 0, 512, 512);
-        grad.addColorStop(0, '#FFE082'); grad.addColorStop(0.3, '#FFD700'); grad.addColorStop(0.6, '#FFC107'); grad.addColorStop(1, '#FF8F00');
+        grad.addColorStop(0, '#FFE082'); grad.addColorStop(0.3, '#FFD700');
+        grad.addColorStop(0.6, '#FFC107'); grad.addColorStop(1, '#FF8F00');
         ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(150,0); ctx.lineTo(0,150); ctx.closePath(); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(512,512); ctx.lineTo(362,512); ctx.lineTo(512,362); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(180,0); ctx.lineTo(0,180); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(512,512); ctx.lineTo(332,512); ctx.lineTo(512,332); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 3;
+        for (let i = -512; i < 1024; i += 40) {
+            ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + 512, 512); ctx.stroke();
+        }
         ctx.strokeStyle = '#8D6E00'; ctx.lineWidth = 20; ctx.strokeRect(10,10,492,492);
     } else if (type === 'bomb') {
         ctx.fillStyle = '#1A0000'; ctx.fillRect(0,0,512,512);
@@ -1062,18 +1167,30 @@ function createTexture(emoji, text, color, type = 'normal') {
         for(let i=-512; i<1024; i+=140) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i+512,512); ctx.stroke(); }
         ctx.restore();
         ctx.strokeStyle = '#FF5252'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
-        ctx.fillStyle = 'rgba(255,82,82,0.25)'; ctx.fillRect(0,0,512,512);
+        ctx.fillStyle = 'rgba(255,82,82,0.2)'; ctx.fillRect(0,0,512,512);
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.beginPath(); ctx.arc(256, 256, 100, 0, Math.PI*2); ctx.fill();
     } else if (type === 'ice') {
         ctx.fillStyle = '#00E5FF'; ctx.fillRect(0,0,512,512);
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(200,0); ctx.lineTo(0,200); ctx.closePath(); ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.lineWidth = 10;
-        for(let i=0; i<10; i++) { ctx.beginPath(); ctx.moveTo(Math.random()*512, Math.random()*512); ctx.lineTo(Math.random()*512, Math.random()*512); ctx.stroke(); }
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(220,0); ctx.lineTo(0,220); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(512,512); ctx.lineTo(292,512); ctx.lineTo(512,292); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.beginPath(); ctx.moveTo(512,0); ctx.lineTo(380,0); ctx.lineTo(512,150); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 6;
+        for(let i=0; i<12; i++) { ctx.beginPath(); ctx.moveTo(Math.random()*512, Math.random()*512); ctx.lineTo(Math.random()*512, Math.random()*512); ctx.stroke(); }
         ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
     } else if (type === 'crumble') {
         ctx.fillStyle = '#5D4037'; ctx.fillRect(0,0,512,512);
         ctx.strokeStyle = '#1A0A00'; ctx.lineWidth = 20;
-        for(let i=0; i<15; i++) { ctx.beginPath(); ctx.moveTo(Math.random()*512, Math.random()*512); ctx.lineTo(Math.random()*512, Math.random()*512); ctx.stroke(); }
+        for(let i=0; i<20; i++) { ctx.beginPath(); ctx.moveTo(Math.random()*512, Math.random()*512); ctx.lineTo(Math.random()*512, Math.random()*512); ctx.stroke(); }
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        for(let y=0; y<512; y+=60) {
+            for(let x=0; x<512; x+=100) {
+                const offset = (y/60) % 2 ? 50 : 0;
+                ctx.fillRect(x + offset, y, 95, 55);
+            }
+        }
         ctx.strokeStyle = '#8D6E63'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
     } else if (type === 'rainbow') {
         const grad = ctx.createLinearGradient(0, 0, 512, 512);
@@ -1082,53 +1199,49 @@ function createTexture(emoji, text, color, type = 'normal') {
         grad.addColorStop(0.66, '#00B0FF'); grad.addColorStop(0.83, '#651FFF');
         grad.addColorStop(1, '#D500F9');
         ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.beginPath(); ctx.arc(140, 140, 70, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(360, 370, 50, 0, Math.PI*2); ctx.fill();
         ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.beginPath(); ctx.arc(150, 150, 60, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(350, 360, 40, 0, Math.PI*2); ctx.fill();
     } else if (type === 'dragon') {
         const grad = ctx.createLinearGradient(0, 0, 0, 512);
         grad.addColorStop(0, '#FFEB3B'); grad.addColorStop(0.3, '#FF9800');
         grad.addColorStop(0.7, '#E65100'); grad.addColorStop(1, '#B71C1C');
         ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
         ctx.fillStyle = 'rgba(255,235,59,0.4)';
-        for (let i = 0; i < 8; i++) { ctx.beginPath(); ctx.arc(Math.random()*512, Math.random()*512, 40 + Math.random()*60, 0, Math.PI*2); ctx.fill(); }
+        for (let i = 0; i < 12; i++) { ctx.beginPath(); ctx.arc(Math.random()*512, Math.random()*512, 30 + Math.random()*70, 0, Math.PI*2); ctx.fill(); }
         ctx.strokeStyle = '#FFEB3B'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
     } else if (type === 'diamond') {
         const grad = ctx.createRadialGradient(256, 256, 50, 256, 256, 400);
         grad.addColorStop(0, '#E0F7FA'); grad.addColorStop(0.5, '#00BCD4'); grad.addColorStop(1, '#006064');
         ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
         ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(200,0); ctx.lineTo(0,200); ctx.closePath(); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(512,0); ctx.lineTo(312,0); ctx.lineTo(512,200); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(230,0); ctx.lineTo(0,230); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(512,0); ctx.lineTo(282,0); ctx.lineTo(512,230); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(0,512); ctx.lineTo(0,282); ctx.lineTo(230,512); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(512,512); ctx.lineTo(282,512); ctx.lineTo(512,282); ctx.closePath(); ctx.fill();
         ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 25; ctx.strokeRect(12.5,12.5,487,487);
     } else {
-        ctx.fillStyle = color; ctx.fillRect(0,0,512,512);
-        ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 15; ctx.strokeRect(7.5,7.5,497,497);
         const grad = ctx.createLinearGradient(0,0,0,512);
-        grad.addColorStop(0, 'rgba(255,255,255,0.15)');
-        grad.addColorStop(1, 'rgba(0,0,0,0.15)');
+        grad.addColorStop(0, color);
+        grad.addColorStop(1, shadeColor(color, -20));
         ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
+        for (let i = 0; i < 512; i += 24) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + 512, 512); ctx.stroke(); }
+        ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 15; ctx.strokeRect(7.5,7.5,497,497);
+        const topGrad = ctx.createLinearGradient(0, 0, 0, 100);
+        topGrad.addColorStop(0, 'rgba(255,255,255,0.25)');
+        topGrad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = topGrad; ctx.fillRect(10, 10, 492, 100);
     }
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.miterLimit = 2;
-    ctx.font = '260px Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-    ctx.shadowColor = '#FFFFFF'; ctx.shadowBlur = 0;
-    const outlineOffsets = [[-12,0],[12,0],[0,-12],[0,12],[-9,-9],[9,-9],[-9,9],[9,9],[-6,0],[6,0],[0,-6],[0,6]];
-    for (const [dx, dy] of outlineOffsets) { ctx.shadowOffsetX = dx; ctx.shadowOffsetY = dy; ctx.fillText(emoji, 256, 195); }
-    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
-    ctx.fillText(emoji, 256, 195);
-    ctx.font = '900 100px "Rubik", sans-serif';
-    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 26; ctx.strokeText(text, 256, 445);
-    ctx.fillStyle = (type === 'golden' || type === 'rainbow' || type === 'dragon' || type === 'diamond') ? '#3E2723' : '#1A0A00';
-    ctx.fillText(text, 256, 445);
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
     tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter; tex.generateMipmaps = false;
     return tex;
 }
 
-function createBlockMesh(w, h, d, color, emoji, text, type = 'normal') {
-    const geo = new THREE.BoxGeometry(w, h, d); const tex = createTexture(emoji, text, color, type);
+function createBlockMesh(w, h, d, color, type = 'normal') {
+    const geo = new THREE.BoxGeometry(w, h, d); const tex = createTexture(color, type);
     let sideOpts = { map: tex, roughness: 0.45, metalness: 0.1 };
     let topOpts = { color: color, roughness: 0.5 };
     if (type === 'golden') {
@@ -1161,7 +1274,8 @@ function createBlockMesh(w, h, d, color, emoji, text, type = 'normal') {
             sideOpts.emissiveIntensity = 0.2;
         }
     }
-    const side = new THREE.MeshStandardMaterial(sideOpts); const top = new THREE.MeshStandardMaterial(topOpts);
+    const side = new THREE.MeshStandardMaterial(sideOpts);
+    const top = new THREE.MeshStandardMaterial(topOpts);
     const mesh = new THREE.Mesh(geo, [side, side, top, top, side, side]);
     mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.blockType = type;
     if (type !== 'normal' && type !== 'crumble') {
@@ -1177,46 +1291,69 @@ function createBlockMesh(w, h, d, color, emoji, text, type = 'normal') {
 
 function rollBlockType() {
     if (dailyModifiers.onlyType) return dailyModifiers.onlyType;
+    if (dailyModifiers.noSpecials) {
+        return 'normal';
+    }
     if (score < 5) return 'normal';
     const r = Math.random();
     if (r < 0.005) return 'rainbow';
     if (r < 0.010) return 'dragon';
     if (r < 0.015) return 'diamond';
-    if (r < 0.075) return 'golden';
-    if (r < 0.135) return 'bomb';
+    if (r < 0.075) {
+        if (dailyModifiers.noGolden) return 'normal';
+        return 'golden';
+    }
+    if (r < 0.135) {
+        if (dailyModifiers.noBombs) return 'normal';
+        return 'bomb';
+    }
     if (r < 0.195) return 'ice';
     if (r < 0.235 && score > 15) return 'crumble';
     return 'normal';
 }
 
 function getBlockVisuals(type, skinKey) {
-    const skin = SKINS[skinKey] || SKINS.default;
     const palette = getPaletteColors();
     const rndColor = palette[Math.floor(Math.random() * palette.length)];
-    const rndEmoji = skin.emojis[Math.floor(Math.random() * skin.emojis.length)];
-    const rndText = skin.texts[Math.floor(Math.random() * skin.texts.length)];
     switch(type) {
-        case 'golden': return { color: '#FFC107', emoji: '👑', text: 'ЗОЛОТО' };
-        case 'bomb': return { color: '#FF1744', emoji: '💣', text: 'БУМ' };
-        case 'ice': return { color: '#00E5FF', emoji: '❄️', text: 'ЛЕД' };
-        case 'crumble': return { color: '#5D4037', emoji: '🧱', text: 'ХРУПКИЙ' };
-        case 'rainbow': return { color: '#FF00FF', emoji: '🌈', text: 'РАДУГА' };
-        case 'dragon': return { color: '#B71C1C', emoji: '🐉', text: 'ДРАКОН' };
-        case 'diamond': return { color: '#00BCD4', emoji: '💎', text: 'АЛМАЗ' };
-        default: return { color: rndColor, emoji: rndEmoji, text: rndText };
+        case 'golden': return { color: '#FFC107' };
+        case 'bomb': return { color: '#FF1744' };
+        case 'ice': return { color: '#00E5FF' };
+        case 'crumble': return { color: '#5D4037' };
+        case 'rainbow': return { color: '#FF00FF' };
+        case 'dragon': return { color: '#B71C1C' };
+        case 'diamond': return { color: '#00BCD4' };
+        default: return { color: rndColor };
     }
 }
 
 function generateNextBlockData() {
     const type = rollBlockType();
-    const { color, emoji, text } = getBlockVisuals(type, currentSkin);
-    return { type, color, emoji, text };
+    const { color } = getBlockVisuals(type, currentSkin);
+    return { type, color };
+}
+
+function updateNextBlockPreview(type, color) {
+    const el = document.getElementById('next-block-preview');
+    if (!el) return;
+    let bg;
+    switch(type) {
+        case 'golden': bg = 'linear-gradient(135deg, #FFE082, #FFC107)'; break;
+        case 'bomb': bg = 'repeating-linear-gradient(45deg, #111, #111 8px, #FF1744 8px, #FF1744 16px)'; break;
+        case 'ice': bg = 'linear-gradient(135deg, #00E5FF, #4FC3F7)'; break;
+        case 'crumble': bg = 'repeating-linear-gradient(45deg, #5D4037, #5D4037 6px, #3E2723 6px, #3E2723 12px)'; break;
+        case 'rainbow': bg = 'linear-gradient(90deg, #FF1744, #FF9100, #FFEA00, #00E676, #00B0FF, #651FFF, #D500F9)'; break;
+        case 'dragon': bg = 'linear-gradient(135deg, #FFEB3B, #B71C1C)'; break;
+        case 'diamond': bg = 'linear-gradient(135deg, #E0F7FA, #006064)'; break;
+        default: bg = color;
+    }
+    el.style.background = bg;
 }
 
 function createBaseBlock() {
     nextBlockData = generateNextBlockData();
     const baseSize = dailyModifiers.baseSize || BLOCK_SIZE;
-    const base = createBlockMesh(baseSize, BLOCK_HEIGHT, baseSize, '#FF1744', '🏗️', 'БАЗА', 'normal');
+    const base = createBlockMesh(baseSize, BLOCK_HEIGHT, baseSize, '#FF1744', 'normal');
     base.position.set(0, 0, 0); scene.add(base); blocks.push(base);
     spawnNewBlock();
 }
@@ -1226,17 +1363,17 @@ function spawnNewBlock() {
     if (dailyModifiers.diagFromStart) movingAxis = 'diag';
     else if (score > 30) movingAxis = 'diag';
     else movingAxis = blocks.length % 2 === 1 ? 'x' : 'z';
-    const { type, color, emoji, text } = nextBlockData;
+    const { type, color } = nextBlockData;
     nextBlockData = generateNextBlockData();
-    nextBlockEmoji.innerText = nextBlockData.emoji;
+    updateNextBlockPreview(nextBlockData.type, nextBlockData.color);
     const w = top.geometry.parameters.width, d = top.geometry.parameters.depth;
     let sx = top.position.x, sz = top.position.z;
     if (movingAxis === 'x') sx = direction === 1 ? -15 : 15;
     else if (movingAxis === 'z') sz = direction === 1 ? -15 : 15;
     else if (movingAxis === 'diag') { sx = direction === 1 ? -15 : 15; sz = direction === 1 ? -15 : 15; }
-    currentBlock = createBlockMesh(w, BLOCK_HEIGHT, d, color, emoji, text, type);
+    currentBlock = createBlockMesh(w, BLOCK_HEIGHT, d, color, type);
     currentBlock.position.set(sx, top.position.y + BLOCK_HEIGHT, sz);
-    currentBlock.userData = { w, d, moving: true, color, emoji, text, blockType: type, squash: 1 };
+    currentBlock.userData = { w, d, moving: true, color, blockType: type, squash: 1 };
     scene.add(currentBlock);
 }
 
@@ -1257,14 +1394,12 @@ function dropBlock() {
     let absDiffX = Math.abs(diffX), absDiffZ = Math.abs(diffZ);
     let maxDiff = Math.max(absDiffX, absDiffZ);
 
-    // Магнит
     if (activePowerups.magnet && !magnetUsed) {
         magnetUsed = true;
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         diffX = 0; diffZ = 0; absDiffX = 0; absDiffZ = 0; maxDiff = 0;
         showPopup(bonusText, '🧲 МАГНИТ!', 1200);
     }
-    // Алмаз — прощает любую неточность
     if (bType === 'diamond' && maxDiff < Math.max(sizeX, sizeZ) / 2) {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         diffX = 0; diffZ = 0; absDiffX = 0; absDiffZ = 0; maxDiff = 0;
@@ -1274,9 +1409,9 @@ function dropBlock() {
     const missZ = (movingAxis === 'z' || movingAxis === 'diag') && absDiffZ >= sizeZ / 2;
     const precisionMode = (gameMode === 'precision');
     const noCutActive = dailyModifiers.noCut || precisionMode;
+    const perfectThreshold = dailyModifiers.tightThreshold || 0.15;
 
-    // Ghost — автоспасение работает во ВСЕХ режимах, включая precision и noCut
-    if (activePowerups.ghost && !ghostUsed && (missX || missZ || (noCutActive && maxDiff >= 0.15))) {
+    if (activePowerups.ghost && !ghostUsed && (missX || missZ || (noCutActive && maxDiff >= perfectThreshold))) {
         ghostUsed = true;
         showPopup(bonusText, '👻 ПРИЗРАК СПАС!', 1500);
         playSound('quest');
@@ -1284,30 +1419,26 @@ function dropBlock() {
         diffX = 0; diffZ = 0; absDiffX = 0; absDiffZ = 0; maxDiff = 0;
     }
 
-    // Полный промах
     if (missX || missZ) {
         currentBlock.userData.falling = true;
         triggerGameOver();
         return;
     }
 
-    // Precision / noCut: любая неидеальность = конец
-    if (noCutActive && maxDiff >= 0.15) {
+    if (noCutActive && maxDiff >= perfectThreshold) {
         currentBlock.userData.falling = true;
         triggerGameOver();
         return;
     }
 
-    // Crumble — наоборот, идеально НЕ ставить
-    if (bType === 'crumble' && maxDiff < 0.15) {
+    if (bType === 'crumble' && maxDiff < perfectThreshold) {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         spawnBombParticles(); triggerGameOver(); return;
     }
 
-    if (maxDiff < 0.15) {
-        // === PERFECT ===
+    if (maxDiff < perfectThreshold) {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
-        combo++;
+        if (!dailyModifiers.noCombo) combo++;
         stats.totalPerfect++;
         if (combo > stats.maxCombo) stats.maxCombo = combo;
 
@@ -1345,7 +1476,6 @@ function dropBlock() {
         const oldScore = score; score += points;
         checkMilestone(oldScore, score); triggerPerfectParticles();
 
-        // Fire skin special
         if (skinMods.fireChance && Math.random() < skinMods.fireChance) {
             spawnDragonFire();
             shakeIntensity = 0.6;
@@ -1353,7 +1483,6 @@ function dropBlock() {
             showPopup(bonusText, '🔥 ОГОНЬ!', 1200);
         }
 
-        // Golden trail feature
         if (unlockedFeatures.goldenTrail) {
             spawnGoldenTrail(currentBlock.position);
         }
@@ -1365,7 +1494,6 @@ function dropBlock() {
         else if (isSecret) coinReward += 3;
         addCoins(coinReward);
     } else {
-        // === CUT ===
         combo = 0; updateQuest('cut', 1);
         if (bType === 'bomb') { score = Math.max(0, score - 1); playSound('bomb'); shakeIntensity = 0.5; showPopup(bonusText, '💣 -1 ОЧКО', 900); spawnBombParticles(); triggerHaptic('error'); }
         else { playSound('drop'); triggerHaptic('light'); }
@@ -1378,14 +1506,14 @@ function dropBlock() {
         createDebris(cutDiff, origSize, newSize, cutAxis, top);
         const w = cutAxis === 'x' ? newSize : currentBlock.userData.w;
         const d = cutAxis === 'z' ? newSize : currentBlock.userData.d;
-        const prevColor = currentBlock.userData.color, prevEmoji = currentBlock.userData.emoji, prevText = currentBlock.userData.text;
+        const prevColor = currentBlock.userData.color;
         scene.remove(currentBlock); disposeMesh(currentBlock);
-        const nm = createBlockMesh(w, BLOCK_HEIGHT, d, prevColor, prevEmoji, prevText, 'normal');
+        const nm = createBlockMesh(w, BLOCK_HEIGHT, d, prevColor, 'normal');
         let targetX = top.position.x, targetZ = top.position.z;
         if (cutAxis === 'x') targetX = top.position.x + (diffX > 0 ? (origSize-newSize)/2 : -(origSize-newSize)/2);
         if (cutAxis === 'z') targetZ = top.position.z + (diffZ > 0 ? (origSize-newSize)/2 : -(origSize-newSize)/2);
         nm.position.set(targetX, currentBlock.position.y, targetZ);
-        nm.userData = { w, d, color: prevColor, emoji: prevEmoji, text: prevText, blockType: 'normal', squash: 1 };
+        nm.userData = { w, d, color: prevColor, blockType: 'normal', squash: 1 };
         currentBlock = nm;
         if (bType !== 'bomb') score++;
         addCoins(1);
@@ -1473,10 +1601,9 @@ function createDebris(diff, origSize, newSize, axis, top) {
     scene.add(mesh); debris.push(mesh);
 }
 
-// ============ АНИМАЦИИ ПРОИГРЫША / ПОБЕДЫ ============
+// ============ АНИМАЦИИ ============
 function playLoseAnimation() {
     const blocksCopy = [...blocks];
-    // Включаем последний падающий блок (currentBlock) в общую анимацию
     if (currentBlock && currentBlock.parent && !blocksCopy.includes(currentBlock)) {
         blocksCopy.push(currentBlock);
         currentBlock = null;
@@ -1485,17 +1612,8 @@ function playLoseAnimation() {
     blocksCopy.forEach((b, i) => {
         setTimeout(() => {
             if (!b.parent) return;
-            const velocity = new THREE.Vector3(
-                (Math.random() - 0.5) * 0.4,
-                -Math.random() * 0.4 - 0.2,
-                (Math.random() - 0.5) * 0.4
-            );
-            b.userData.vel = velocity;
-            b.userData.rotSpeed = new THREE.Vector3(
-                (Math.random() - 0.5) * 0.3,
-                (Math.random() - 0.5) * 0.3,
-                (Math.random() - 0.5) * 0.3
-            );
+            b.userData.vel = new THREE.Vector3((Math.random() - 0.5) * 0.4, -Math.random() * 0.4 - 0.2, (Math.random() - 0.5) * 0.4);
+            b.userData.rotSpeed = new THREE.Vector3((Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3);
             debris.push(b);
         }, i * 25);
     });
@@ -1512,21 +1630,11 @@ function playWinAnimation() {
     }
     for (let i = 0; i < 200; i++) {
         const colorChoices = [0xFFD700, 0xFF6B9D, 0x4ECDC4, 0xA855F7, 0x4FACFE, 0xFFD93D];
-        const piece = new THREE.Mesh(
-            new THREE.BoxGeometry(0.25, 0.25, 0.03),
-            new THREE.MeshBasicMaterial({ color: colorChoices[Math.floor(Math.random() * colorChoices.length)] })
-        );
-        piece.position.set(
-            (Math.random() - 0.5) * 20,
-            camera.position.y - 5 + Math.random() * 5,
-            (Math.random() - 0.5) * 20
-        );
+        const piece = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 0.03), new THREE.MeshBasicMaterial({ color: colorChoices[Math.floor(Math.random() * colorChoices.length)] }));
+        piece.position.set((Math.random() - 0.5) * 20, camera.position.y - 5 + Math.random() * 5, (Math.random() - 0.5) * 20);
         const angle = Math.random() * Math.PI * 2;
         const speed = Math.random() * 0.5 + 0.15;
-        piece.userData = {
-            vel: new THREE.Vector3(Math.cos(angle) * speed, Math.random() * 1.2 + 0.4, Math.sin(angle) * speed),
-            rotSpeed: new THREE.Vector3(Math.random() * 0.5, Math.random() * 0.5, Math.random() * 0.5)
-        };
+        piece.userData = { vel: new THREE.Vector3(Math.cos(angle) * speed, Math.random() * 1.2 + 0.4, Math.sin(angle) * speed), rotSpeed: new THREE.Vector3(Math.random() * 0.5, Math.random() * 0.5, Math.random() * 0.5) };
         scene.add(piece); confetti.push(piece);
     }
 }
@@ -1564,7 +1672,7 @@ function animate() {
     if (gameState === 'playing' && currentBlock?.userData.moving) {
         let speed = currentSpeed;
         if (isFury) speed *= 0.6;
-        if (currentBlock.userData.blockType === 'ice') speed = Math.min(speed * 1.8, 0.8);
+        if (currentBlock.userData.blockType === 'ice' || dailyModifiers.allIce) speed = Math.min(speed * 1.8, 0.8);
         let delta = speed * direction;
         if (score > 20 && !isFury) delta += Math.sin(performance.now() * 0.003) * 0.02;
         if (movingAxis === 'x') { currentBlock.position.x += delta; if (currentBlock.position.x > 15) direction = -1; if (currentBlock.position.x < -15) direction = 1; }
@@ -1620,6 +1728,19 @@ function startGame(mode) {
         if (showTutorialHint) tutorialEl.style.display = 'block';
         updateActivePowerupsUI();
 
+        // Принудительные фон/палитра для daily
+        if (dailyChallengeActive) {
+            if (dailyModifiers.forceBg && !savedBgBeforeDaily) {
+                savedBgBeforeDaily = currentBackground;
+                currentBackground = dailyModifiers.forceBg;
+                applyBackground();
+            }
+            if (dailyModifiers.forcePalette && !savedPaletteBeforeDaily) {
+                savedPaletteBeforeDaily = currentPalette;
+                currentPalette = dailyModifiers.forcePalette;
+            }
+        }
+
         dynamicMaxSpeed = gameMode === 'endless' ? 0.7 : 0.45;
         let baseSpeed = BASE_SPEED;
         if (!dailyChallengeActive) baseSpeed *= getSmartDifficultyMultiplier();
@@ -1656,17 +1777,11 @@ function startGame(mode) {
             const ch = getDailyChallenge();
             modeLabel.innerText = `🎯 ${ch.name}`;
         } else {
-            modeLabel.innerText = {
-                classic: 'КЛАССИКА',
-                time: 'НА ВРЕМЯ',
-                precision: '🎯 PRECISION',
-                speedrun: '⚡ SPEEDRUN',
-                endless: '♾️ ENDLESS',
-                mirror: '🪞 MIRROR'
-            }[gameMode] || 'ИГРА';
+            modeLabel.innerText = { classic: 'КЛАССИКА', time: 'НА ВРЕМЯ', precision: '🎯 PRECISION', speedrun: '⚡ SPEEDRUN', endless: '♾️ ENDLESS', mirror: '🪞 MIRROR' }[gameMode] || 'ИГРА';
         }
 
-        startScreen.style.display = 'none'; gameOverEl.style.display = 'none'; pauseScreen.style.display = 'none';
+        startScreen.style.display = 'none';
+        hideModal(gameOverEl); hideModal(pauseScreen);
         camera.position.set(20, 25, 20); camera.lookAt(0, 0, 0);
 
         const todayStr = new Date().toDateString();
@@ -1696,10 +1811,9 @@ function goToMenu() {
     if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
     resetActivePowerups();
     dailyChallengeActive = false; dailyModifiers = {};
-    gameOverEl.style.display = 'none'; pauseScreen.style.display = 'none';
-    shopScreen.style.display = 'none'; rulesScreen.style.display = 'none';
-    achScreen.style.display = 'none'; lbScreen.style.display = 'none'; settingsScreen.style.display = 'none';
-    powerupsScreen.style.display = 'none'; chestScreen.style.display = 'none';
+    restoreDailyVisuals();
+    hideModal(gameOverEl); hideModal(pauseScreen); hideModal(shopScreen); hideModal(rulesScreen);
+    hideModal(achScreen); hideModal(lbScreen); hideModal(settingsScreen); hideModal(powerupsScreen); hideModal(chestScreen);
     startScreen.style.display = 'flex';
     const bgColors = getBgColors();
     scene.background.set(bgColors[0]); document.body.style.background = bgColors[0];
@@ -1754,19 +1868,20 @@ function triggerGameOver() {
     checkAchievements();
     resetActivePowerups();
     dailyChallengeActive = false; dailyModifiers = {};
+    restoreDailyVisuals();
 
-    setTimeout(() => { gameOverEl.style.display = 'flex'; }, 900);
+    setTimeout(() => { showModal(gameOverEl); }, 900);
     triggerHaptic('error');
 }
 
 function togglePause() {
     if (gameState === 'playing') {
-        gameState = 'paused'; pauseScreen.style.display = 'flex';
+        gameState = 'paused'; showModal(pauseScreen);
         document.body.classList.remove('in-game');
         if (timeAttackTimer) clearInterval(timeAttackTimer);
         if (freezeTimer) clearTimeout(freezeTimer);
     } else if (gameState === 'paused') {
-        gameState = 'playing'; pauseScreen.style.display = 'none';
+        gameState = 'playing'; hideModal(pauseScreen);
         document.body.classList.add('in-game');
         const timeLimit = dailyModifiers.timeLimit || (gameMode === 'time' ? 60 : 0) || (gameMode === 'speedrun' ? 30 : 0);
         if (timeLimit > 0) {
@@ -1778,7 +1893,7 @@ function togglePause() {
 // ============ INPUT ============
 function handleInput(e) {
     const target = e.target;
-    if (target && target.closest && target.closest('button, .mode-btn, .mini-mode-btn, #top-right-controls, .modal, .powerup-item, .daily-challenge-banner')) return;
+    if (target && target.closest && target.closest('button, .mode-btn, .mini-mode-btn, #top-right-controls, .modal, .powerup-item, .daily-challenge-banner, .lb-mode-tab')) return;
     if (target && target.closest && target.closest('#start-screen, #game-over, #pause-screen, #shop-screen, #rules-screen, #achievements-screen, #leaderboard-screen, #settings-screen, #daily-screen, #powerups-screen, #chest-screen')) return;
     if (gameState === 'playing') {
         if (e.type === 'touchstart') e.preventDefault();
@@ -1803,7 +1918,6 @@ function bindModeButton(id, mode) {
 bindModeButton('btn-classic', 'classic');
 bindModeButton('btn-time', 'time');
 
-// Мини-режимы (без powerups)
 document.querySelectorAll('.mini-mode-btn').forEach(btn => {
     const handle = (e) => {
         if (e) { if (e.cancelable !== false) e.stopPropagation(); e.preventDefault(); }
@@ -1817,31 +1931,38 @@ document.querySelectorAll('.mini-mode-btn').forEach(btn => {
 });
 
 // ============ BUTTONS ============
-safeClick($('restart-btn'), () => { activePowerups = { magnet: false, freeze: false, ghost: false, multiplier: false }; startGame(); });
+safeClick($('restart-btn'), () => { activePowerups = { magnet: false, freeze: false, ghost: false, multiplier: false }; hideModal(gameOverEl); startGame(); });
 safeClick($('menu-btn'), () => goToMenu());
 safeClick(pauseBtn, () => togglePause());
 safeClick($('pause-resume'), () => togglePause());
 safeClick($('pause-menu'), () => goToMenu());
 safeClick(menuToggleBtn, () => { if (gameState === 'playing' || gameState === 'paused') goToMenu(); });
-safeClick($('shop-btn'), () => { switchShopTab('skins'); renderShop(); shopScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
-safeClick($('close-shop'), () => { shopScreen.style.display = 'none'; startScreen.style.display = 'flex'; updateCoinUI(); });
-safeClick($('rules-btn'), () => { rulesScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
-safeClick($('close-rules'), () => { rulesScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
-safeClick($('ach-btn'), () => { renderAchievements(); achScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
-safeClick($('close-achievements'), () => { achScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
-safeClick($('lb-btn'), () => { renderLeaderboard(); lbScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
-safeClick($('close-leaderboard'), () => { lbScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
-safeClick($('settings-btn'), () => { updateSettingsUI(); settingsScreen.style.display = 'flex'; startScreen.style.display = 'none'; });
-safeClick($('close-settings'), () => { settingsScreen.style.display = 'none'; startScreen.style.display = 'flex'; });
+safeClick($('shop-btn'), () => { switchShopTab('skins'); renderShop(); showModal(shopScreen); startScreen.style.display = 'none'; });
+safeClick($('close-shop'), () => { hideModal(shopScreen); startScreen.style.display = 'flex'; updateCoinUI(); });
+safeClick($('rules-btn'), () => { showModal(rulesScreen); startScreen.style.display = 'none'; });
+safeClick($('close-rules'), () => { hideModal(rulesScreen); startScreen.style.display = 'flex'; });
+safeClick($('ach-btn'), () => { renderAchievements(); showModal(achScreen); startScreen.style.display = 'none'; });
+safeClick($('close-achievements'), () => { hideModal(achScreen); startScreen.style.display = 'flex'; });
+safeClick($('lb-btn'), () => { currentLbMode = 'classic'; renderLeaderboard(); showModal(lbScreen); startScreen.style.display = 'none'; });
+safeClick($('close-leaderboard'), () => { hideModal(lbScreen); startScreen.style.display = 'flex'; });
+safeClick($('settings-btn'), () => { updateSettingsUI(); showModal(settingsScreen); startScreen.style.display = 'none'; });
+safeClick($('close-settings'), () => { hideModal(settingsScreen); startScreen.style.display = 'flex'; });
 safeClick($('chest-btn'), () => { showChestOpening(); });
 safeClick($('open-chest-btn'), () => openChest());
-safeClick($('close-chest'), () => { chestScreen.style.display = 'none'; startScreen.style.display = 'flex'; updateCoinUI(); });
-safeClick($('close-powerups'), () => { powerupsScreen.style.display = 'none'; startScreen.style.display = 'flex'; pendingGameMode = null; });
+safeClick($('close-chest'), () => { hideModal(chestScreen); startScreen.style.display = 'flex'; updateCoinUI(); });
+safeClick($('close-powerups'), () => { hideModal(powerupsScreen); startScreen.style.display = 'flex'; pendingGameMode = null; });
 safeClick($('start-with-powerups'), () => startGameWithPowerups());
 safeClick(dailyPlayBtn, () => { if (!getDailyChallengeStatus()) startDailyChallenge(); });
 
 document.querySelectorAll('.shop-tab').forEach(tab => {
     safeClick(tab, () => switchShopTab(tab.dataset.tab));
+});
+
+document.querySelectorAll('.lb-mode-tab').forEach(tab => {
+    safeClick(tab, () => {
+        currentLbMode = tab.dataset.mode;
+        renderLeaderboard();
+    });
 });
 
 safeClick($('toggle-music'), () => {
@@ -1858,7 +1979,7 @@ safeClick($('claim-daily'), () => {
         playSound('quest');
         triggerHaptic('success');
     }
-    dailyScreen.style.display = 'none';
+    hideModal(dailyScreen);
     startScreen.style.display = 'flex';
 });
 
@@ -1871,8 +1992,7 @@ safeClick(muteBtn, () => {
         settings.musicEnabled = true; settings.sfxEnabled = true;
         if (gameState === 'playing') startMusic();
     }
-    saveSettings();
-    updateSettingsUI();
+    saveSettings(); updateSettingsUI();
 });
 
 safeClick($('challenge-btn'), () => {
@@ -1903,6 +2023,18 @@ updateSettingsUI();
 updateChestUI();
 updateActivePowerupsUI();
 renderDailyChallenge();
+
+// Миграция старых лидербордов
+(function migrateLeaderboard() {
+    let changed = false;
+    leaderboard.forEach((e, i) => {
+        if (typeof e.ts !== 'number') {
+            e.ts = i;
+            changed = true;
+        }
+    });
+    if (changed) saveLeaderboard();
+})();
 
 checkDailyStreak();
 if (dailyRewardPending) {
