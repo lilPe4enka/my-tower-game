@@ -63,20 +63,11 @@ export function updateDOMText(element, newText) {
 
 export function updateDOMStyle(element, prop, value) {
     if (!element) return;
-    const key = `${element.id || element.className}-${prop}`;
-    const cacheKey = { key };
-    if (domCache.get(cacheKey) === value) return;
-    domCache.set(cacheKey, value);
     element.style[prop] = value;
 }
 
 export function updateDOMClass(element, className, force) {
     if (!element) return;
-    const key = `${element.id || element.className}-${className}`;
-    const cacheKey = { key };
-    const current = domCache.get(cacheKey);
-    if (current === force) return;
-    domCache.set(cacheKey, force);
     element.classList.toggle(className, force);
 }
 
@@ -97,20 +88,3 @@ export function updateFpsCounter() {
 }
 
 export function getCurrentFps() { return currentFps; }
-
-// ============ MEMOIZE ============
-export function memoize(fn, keyFn = null) {
-    const cache = new Map();
-    const MAX_CACHE = 100;
-    return function(...args) {
-        const key = keyFn ? keyFn(...args) : JSON.stringify(args);
-        if (cache.has(key)) return cache.get(key);
-        const result = fn.apply(this, args);
-        if (cache.size >= MAX_CACHE) {
-            const firstKey = cache.keys().next().value;
-            cache.delete(firstKey);
-        }
-        cache.set(key, result);
-        return result;
-    };
-}
