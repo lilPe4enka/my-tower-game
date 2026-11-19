@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>3D Tower Stacker: MEGA HYPE</title>
+    <title>Башня хайпа</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,8 +14,6 @@
     </script>
 </head>
 <body>
-
-<button id="settings-btn" class="floating-settings" title="Настройки">⚙️</button>
 
 <div id="ui-layer">
     <div id="quests"></div>
@@ -30,6 +28,11 @@
         <div id="game-coins">🪙 0</div>
         <div id="timer">⏱ 60</div>
         <div id="mode-label">КЛАССИКА</div>
+        <div id="wind-indicator">
+            <span class="wind-side" id="wind-left">◀</span>
+            <div class="wind-bar"><div id="wind-fill"></div></div>
+            <span class="wind-side" id="wind-right">▶</span>
+        </div>
     </div>
     <div id="active-powerups"></div>
     <div id="next-block-ui">
@@ -37,7 +40,7 @@
         <div id="next-block-preview"></div>
     </div>
     <div id="fury-overlay"></div>
-    <div id="combo-text" class="popup-text">КОМБО x2</div>
+    <div id="combo-text" class="popup-text">СЕРИЯ x2</div>
     <div id="perfect-text" class="popup-text">ИДЕАЛЬНО</div>
     <div id="bonus-text" class="popup-text">БОНУС</div>
     <div id="milestone-text" class="popup-text">10 ЭТАЖЕЙ</div>
@@ -84,11 +87,11 @@
             <div class="coins-balance" id="coins-balance">🪙 0</div>
         </div>
         <div class="shop-tabs">
-            <button class="shop-tab active" data-tab="skins">Скины</button>
+            <button class="shop-tab active" data-tab="skins">Облики</button>
             <button class="shop-tab" data-tab="colors">Цвета</button>
             <button class="shop-tab" data-tab="backgrounds">Фоны</button>
         </div>
-        <div class="shop-progress" id="shop-progress">Скины: 1/8</div>
+        <div class="shop-progress" id="shop-progress">Облики: 1/8</div>
         <div class="skin-list" id="skin-list"></div>
         <div class="customize-list" id="colors-list" style="display:none"></div>
         <div class="customize-list" id="backgrounds-list" style="display:none"></div>
@@ -101,9 +104,9 @@
         <h1>📖 ПРАВИЛА</h1>
         <div class="rules-content">
             <p><strong>🎯 Цель:</strong> Построй самую высокую башню!</p>
-            <p><strong>👆 Управление:</strong> Тапай, когда движущийся блок ровно над башней.</p>
+            <p><strong>👆 Управление:</strong> Нажимай, когда движущийся блок будет ровно над башней.</p>
             <p><strong>✂️ Обрезка:</strong> Промахнулся — блок обрежется. Полностью мимо — конец!</p>
-            <p><strong>🪙 Монеты:</strong> +1 за блок, +1 за идеал, бонус за спецблоки и майлстоуны.</p>
+            <p><strong>🪙 Монеты:</strong> +1 за блок, +1 за идеал, бонус за особые блоки и высоту башни.</p>
             <p style="margin-top: 15px;"><strong>🧱 Типы блоков:</strong></p>
             <div class="rule-block"><span class="rule-swatch" style="background:linear-gradient(135deg,#FF1744,#FF6B9D)"></span><span><b>Обычный.</b> +1 очко.</span></div>
             <div class="rule-block"><span class="rule-swatch" style="background:linear-gradient(135deg,#FFE082,#FFC107)"></span><span><b>Золотой.</b> +3 очка. Светится.</span></div>
@@ -121,11 +124,12 @@
             <div class="rule-block"><span class="rule-icon">💰</span><span><b>Множитель</b> — x2 монет.</span></div>
             <p style="margin-top: 15px;"><strong>🔥 Ярость:</strong> 5 идеалов → x2 очки.</p>
             <p><strong>📐 Диагональ:</strong> После 30 очков блоки летают по диагонали.</p>
-            <p><strong>🏅 Уровни:</strong> XP за игру. Каждые 5 уровней — сундук!</p>
-            <p><strong>🎯 Челлендж дня:</strong> Уникальное испытание каждый день.</p>
-            <p><strong>🎮 Доп. режимы:</strong> Precision, Speedrun, Endless, Mirror.</p>
-            <p><strong>🍂 Сезоны:</strong> Бонусы к монетам и XP зависят от времени года.</p>
-            <p><strong>🎨 Кастомизация:</strong> Скины, палитры и фоны.</p>
+            <p><strong>🏅 Уровни:</strong> Опыт за игру. Каждые 5 уровней — сундук!</p>
+            <p><strong>🎯 Испытание дня:</strong> Уникальное испытание каждый день.</p>
+            <p><strong>🌪 Шторм:</strong> Ветер сносит блок в сторону. Чем выше башня — тем сильнее порывы.</p>
+            <p><strong>🎮 Дополнительные режимы:</strong> Точность, Шторм, Бесконечный и Зеркальный.</p>
+            <p><strong>🍂 Сезоны:</strong> Бонусы к монетам и опыту зависят от времени года.</p>
+            <p><strong>🎨 Внешний вид:</strong> Облики, палитры и фоны.</p>
         </div>
         <button id="close-rules" class="close-modal-btn">ПОНЯТНО</button>
     </div>
@@ -134,7 +138,7 @@
 <div id="achievements-screen" class="screen modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>🏆 Ачивки</h2>
+            <h2>🏆 Достижения</h2>
             <div class="coins-balance" id="ach-progress">0/22</div>
         </div>
         <div class="ach-list" id="ach-list"></div>
@@ -148,10 +152,10 @@
         <div class="lb-mode-tabs" id="lb-mode-tabs">
             <button class="lb-mode-tab active" data-mode="classic">🎮 Обычный</button>
             <button class="lb-mode-tab" data-mode="time">⏱ На время</button>
-            <button class="lb-mode-tab" data-mode="precision">🎯 Precision</button>
-            <button class="lb-mode-tab" data-mode="speedrun">⚡ Speedrun</button>
-            <button class="lb-mode-tab" data-mode="endless">♾️ Endless</button>
-            <button class="lb-mode-tab" data-mode="mirror">🪞 Mirror</button>
+            <button class="lb-mode-tab" data-mode="precision">🎯 Точность</button>
+            <button class="lb-mode-tab" data-mode="storm">🌪 Шторм</button>
+            <button class="lb-mode-tab" data-mode="endless">♾️ Бесконечный</button>
+            <button class="lb-mode-tab" data-mode="mirror">🪞 Зеркальный</button>
         </div>
         <div class="lb-best">
             <div class="lb-best-label">🏆 Лучший результат</div>
@@ -198,7 +202,7 @@
 <div id="powerups-screen" class="screen modal">
     <div class="modal-content">
         <h1>⚡ Способности</h1>
-        <p class="lb-sub">Выбери бустеры на эту игру</p>
+        <p class="lb-sub">Выбери способности для этой игры</p>
         <div class="powerup-list" id="powerup-list"></div>
         <div class="btn-group">
             <button id="start-with-powerups" class="btn-primary">🚀 НАЧАТЬ ИГРУ</button>
@@ -224,6 +228,7 @@
 </div>
 
 <div id="start-screen" class="screen">
+    <button id="settings-btn" class="floating-settings" title="Настройки">⚙️</button>
     <div class="start-content">
         <div id="season-pill" class="pill pill-season" style="display:none;">❄️ Зима +20% 🪙</div>
         <h1 class="start-title">
@@ -235,9 +240,9 @@
             <div id="menu-streak" class="pill pill-streak hidden">🔥 0</div>
         </div>
         <div id="menu-level-box" class="level-box">
-            <div class="level-badge">🏅 LVL <span id="menu-level-num">1</span></div>
+            <div class="level-badge">🏅 УРОВЕНЬ <span id="menu-level-num">1</span></div>
             <div class="xp-bar"><div class="xp-fill" id="menu-xp-fill"></div></div>
-            <div class="xp-text" id="menu-xp-text">0 / 100 XP</div>
+            <div class="xp-text" id="menu-xp-text">0 / 100 опыта</div>
         </div>
         <div id="chest-btn-container" style="display:none;">
             <button id="chest-btn" class="chest-open-btn">
@@ -248,7 +253,7 @@
         <div id="daily-challenge-banner" class="daily-challenge-banner">
             <div class="daily-icon" id="daily-icon">🎯</div>
             <div class="daily-info">
-                <div class="daily-label">ЧЕЛЛЕНДЖ ДНЯ</div>
+                <div class="daily-label">ИСПЫТАНИЕ ДНЯ</div>
                 <div class="daily-name" id="daily-name">...</div>
                 <div class="daily-desc" id="daily-desc">...</div>
             </div>
@@ -275,19 +280,19 @@
         <div class="more-modes">
             <button class="mini-mode-btn" data-mode="precision">
                 <span class="mm-icon">🎯</span>
-                <span class="mm-name">Precision</span>
+                <span class="mm-name">Точность</span>
             </button>
-            <button class="mini-mode-btn" data-mode="speedrun">
-                <span class="mm-icon">⚡</span>
-                <span class="mm-name">Speedrun</span>
+            <button class="mini-mode-btn" data-mode="storm">
+                <span class="mm-icon">🌪</span>
+                <span class="mm-name">Шторм</span>
             </button>
             <button class="mini-mode-btn" data-mode="endless">
                 <span class="mm-icon">♾️</span>
-                <span class="mm-name">Endless</span>
+                <span class="mm-name">Бесконечный</span>
             </button>
             <button class="mini-mode-btn" data-mode="mirror">
                 <span class="mm-icon">🪞</span>
-                <span class="mm-name">Mirror</span>
+                <span class="mm-name">Зеркальный</span>
             </button>
         </div>
         <div class="menu-footer">
@@ -301,7 +306,7 @@
             </button>
             <button id="ach-btn" class="footer-btn">
                 <span class="footer-icon">🏆</span>
-                <span class="footer-label">Ачивки</span>
+                <span class="footer-label">Достижения</span>
             </button>
             <button id="lb-btn" class="footer-btn">
                 <span class="footer-icon">👑</span>
