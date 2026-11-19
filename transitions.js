@@ -25,8 +25,10 @@ export const SCREEN_TRANSITIONS = {
     'powerups-screen': TRANSITION_TYPES.SLIDE_UP,
     'chest-screen': TRANSITION_TYPES.ZOOM_IN,
     'missions-screen': TRANSITION_TYPES.SLIDE_RIGHT,
+    'minigames-screen': TRANSITION_TYPES.SLIDE_RIGHT,
     'prestige-confirm-screen': TRANSITION_TYPES.FLIP,
     'prestige-chest-screen': TRANSITION_TYPES.ZOOM_IN,
+    'event-screen': TRANSITION_TYPES.SLIDE_RIGHT,
 };
 
 export const TRANSITION_DURATIONS = {
