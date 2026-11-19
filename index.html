@@ -3,11 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#FDF2F5">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#FF6B9D">
+    <meta name="description" content="Построй самую высокую башню! 🏗️ Играй бесплатно.">
     <title>Башня хайпа</title>
+    
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Башня">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Башня хайпа">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -16,7 +26,8 @@
     <script type="importmap">
     {
         "imports": {
-            "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
         }
     }
     </script>
@@ -150,6 +161,7 @@
                 <p><strong>🏅 Уровни:</strong> Опыт за игру. Каждые 5 уровней — сундук!</p>
                 <p><strong>⭐ Престиж:</strong> С 100 уровня можно сбросить прогресс ради перманентных бонусов и редких наград!</p>
                 <p><strong>🎯 Миссии:</strong> 3-5 ежедневных заданий с наградами.</p>
+                <p><strong>🎉 События:</strong> Сезонные и праздничные события с уникальными скинами!</p>
                 <p><strong>🎯 Испытание дня:</strong> Уникальное испытание каждый день.</p>
                 <p><strong>🌪 Шторм:</strong> Ветер сносит блок в сторону. Чем выше башня — тем сильнее порывы.</p>
                 <p><strong>🎮 Дополнительные режимы:</strong> Точность, Шторм, Бесконечный и Зеркальный.</p>
@@ -212,6 +224,23 @@
                     <span class="setting-label">📳 Вибрация</span>
                     <button id="toggle-haptics" class="toggle-btn" data-on="true">ВКЛ</button>
                 </div>
+                <div class="setting-row">
+                    <span class="setting-label">✨ Качество графики</span>
+                    <select id="quality-select" class="quality-select">
+                        <option value="low">Низкое</option>
+                        <option value="medium">Среднее</option>
+                        <option value="high" selected>Высокое</option>
+                        <option value="ultra">Ультра</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">🌸 Bloom (свечение)</span>
+                    <button id="toggle-bloom" class="toggle-btn" data-on="true">ВКЛ</button>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">🎞️ Пост-эффекты</span>
+                    <button id="toggle-postfx" class="toggle-btn" data-on="true">ВКЛ</button>
+                </div>
             </div>
             <button id="close-settings" class="close-modal-btn">ЗАКРЫТЬ</button>
         </div>
@@ -272,6 +301,19 @@
         </div>
     </div>
     
+    <!-- Minigames -->
+    <div id="minigames-screen" class="screen modal" role="dialog" aria-labelledby="minigames-title">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="minigames-title">🎮 Мини-игры</h2>
+                <div class="minigame-status" id="minigame-status-text">Доступно</div>
+            </div>
+            <div id="minigames-list" class="minigame-list"></div>
+            <div id="minigame-arena-container" style="display:none;"></div>
+            <button id="close-minigames" class="close-modal-btn">ЗАКРЫТЬ</button>
+        </div>
+    </div>
+    
     <!-- Prestige Confirm -->
     <div id="prestige-confirm-screen" class="screen modal" role="dialog" aria-labelledby="prestige-confirm-title">
         <div class="modal-content prestige-confirm-content">
@@ -322,6 +364,20 @@
         </div>
     </div>
     
+    <!-- Event Details -->
+    <div id="event-screen" class="screen modal" role="dialog" aria-labelledby="event-title">
+        <div class="modal-content">
+            <div class="event-modal-header">
+                <div class="event-modal-icon" id="event-modal-icon">🎉</div>
+                <h2 id="event-title" class="event-modal-title">Событие</h2>
+                <div class="event-modal-desc" id="event-modal-desc">...</div>
+                <div class="event-modal-dates" id="event-modal-dates">...</div>
+            </div>
+            <div id="event-rewards-timeline" class="event-rewards-timeline"></div>
+            <button id="close-event" class="close-modal-btn">ЗАКРЫТЬ</button>
+        </div>
+    </div>
+    
     <!-- Floating Settings -->
     <button class="floating-settings" id="settings-btn" aria-label="Настройки">⚙️</button>
     
@@ -340,6 +396,26 @@
                 <div class="pill pill-coin"><span id="menu-coins">🪙 0</span></div>
                 <div class="pill pill-streak hidden" id="menu-streak">🔥 0</div>
             </div>
+            
+            <!-- Event Banner -->
+            <div id="event-banner" class="event-banner" style="display:none;">
+                <div class="event-header">
+                    <div class="event-icon" id="event-icon">🎉</div>
+                    <div class="event-info">
+                        <div class="event-label" id="event-label">СОБЫТИЕ</div>
+                        <div class="event-name" id="event-name">...</div>
+                        <div class="event-desc" id="event-desc">...</div>
+                    </div>
+                    <div class="event-badge" id="event-badge">0/0</div>
+                </div>
+                <div class="event-progress-container">
+                    <div class="event-progress-bar">
+                        <div class="event-progress-fill" id="event-progress-fill" style="width:0%"></div>
+                    </div>
+                    <div class="event-progress-text" id="event-progress-text">День 1</div>
+                </div>
+            </div>
+            
             <div class="level-box">
                 <div class="level-badge">
                     🏅 УРОВЕНЬ <span id="menu-level-num">1</span>
@@ -348,7 +424,7 @@
                 <div class="xp-bar"><div class="xp-fill" id="menu-xp-fill"></div></div>
                 <div class="xp-text" id="menu-xp-text">0 / 100 опыта</div>
                 
-                <!-- Секция престижа (скрыта по умолчанию) -->
+                <!-- Секция престижа -->
                 <div id="prestige-section" class="prestige-section" style="display:none;">
                     <div class="prestige-header">
                         <div class="prestige-title">
@@ -373,6 +449,12 @@
                     <span class="chest-badge" id="chest-count-badge">0</span>
                 </button>
             </div>
+            
+            <!-- Install App Button -->
+            <button id="install-app-btn" class="install-app-btn" style="display:none;">
+                <span class="install-icon">📲</span>
+                <span class="install-text">Установить приложение</span>
+            </button>
             
             <div class="daily-challenge-banner" id="daily-challenge-banner">
                 <div class="daily-icon" id="daily-icon">🎯</div>
@@ -422,11 +504,20 @@
                 </button>
             </div>
             
-            <div class="menu-footer" style="grid-template-columns: repeat(5, 1fr);">
+            <div class="menu-footer" style="grid-template-columns: repeat(3, 1fr);">
+                <button class="footer-btn" id="event-btn" style="display:none;">
+                    <span class="footer-icon" id="event-btn-icon">🎉</span>
+                    <span class="footer-label" id="event-btn-label">Событие</span>
+                    <span class="event-notification-dot hidden" id="event-notification-dot"></span>
+                </button>
                 <button class="footer-btn" id="missions-btn">
                     <span class="footer-icon">🎯</span>
                     <span class="footer-label">Миссии</span>
                     <span class="missions-notification-badge hidden" id="missions-badge">0</span>
+                </button>
+                <button class="footer-btn" id="minigames-btn">
+                    <span class="footer-icon">🎮</span>
+                    <span class="footer-label">Мини-игры</span>
                 </button>
                 <button class="footer-btn" id="shop-btn">
                     <span class="footer-icon">🛍️</span>
@@ -451,6 +542,7 @@
     <!-- Mute Button -->
     <button id="mute-btn" class="floating-settings" style="top:auto;bottom:20px;right:20px;" aria-label="Звук">🔊</button>
     
+    <!-- Модули -->
     <script type="module">
         import './utils.js';
         import './constants.js';
@@ -460,7 +552,56 @@
         import './prestige.js';
         import './performance.js';
         import './accessibility.js';
+        import './environment-particles.js';
+        import './postprocessing.js';
+        import './minigames.js';
+        import './optimization.js';
+        import './seasonal-events.js';
     </script>
     <script type="module" src="game.js"></script>
+    
+    <!-- PWA Service Worker -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js', { scope: './' })
+                .then((registration) => {
+                    console.log('[PWA] SW registered:', registration.scope);
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                if (confirm('Доступна новая версия игры! Обновить?')) {
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                    window.location.reload();
+                                }
+                            }
+                        });
+                    });
+                })
+                .catch((err) => console.warn('[PWA] SW registration failed:', err));
+        });
+    }
+    
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        const installBtn = document.getElementById('install-app-btn');
+        if (installBtn) installBtn.style.display = 'flex';
+    });
+    
+    window.addEventListener('appinstalled', () => {
+        deferredPrompt = null;
+        const installBtn = document.getElementById('install-app-btn');
+        if (installBtn) installBtn.style.display = 'none';
+    });
+    
+    function installApp() {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+    }
+    </script>
 </body>
 </html>
