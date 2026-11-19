@@ -132,23 +132,6 @@ export function addDecorativeStars(container, count = 20) {
     }
 }
 
-// ============ КНОПКА ЗАКРЫТИЯ ============
-export function addCloseButtonToModal(modalContent, onCloseCallback) {
-    if (!modalContent) return;
-    if (modalContent.querySelector('.modal-close-btn')) return;
-    
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'modal-close-btn';
-    closeBtn.innerHTML = '✕';
-    closeBtn.setAttribute('aria-label', 'Закрыть');
-    closeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (typeof onCloseCallback === 'function') onCloseCallback();
-    });
-    modalContent.style.position = 'relative';
-    modalContent.appendChild(closeBtn);
-}
-
 // ============ НОРМАЛИЗАЦИЯ ШРИФТОВ ============
 export function normalizeFontSizes() {
     const elements = document.querySelectorAll('.mode-btn .mode-name, .daily-name, .customize-name, .skin-name');
@@ -169,4 +152,21 @@ export function animateElementsSequentially(elements, animationType = 'fadeInUp'
         el.style.opacity = '0';
         el.style.animation = `${animationType} 0.4s ease-out ${index * staggerDelay / 1000}s forwards`;
     });
+}
+
+// ============ КНОПКА ЗАКРЫТИЯ ============
+export function addCloseButtonToModal(modalContent, onCloseCallback) {
+    if (!modalContent) return;
+    if (modalContent.querySelector('.modal-close-btn')) return;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'modal-close-btn';
+    closeBtn.innerHTML = '✕';
+    closeBtn.setAttribute('aria-label', 'Закрыть');
+    closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (typeof onCloseCallback === 'function') onCloseCallback();
+    });
+    modalContent.style.position = 'relative';
+    modalContent.appendChild(closeBtn);
 }
