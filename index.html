@@ -37,6 +37,14 @@
             </div>
         </div>
         
+        <!-- Комбо-индикатор -->
+        <div id="combo-indicator" aria-label="Индикатор комбо">
+            <div id="combo-multiplier-text">Серия 0</div>
+            <div class="combo-progress-bar">
+                <div id="combo-progress-fill"></div>
+            </div>
+        </div>
+        
         <div id="quests" aria-label="Задания"></div>
         
         <div id="top-right-controls">
@@ -137,8 +145,11 @@
                 <p><strong>⚡ Способности:</strong></p>
                 <p>🧲Магнит — 1 блок идеально.<br>❄️Заморозка — медленно 10 сек.<br>👻Призрак — прощает 1 промах.<br>💰Множитель — x2 монет.</p>
                 <p><strong>🔥 Ярость:</strong> 5 идеалов → x2 очки.</p>
+                <p><strong>⚡ Комбо-множители:</strong> Серия x5 → x2 очков, x10 → x3, x15 → x5, x20 → x8, x25 → x12, x30 → x20!</p>
                 <p><strong>📐 Диагональ:</strong> После 30 очков блоки летают по диагонали.</p>
                 <p><strong>🏅 Уровни:</strong> Опыт за игру. Каждые 5 уровней — сундук!</p>
+                <p><strong>⭐ Престиж:</strong> С 100 уровня можно сбросить прогресс ради перманентных бонусов и редких наград!</p>
+                <p><strong>🎯 Миссии:</strong> 3-5 ежедневных заданий с наградами.</p>
                 <p><strong>🎯 Испытание дня:</strong> Уникальное испытание каждый день.</p>
                 <p><strong>🌪 Шторм:</strong> Ветер сносит блок в сторону. Чем выше башня — тем сильнее порывы.</p>
                 <p><strong>🎮 Дополнительные режимы:</strong> Точность, Шторм, Бесконечный и Зеркальный.</p>
@@ -245,6 +256,72 @@
         </div>
     </div>
     
+    <!-- Missions -->
+    <div id="missions-screen" class="screen modal" role="dialog" aria-labelledby="missions-title">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="missions-title">🎯 Ежедневные миссии</h2>
+                <div class="missions-timer" id="missions-timer">Обновление через: --:--:--</div>
+            </div>
+            <div class="missions-header-stats">
+                <span class="missions-stats-text" id="missions-stats-text">Выполнено: 0/0</span>
+                <span class="missions-stats-text" id="missions-available-text">Доступно наград: 0</span>
+            </div>
+            <div id="missions-list" class="missions-list"></div>
+            <button id="close-missions" class="close-modal-btn">ЗАКРЫТЬ</button>
+        </div>
+    </div>
+    
+    <!-- Prestige Confirm -->
+    <div id="prestige-confirm-screen" class="screen modal" role="dialog" aria-labelledby="prestige-confirm-title">
+        <div class="modal-content prestige-confirm-content">
+            <div class="prestige-confirm-icon">⭐</div>
+            <h2 id="prestige-confirm-title" class="prestige-confirm-title">АКТИВИРОВАТЬ ПРЕСТИЖ?</h2>
+            <div class="prestige-confirm-desc">
+                Ты сбросишь уровень, рекорды и статистику, но получишь <strong>перманентные бонусы</strong> и <strong>редкие награды</strong>!
+            </div>
+            <div class="prestige-rewards-list" id="prestige-rewards-preview">
+                <div class="prestige-reward-item">
+                    <span class="reward-icon">🪙</span>
+                    <span id="prestige-coins-preview">+1000 монет</span>
+                </div>
+                <div class="prestige-reward-item">
+                    <span class="reward-icon">📦</span>
+                    <span id="prestige-chests-preview">+3 престиж-сундука</span>
+                </div>
+                <div class="prestige-reward-item">
+                    <span class="reward-icon">✨</span>
+                    <span id="prestige-bonus-preview">+10% ко всему навсегда</span>
+                </div>
+            </div>
+            <div class="prestige-warning">
+                ⚠️ Будут сброшены: уровень, опыт, рекорды и статистика.<br>
+                ✅ Сохранятся: монеты, скины, достижения, способности.
+            </div>
+            <div class="btn-group">
+                <button id="prestige-confirm-btn" class="btn-primary">⭐ АКТИВИРОВАТЬ</button>
+                <button id="prestige-cancel-btn" class="btn-ghost">ОТМЕНА</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Prestige Chest Opening -->
+    <div id="prestige-chest-screen" class="screen modal" role="dialog" aria-labelledby="prestige-chest-title">
+        <div class="modal-content">
+            <h2 id="prestige-chest-title">⭐ Престиж-сундук!</h2>
+            <p id="prestige-chest-sub">Что же внутри?</p>
+            <div class="prestige-chest-container">
+                <div class="prestige-chest-rays"></div>
+                <div id="prestige-chest-icon" class="prestige-chest-icon">🎁</div>
+                <div class="prestige-reward-display">
+                    <div id="prestige-reward-text" class="prestige-reward-text"></div>
+                </div>
+            </div>
+            <button id="open-prestige-chest-btn" class="btn-primary">ОТКРЫТЬ</button>
+            <button id="close-prestige-chest" class="close-modal-btn" style="display:none;">ЗАБРАТЬ ВСЁ</button>
+        </div>
+    </div>
+    
     <!-- Floating Settings -->
     <button class="floating-settings" id="settings-btn" aria-label="Настройки">⚙️</button>
     
@@ -264,16 +341,39 @@
                 <div class="pill pill-streak hidden" id="menu-streak">🔥 0</div>
             </div>
             <div class="level-box">
-                <div class="level-badge">🏅 УРОВЕНЬ <span id="menu-level-num">1</span></div>
+                <div class="level-badge">
+                    🏅 УРОВЕНЬ <span id="menu-level-num">1</span>
+                    <span id="prestige-profile-badge" class="prestige-profile-badge" style="display:none;">⭐ <span id="prestige-count-badge">0</span></span>
+                </div>
                 <div class="xp-bar"><div class="xp-fill" id="menu-xp-fill"></div></div>
                 <div class="xp-text" id="menu-xp-text">0 / 100 опыта</div>
+                
+                <!-- Секция престижа (скрыта по умолчанию) -->
+                <div id="prestige-section" class="prestige-section" style="display:none;">
+                    <div class="prestige-header">
+                        <div class="prestige-title">
+                            <span>⭐ ПРЕСТИЖ</span>
+                            <span class="prestige-count" id="prestige-count-display">0</span>
+                        </div>
+                    </div>
+                    <div class="prestige-bonus-text" id="prestige-bonus-text">Бонусы: —</div>
+                    <div class="prestige-progress-bar">
+                        <div class="prestige-progress-fill" id="prestige-progress-fill" style="width:0%"></div>
+                    </div>
+                    <div class="prestige-progress-text" id="prestige-progress-text">0 / 100 уровня</div>
+                    <button id="prestige-activate-btn" class="prestige-activate-btn" disabled>
+                        🔒 ДОСТУПНО С 100 УРОВНЯ
+                    </button>
+                </div>
             </div>
+            
             <div id="chest-btn-container">
-                <button class="chest-open-btn" id="chest-btn">
+                <button class="chest-open-btn btn-shine" id="chest-btn">
                     📦 Открыть сундуки
                     <span class="chest-badge" id="chest-count-badge">0</span>
                 </button>
             </div>
+            
             <div class="daily-challenge-banner" id="daily-challenge-banner">
                 <div class="daily-icon" id="daily-icon">🎯</div>
                 <div class="daily-info">
@@ -283,8 +383,9 @@
                 </div>
                 <button class="daily-play-btn" id="daily-play-btn">ИГРАТЬ</button>
             </div>
+            
             <div class="mode-buttons">
-                <button class="mode-btn" id="btn-classic">
+                <button class="mode-btn btn-shine" id="btn-classic">
                     <span class="mode-icon">🎮</span>
                     <div class="mode-info">
                         <span class="mode-name">Классика</span>
@@ -292,7 +393,7 @@
                     </div>
                     <span class="mode-arrow">›</span>
                 </button>
-                <button class="mode-btn" id="btn-time">
+                <button class="mode-btn btn-shine" id="btn-time">
                     <span class="mode-icon">⏱</span>
                     <div class="mode-info">
                         <span class="mode-name">На время</span>
@@ -301,6 +402,7 @@
                     <span class="mode-arrow">›</span>
                 </button>
             </div>
+            
             <div class="more-modes">
                 <button class="mini-mode-btn" data-mode="precision">
                     <span class="mm-icon">🎯</span>
@@ -319,7 +421,13 @@
                     <span class="mm-name">Зеркальный</span>
                 </button>
             </div>
-            <div class="menu-footer">
+            
+            <div class="menu-footer" style="grid-template-columns: repeat(5, 1fr);">
+                <button class="footer-btn" id="missions-btn">
+                    <span class="footer-icon">🎯</span>
+                    <span class="footer-label">Миссии</span>
+                    <span class="missions-notification-badge hidden" id="missions-badge">0</span>
+                </button>
                 <button class="footer-btn" id="shop-btn">
                     <span class="footer-icon">🛍️</span>
                     <span class="footer-label">Магазин</span>
@@ -343,6 +451,16 @@
     <!-- Mute Button -->
     <button id="mute-btn" class="floating-settings" style="top:auto;bottom:20px;right:20px;" aria-label="Звук">🔊</button>
     
+    <script type="module">
+        import './utils.js';
+        import './constants.js';
+        import './combo-system.js';
+        import './transitions.js';
+        import './missions.js';
+        import './prestige.js';
+        import './performance.js';
+        import './accessibility.js';
+    </script>
     <script type="module" src="game.js"></script>
 </body>
 </html>
