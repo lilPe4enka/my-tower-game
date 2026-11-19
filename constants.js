@@ -61,6 +61,7 @@ export const GAME_CONFIG = {
     CAMERA_OFFSET_X: 20,
     CAMERA_OFFSET_Y: 25,
     CAMERA_OFFSET_Z: 20,
+    CAMERA_LOOK_OFFSET_Y: 2,
     CAMERA_LERP_FACTOR: 0.1,
     CAMERA_SHAKE_DECAY: 0.85,
     
@@ -93,6 +94,13 @@ export const GAME_MODES = {
     STORM: 'storm',
     ENDLESS: 'endless',
     MIRROR: 'mirror',
+};
+
+export const GAME_STATES = {
+    MENU: 'menu',
+    PLAYING: 'playing',
+    PAUSED: 'paused',
+    GAMEOVER: 'gameover',
 };
 
 export const GAME_MODE_NAMES = {
@@ -132,13 +140,6 @@ export const BLOCK_GLOW_COLORS = {
     [BLOCK_TYPES.RAINBOW]: 0xFF00FF,
     [BLOCK_TYPES.DRAGON]: 0xFF6600,
     [BLOCK_TYPES.DIAMOND]: 0x00BCD4,
-};
-
-export const GAME_STATES = {
-    MENU: 'menu',
-    PLAYING: 'playing',
-    PAUSED: 'paused',
-    GAMEOVER: 'gameover',
 };
 
 export const STORAGE_KEYS = {
