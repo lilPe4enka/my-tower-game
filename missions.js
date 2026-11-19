@@ -68,7 +68,7 @@ export const MISSIONS_CONFIG = {
 // ============ ГЕНЕРАЦИЯ МИССИЙ ============
 export function generateDailyMissions() {
     const pool = [...MISSIONS_POOL];
-    const count = MISSIONS_CONFIG.MIN_MISSIONS_PER_DAY + 
+    const count = MISSIONS_CONFIG.MIN_MISSIONS_PER_DAY +
         Math.floor(Math.random() * (MISSIONS_CONFIG.MAX_MISSIONS_PER_DAY - MISSIONS_CONFIG.MIN_MISSIONS_PER_DAY + 1));
     
     const missions = [];
@@ -120,13 +120,15 @@ export function loadMissions() {
     const missions = safeGetItem(MISSIONS_CONFIG.STORAGE_KEY, []);
     const claimed = safeGetItem(MISSIONS_CONFIG.CLAIMED_KEY, []);
     
+    if (!Array.isArray(missions)) return [];
+    
     missions.forEach(m => {
-        if (claimed.includes(m.id)) {
+        if (Array.isArray(claimed) && claimed.includes(m.id)) {
             m.claimed = true;
         }
     });
     
-    return Array.isArray(missions) ? missions : [];
+    return missions;
 }
 
 export function saveMissions(missions) {
@@ -209,21 +211,4 @@ export function formatMissionReward(reward) {
 export function getMissionProgress(mission) {
     if (!mission || mission.target === 0) return 0;
     return Math.min(100, (mission.current / mission.target) * 100);
-}
-
-// ============ ТАЙМЕР ОБНОВЛЕНИЯ ============
-export function getTimeUntilReset() {
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-    return tomorrow - now;
-}
-
-export function formatTimeUntilReset() {
-    const diff = getTimeUntilReset();
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
