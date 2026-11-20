@@ -323,12 +323,16 @@ user-select: none;
 #start-screen {
 background: linear-gradient(135deg, #FFE5EC 0%, #E0F7F5 50%, #FFE5EC 100%);
 background-size: 200% 200%;
-overflow: hidden;
+overflow-y: auto;
+justify-content: flex-start;
+padding-top: max(calc(var(--safe-top) + 20px), 24px);
+padding-bottom: max(calc(var(--safe-bottom) + 24px), 28px);
 }
 .start-content {
 width: 100%; max-width: min(360px, 90vw);
 display: flex; flex-direction: column; align-items: center;
 position: relative;
+margin: auto 0;
 }
 .start-title {
 font-size: clamp(28px, 8vw, 42px);
@@ -420,7 +424,7 @@ pointer-events: none;
 /* =========================================
 MENU FOOTER
 ========================================= */
-.menu-footer { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(6px, 1.8vw, 9px); margin-top: 14px; width: 100%; }
+.menu-footer { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(6px, 1.8vw, 9px); margin-top: 14px; width: 100%; }
 .footer-btn { background: white; padding: clamp(10px, 2.5vw, 12px) clamp(4px, 1.5vw, 8px); border-radius: 14px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; transition: transform 0.15s, box-shadow 0.2s; position: relative; }
 .footer-btn:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
 .footer-btn .footer-icon { font-size: clamp(20px, 5.5vw, 24px); line-height: 1; }
@@ -635,7 +639,7 @@ MISSIONS
 /* =========================================
 PRESTIGE
 ========================================= */
-.prestige-section { width: 100%; margin-top: 12px; padding: 12px; background: linear-gradient(135deg, #FFF8E1, #FFECB3); border-radius: 16px; border: 2px solid #FFD54F; box-shadow: 0 4px 16px rgba(255, 213, 79, 0.25); position: relative; overflow: hidden; }
+.prestige-section { width: 100%; margin-top: 12px; margin-bottom: 12px; padding: 12px; background: linear-gradient(135deg, #FFF8E1, #FFECB3); border-radius: 16px; border: 2px solid #FFD54F; box-shadow: 0 4px 16px rgba(255, 213, 79, 0.25); position: relative; overflow: hidden; }
 .prestige-section::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%); pointer-events: none; animation: prestigeShine 4s ease-in-out infinite; }
 @keyframes prestigeShine { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(180deg); } }
 .prestige-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; }
@@ -682,7 +686,7 @@ EVENTS
 .event-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; position: relative; }
 .event-icon { font-size: clamp(32px, 8vw, 40px); filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)); animation: eventIconFloat 3s ease-in-out infinite; }
 @keyframes eventIconFloat { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-4px) rotate(3deg); } }
-.event-info { flex: 1; min-width: 0; }
+.event-info { flex: 1; min-width: 0; text-align: left; }
 .event-label { font-size: clamp(9px, 2.4vw, 11px); font-weight: 900; color: rgba(255, 255, 255, 0.85); letter-spacing: 1.5px; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); }
 .event-name { font-size: clamp(14px, 3.8vw, 17px); font-weight: 900; color: white; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .event-desc { font-size: clamp(10px, 2.6vw, 12px); color: rgba(255, 255, 255, 0.9); font-weight: 600; margin-top: 2px; }
@@ -705,7 +709,7 @@ EVENTS
 .event-reward-item.locked { opacity: 0.5; }
 .event-reward-day { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--event-color, #FF6B9D), var(--event-color-dark, #E85A8C)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
 .event-reward-item.claimed .event-reward-day { background: linear-gradient(135deg, #BDBDBD, #9E9E9E); }
-.event-reward-content { flex: 1; min-width: 0; }
+.event-reward-content { flex: 1; min-width: 0; text-align: left; }
 .event-reward-text { font-weight: 900; font-size: clamp(12px, 3.2vw, 14px); color: var(--text-primary); display: block; }
 .event-reward-sub { font-size: clamp(10px, 2.6vw, 11px); color: var(--text-secondary); font-weight: 600; margin-top: 2px; }
 .event-reward-action { flex-shrink: 0; }
@@ -735,12 +739,19 @@ TRANSITIONS
 @keyframes transitionSlideRightIn { from { opacity: 0; transform: translateX(-100%); } to { opacity: 1; transform: translateX(0); } }
 @keyframes transitionSlideRightOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
 .transition-slideUp-in { animation: transitionSlideUpIn 0.4s var(--ease-out-back) forwards; }
+.transition-slideUp-out { animation: transitionSlideUpOut 0.3s var(--ease-smooth) forwards; }
 @keyframes transitionSlideUpIn { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+@keyframes transitionSlideUpOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(100%); } }
 .transition-zoomIn-in { animation: transitionZoomInIn 0.35s var(--ease-out-back) forwards; }
+.transition-zoomIn-out { animation: transitionZoomInOut 0.25s var(--ease-smooth) forwards; }
 @keyframes transitionZoomInIn { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
+@keyframes transitionZoomInOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.8); } }
 .transition-flip-in { animation: transitionFlipIn 0.5s var(--ease-out-back) forwards; transform-style: preserve-3d; }
+.transition-flip-out { animation: transitionFlipOut 0.35s var(--ease-smooth) forwards; transform-style: preserve-3d; }
 @keyframes transitionFlipIn { 0% { opacity: 0; transform: perspective(800px) rotateY(-90deg) scale(0.8); } 50% { opacity: 0.5; } 100% { opacity: 1; transform: perspective(800px) rotateY(0) scale(1); } }
+@keyframes transitionFlipOut { 0% { opacity: 1; transform: perspective(800px) rotateY(0) scale(1); } 100% { opacity: 0; transform: perspective(800px) rotateY(90deg) scale(0.8); } }
 .transition-bounce-in { animation: transitionBounceIn 0.5s var(--ease-out-back) forwards; }
+.transition-bounce-out { animation: transitionZoomInOut 0.25s var(--ease-smooth) forwards; }
 @keyframes transitionBounceIn { 0% { opacity: 0; transform: scale(0.3) translateY(50px); } 50% { opacity: 1; transform: scale(1.1) translateY(-10px); } 70% { transform: scale(0.95) translateY(5px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
 
 /* =========================================
@@ -755,7 +766,7 @@ TRANSITIONS
 .skin-preview.neon { background: linear-gradient(135deg, #FF00FF, #00FFFF, #FFFF00) !important; box-shadow: 0 0 10px #FF00FF, 0 0 20px #00FFFF, 0 0 30px #FFFF00 !important; animation: neonFlicker 2s ease-in-out infinite !important; }
 @keyframes neonFlicker { 0%, 100% { box-shadow: 0 0 10px #FF00FF, 0 0 20px #00FFFF, 0 0 30px #FFFF00; } 50% { box-shadow: 0 0 15px #FF00FF, 0 0 30px #00FFFF, 0 0 45px #FFFF00; } }
 .skin-preview.stars { background: linear-gradient(135deg, #191970, #4B0082, #8A2BE2) !important; position: relative; overflow: hidden; }
-.skin-preview.stars::after { content: '✨'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 16px; animation: starTwinkle 1.5s ease-in-out infinite; }
+.skin-preview.stars::after { content: '✨'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 16px; animation: twinkle 1.5s ease-in-out infinite; }
 .skin-effect-badge { position: absolute; top: 4px; right: 4px; background: rgba(0, 0, 0, 0.7); color: white; padding: 2px 6px; border-radius: 6px; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; backdrop-filter: blur(4px); }
 .skin-fire-active #ui-layer { box-shadow: inset 0 0 100px rgba(255, 69, 0, 0.15); }
 .skin-ice-active #ui-layer { box-shadow: inset 0 0 100px rgba(135, 206, 235, 0.15); }
