@@ -34,7 +34,7 @@
                 <span class="wind-side" id="wind-right">▶</span>
             </div>
         </div>
-        
+
         <!-- Комбо-индикатор -->
         <div id="combo-indicator" aria-label="Индикатор комбо">
             <div id="combo-multiplier-text">Серия 0</div>
@@ -42,34 +42,34 @@
                 <div id="combo-progress-fill"></div>
             </div>
         </div>
-        
+
         <div id="quests" aria-label="Задания"></div>
-        
+
         <div id="top-right-controls">
             <button id="menu-toggle-btn" aria-label="В меню">🏠</button>
             <button id="pause-btn" aria-label="Пауза">⏸</button>
         </div>
-        
+
         <div id="next-block-ui">
             <div class="label">Следующий</div>
             <div id="next-block-preview"></div>
         </div>
-        
+
         <div id="active-powerups" aria-label="Активные способности"></div>
-        
+
         <div id="fury-overlay"></div>
         <div id="screen-flash"></div>
-        
+
         <div id="perfect-text" class="popup-text">ИДЕАЛЬНО</div>
         <div id="combo-text" class="popup-text">СЕРИЯ x2</div>
         <div id="milestone-text" class="popup-text">БОНУС</div>
         <div id="bonus-text" class="popup-text">10 ЭТАЖЕЙ</div>
         <div id="levelup-popup" class="popup-text">НОВЫЙ УРОВЕНЬ!</div>
         <div id="achievement-popup" class="popup-text">АЧИВКА!</div>
-        
+
         <div id="tutorial">Тапни, когда блок будет ровно над башней!</div>
     </div>
-    
+
     <!-- Game Over -->
     <div id="game-over" class="screen modal" role="dialog" aria-labelledby="game-over-title">
         <div class="modal-content">
@@ -88,7 +88,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Pause -->
     <div id="pause-screen" class="screen modal" role="dialog" aria-labelledby="pause-title">
         <div class="modal-content">
@@ -100,7 +100,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Shop -->
     <div id="shop-screen" class="screen modal" role="dialog" aria-labelledby="shop-title">
         <div class="modal-content">
@@ -120,7 +120,7 @@
             <button id="close-shop" class="close-modal-btn">ЗАКРЫТЬ</button>
         </div>
     </div>
-    
+
     <!-- Rules -->
     <div id="rules-screen" class="screen modal" role="dialog" aria-labelledby="rules-title">
         <div class="modal-content">
@@ -154,19 +154,19 @@
             <button id="close-rules" class="close-modal-btn">ПОНЯТНО</button>
         </div>
     </div>
-    
+
     <!-- Achievements -->
     <div id="achievements-screen" class="screen modal" role="dialog" aria-labelledby="ach-title">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="ach-title">🏆 Достижения</h2>
-                <div id="ach-progress">0/22</div>
+                <div id="ach-progress">0/27</div>
             </div>
             <div id="ach-list" class="ach-list"></div>
             <button id="close-achievements" class="close-modal-btn">ЗАКРЫТЬ</button>
         </div>
     </div>
-    
+
     <!-- Leaderboard -->
     <div id="leaderboard-screen" class="screen modal" role="dialog" aria-labelledby="lb-title">
         <div class="modal-content">
@@ -189,7 +189,7 @@
             <button id="close-leaderboard" class="close-modal-btn">ЗАКРЫТЬ</button>
         </div>
     </div>
-    
+
     <!-- Settings -->
     <div id="settings-screen" class="screen modal" role="dialog" aria-labelledby="settings-title">
         <div class="modal-content">
@@ -211,7 +211,7 @@
             <button id="close-settings" class="close-modal-btn">ЗАКРЫТЬ</button>
         </div>
     </div>
-    
+
     <!-- Daily Reward -->
     <div id="daily-screen" class="screen modal" role="dialog" aria-labelledby="daily-title">
         <div class="modal-content">
@@ -222,7 +222,7 @@
             <button id="claim-daily" class="claim-btn">ЗАБРАТЬ</button>
         </div>
     </div>
-    
+
     <!-- Powerups -->
     <div id="powerups-screen" class="screen modal" role="dialog" aria-labelledby="powerups-title">
         <div class="modal-content">
@@ -235,14 +235,14 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Chest -->
     <div id="chest-screen" class="screen modal" role="dialog" aria-labelledby="chest-title">
         <div class="modal-content">
             <h2 id="chest-title">🎁 Сундук!</h2>
             <p id="chest-sub">Что же внутри?</p>
             <div class="chest-container">
-                <div class="chest-rays"></div>
+                <div id="chest-rays" class="chest-rays"></div>
                 <div id="chest-icon" class="chest-icon">📦</div>
                 <div id="chest-reward" class="chest-reward"></div>
             </div>
@@ -250,13 +250,77 @@
             <button id="close-chest" class="close-modal-btn" style="display:none;">ЗАБРАТЬ</button>
         </div>
     </div>
-    
+
+    <!-- Missions -->
+    <div id="missions-screen" class="screen modal" role="dialog" aria-labelledby="missions-title">
+        <div class="modal-content">
+            <h1 id="missions-title">🎯 Ежедневные миссии</h1>
+            <div class="missions-header-stats">
+                <span class="missions-stats-text" id="missions-stats-text">Выполнено: 0/0</span>
+                <span class="missions-stats-text" id="missions-available-text">Доступно наград: 0</span>
+            </div>
+            <div class="missions-timer" id="missions-timer">Обновление через: 00:00:00</div>
+            <div id="missions-list" class="missions-list"></div>
+            <button id="close-missions" class="close-modal-btn">ЗАКРЫТЬ</button>
+        </div>
+    </div>
+
+    <!-- Prestige Confirm -->
+    <div id="prestige-confirm-screen" class="screen modal" role="dialog" aria-labelledby="prestige-confirm-title">
+        <div class="modal-content prestige-confirm-content">
+            <div class="prestige-confirm-icon">⭐</div>
+            <h2 id="prestige-confirm-title" class="prestige-confirm-title">Активировать Престиж?</h2>
+            <p class="prestige-confirm-desc">Ты сбросишь уровень и рекорды, но получишь постоянные бонусы и награды:</p>
+            <div class="prestige-rewards-list">
+                <div class="prestige-reward-item"><span class="reward-icon">🪙</span><span id="prestige-coins-preview">+1000 монет</span></div>
+                <div class="prestige-reward-item"><span class="reward-icon">🎁</span><span id="prestige-chests-preview">+3 престиж-сундуков</span></div>
+                <div class="prestige-reward-item"><span class="reward-icon">✨</span><span id="prestige-bonus-preview">+10% 🪙, +10% ⭐, +5% 🏗️</span></div>
+            </div>
+            <div class="prestige-warning">⚠️ Сбросятся: уровень, опыт, рекорд и таблица попыток. Монеты, скины и достижения сохранятся.</div>
+            <div class="btn-group">
+                <button id="prestige-confirm-btn" class="btn-primary">⭐ ПЕРЕРОДИТЬСЯ</button>
+                <button id="prestige-cancel-btn" class="btn-ghost">ОТМЕНА</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prestige Chest -->
+    <div id="prestige-chest-screen" class="screen modal" role="dialog" aria-labelledby="prestige-chest-title">
+        <div class="modal-content">
+            <h2 id="prestige-chest-title">🎁 Престиж-сундук!</h2>
+            <p id="prestige-chest-sub">Осталось сундуков: 3</p>
+            <div class="prestige-chest-container">
+                <div class="prestige-chest-rays"></div>
+                <div id="prestige-chest-icon" class="prestige-chest-icon">🎁</div>
+                <div class="prestige-reward-display">
+                    <div id="prestige-reward-text" class="prestige-reward-text"></div>
+                </div>
+            </div>
+            <button id="open-prestige-chest-btn" class="btn-primary">ОТКРЫТЬ</button>
+            <button id="close-prestige-chest" class="close-modal-btn" style="display:none;">ЗАБРАТЬ</button>
+        </div>
+    </div>
+
+    <!-- Event -->
+    <div id="event-screen" class="screen modal" role="dialog" aria-labelledby="event-title">
+        <div class="modal-content">
+            <div class="event-modal-header">
+                <div id="event-modal-icon" class="event-modal-icon">🎉</div>
+                <h2 id="event-title" class="event-modal-title">Событие</h2>
+                <div id="event-modal-desc" class="event-modal-desc"></div>
+                <div id="event-modal-dates" class="event-modal-dates"></div>
+            </div>
+            <div id="event-rewards-timeline" class="event-rewards-timeline"></div>
+            <button id="close-event" class="close-modal-btn">ЗАКРЫТЬ</button>
+        </div>
+    </div>
+
     <!-- Floating Settings -->
     <button class="floating-settings" id="settings-btn" aria-label="Настройки">⚙️</button>
-    
+
     <!-- Victory Crown -->
     <div id="victory-crown">👑</div>
-    
+
     <!-- Start Screen -->
     <div id="start-screen" class="screen">
         <div class="start-content">
@@ -270,7 +334,12 @@
                 <div class="pill pill-streak hidden" id="menu-streak">🔥 0</div>
             </div>
             <div class="level-box">
-                <div class="level-badge">🏅 УРОВЕНЬ <span id="menu-level-num">1</span></div>
+                <div class="level-badge">
+                    🏅 УРОВЕНЬ <span id="menu-level-num">1</span>
+                    <span class="prestige-profile-badge" id="prestige-profile-badge" style="display:none;">
+                        ⭐ <span id="prestige-count-badge">0</span>
+                    </span>
+                </div>
                 <div class="xp-bar"><div class="xp-fill" id="menu-xp-fill"></div></div>
                 <div class="xp-text" id="menu-xp-text">0 / 100 опыта</div>
             </div>
@@ -280,6 +349,40 @@
                     <span class="chest-badge" id="chest-count-badge">0</span>
                 </button>
             </div>
+
+            <!-- Сезонное/праздничное событие -->
+            <div class="event-banner" id="event-banner" style="display:none;">
+                <div class="event-header">
+                    <div class="event-icon" id="event-icon">🎉</div>
+                    <div class="event-info">
+                        <div class="event-label" id="event-label">СЕЗОН</div>
+                        <div class="event-name" id="event-name">...</div>
+                        <div class="event-desc" id="event-desc">...</div>
+                    </div>
+                    <div class="event-badge" id="event-badge">0/0</div>
+                </div>
+                <div class="event-progress-container">
+                    <div class="event-progress-bar">
+                        <div class="event-progress-fill" id="event-progress-fill"></div>
+                    </div>
+                    <div class="event-progress-text" id="event-progress-text">День 1</div>
+                </div>
+            </div>
+
+            <!-- Престиж -->
+            <div class="prestige-section" id="prestige-section" style="display:none;">
+                <div class="prestige-header">
+                    <span class="prestige-title">⭐ Престиж</span>
+                    <span class="prestige-count" id="prestige-count-display">0</span>
+                </div>
+                <div class="prestige-bonus-text" id="prestige-bonus-text">Бонусы: —</div>
+                <div class="prestige-progress-bar">
+                    <div class="prestige-progress-fill" id="prestige-progress-fill"></div>
+                </div>
+                <div class="prestige-progress-text" id="prestige-progress-text">1 / 100 уровня</div>
+                <button class="prestige-activate-btn" id="prestige-activate-btn" disabled>🔒 ДОСТУПНО С 100 УРОВНЯ</button>
+            </div>
+
             <div class="daily-challenge-banner" id="daily-challenge-banner">
                 <div class="daily-icon" id="daily-icon">🎯</div>
                 <div class="daily-info">
@@ -330,9 +433,10 @@
                     <span class="footer-icon">🛍️</span>
                     <span class="footer-label">Магазин</span>
                 </button>
-                <button class="footer-btn" id="rules-btn">
-                    <span class="footer-icon">📖</span>
-                    <span class="footer-label">Правила</span>
+                <button class="footer-btn" id="missions-btn">
+                    <span class="missions-notification-badge hidden" id="missions-badge">0</span>
+                    <span class="footer-icon">🎯</span>
+                    <span class="footer-label">Миссии</span>
                 </button>
                 <button class="footer-btn" id="ach-btn">
                     <span class="footer-icon">🏆</span>
@@ -342,13 +446,21 @@
                     <span class="footer-icon">👑</span>
                     <span class="footer-label">Топ</span>
                 </button>
+                <button class="footer-btn" id="rules-btn">
+                    <span class="footer-icon">📖</span>
+                    <span class="footer-label">Правила</span>
+                </button>
+                <button class="footer-btn" id="event-btn" style="display:none;">
+                    <span class="footer-icon" id="event-btn-icon">🎉</span>
+                    <span class="footer-label" id="event-btn-label">Событие</span>
+                </button>
             </div>
         </div>
     </div>
-    
+
     <!-- Mute Button -->
-    <button id="mute-btn" class="floating-settings" style="top:auto;bottom:20px;right:20px;" aria-label="Звук">🔊</button>
-    
+    <button id="mute-btn" class="floating-settings" style="top:auto;bottom:max(calc(var(--safe-bottom) + 16px), 20px);" aria-label="Звук">🔊</button>
+
     <script type="module" src="game.js"></script>
 </body>
 </html>
