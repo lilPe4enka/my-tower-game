@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 // ============ ИМПОРТЫ МОДУЛЕЙ ============
 import { safeGetItem, safeSetItem, safeParseInt, PARTICLE_LIMITS, enforceParticleLimits, showModalSafe, hideModalSafe, isAnyModalOpen, setupGlobalErrorHandler, validateArray, validateObject } from './utils.js';
-import { GAME_CONFIG, LIMITS, GAME_MODES, GAME_MODE_NAMES, BLOCK_TYPES, BLOCK_COLORS, BLOCK_GLOW_COLORS, STORAGE_KEYS, DEFAULTS, xpForNextLevel, getAdaptiveD, CONFETTI_COLORS, MILESTONE_COLORS, LEAD_NOTES, FEATURE_NAMES } from './constants.js';
+import { GAME_CONFIG, LIMITS, GAME_MODES, GAME_STATES, GAME_MODE_NAMES, BLOCK_TYPES, BLOCK_COLORS, BLOCK_GLOW_COLORS, STORAGE_KEYS, DEFAULTS, xpForNextLevel, getAdaptiveD, CONFETTI_COLORS, MILESTONE_COLORS, LEAD_NOTES, FEATURE_NAMES } from './constants.js';
 import { getComboTier, applyComboMultiplier, checkTierUpgrade, formatComboDisplay } from './combo-system.js';
 import { applyTransition, getTransitionForScreen, staggerElements, flashTransition } from './transitions.js';
 import { loadMissions, updateMissionProgress, claimMissionReward, getMissionsStats, formatMissionReward, getMissionProgress } from './missions.js';
@@ -10,17 +10,40 @@ import { getPrestigeCount, getPrestigeBonus, setPrestigeBonus, canPrestige, getP
 import { getCachedTexture, clearTextureCache, throttle, updateDOMText, updateDOMStyle, updateDOMClass, updateFpsCounter } from './performance.js';
 import { saveLastFocus, restoreLastFocus, trapFocus, releaseFocusTrap, setupEscapeKeyHandler, removeEscapeKeyHandler, updateAriaAttributes, announceToScreenReader, addDecorativeStars, normalizeFontSizes, animateElementsSequentially, addCloseButtonToModal } from './accessibility.js';
 import { getCurrentEvent, getEventProgress, getAvailableRewards, claimEventReward, getEventStats, formatEventDate, isEventsSystemActive, getEventDay, EVENT_SKINS } from './seasonal-events.js';
+import { createEnvironmentParticles, updateEnvironmentParticles, getParticlesForBackground } from './environment-particles.js';
 
 setupGlobalErrorHandler();
 
 // ============ TELEGRAM & HAPTICS ============
+const TELEGRAM_APP_URL = 'https://t.me/YOUR_BOT_USERNAME/app'; // замени на реальную ссылку на Mini App
 const tg = window.Telegram?.WebApp;
+
 if (tg) {
     try {
-        tg.ready(); tg.expand();
+        tg.ready();
+        tg.expand();
         if (tg.isVersionAtLeast('7.7')) tg.disableVerticalSwipes();
         tg.onEvent('viewportChanged', () => { if (typeof onResize === 'function') onResize(); });
     } catch (err) {}
+}
+
+function updateTelegramBackButton() {
+    if (!tg?.BackButton || !tg.isVersionAtLeast('6.1')) return;
+    const hasOpenModal = Boolean(document.querySelector('.screen.modal.open'));
+    const inGame = gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSED;
+    if (hasOpenModal || inGame) tg.BackButton.show();
+    else tg.BackButton.hide();
+}
+
+if (tg?.BackButton && tg.isVersionAtLeast('6.1')) {
+    tg.BackButton.onClick(() => {
+        const openModal = document.querySelector('.screen.modal.open');
+        if (openModal) {
+            handleModalDismiss(openModal);
+        } else if (gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSED) {
+            togglePause();
+        }
+    });
 }
 
 function triggerHaptic(type = 'light') {
@@ -45,28 +68,44 @@ function safeClick(el, handler) {
         if (now - lastFire < 300) return;
         lastFire = now;
         if (e.cancelable !== false) e.stopPropagation();
-        try { handler(e); } catch(err) { console.error('Handler:', err); }
+        try { handler(e); } catch (err) { console.error('Handler:', err); }
     };
     el.addEventListener('click', wrapped);
 }
 
 // ============ МОДАЛКИ (с переходами) ============
+function handleModalDismiss(el) {
+    if (el === pauseScreen && gameState === GAME_STATES.PAUSED) {
+        togglePause();
+        return;
+    }
+    if (el === gameOverEl) {
+        goToMenu();
+        return;
+    }
+    if (el === powerupsScreen) {
+        pendingGameMode = null;
+    }
+    hideModal(el);
+}
+
 async function showModal(el) {
-    if (!el) return;
+    if (!el || el.classList.contains('open')) return;
     saveLastFocus();
     const screenId = el.id;
     const transitionType = getTransitionForScreen(screenId);
     el.classList.add('open');
+    updateTelegramBackButton();
     await applyTransition(el, transitionType, 'in');
     updateAriaAttributes(el, true);
     const modalContent = el.querySelector('.modal-content');
     if (modalContent) {
         trapFocus(modalContent);
-        addCloseButtonToModal(modalContent, () => hideModal(el));
+        addCloseButtonToModal(modalContent, () => handleModalDismiss(el));
         const animatableElements = modalContent.querySelectorAll('.ach-item, .skin-item, .customize-item, .powerup-item, .lb-attempt, .quest-chip, .mission-item, .event-reward-item');
         if (animatableElements.length > 0 && animatableElements.length < 30) staggerElements(animatableElements, 40);
     }
-    setupEscapeKeyHandler(el, () => hideModal(el));
+    setupEscapeKeyHandler(el, () => handleModalDismiss(el));
     const title = el.querySelector('h1, h2');
     if (title) announceToScreenReader(`Открыто: ${title.textContent}`);
     if (['chest-screen', 'daily-screen', 'prestige-confirm-screen'].includes(el.id)) {
@@ -76,8 +115,8 @@ async function showModal(el) {
     playSound('screen_transition');
 }
 
-async function hideModal(el) {
-    if (!el) return;
+async function hideModal(el, { restoreMenu = true } = {}) {
+    if (!el || !el.classList.contains('open')) return;
     const screenId = el.id;
     const transitionType = getTransitionForScreen(screenId);
     await applyTransition(el, transitionType, 'out');
@@ -88,6 +127,11 @@ async function hideModal(el) {
     removeEscapeKeyHandler(el);
     restoreLastFocus();
     announceToScreenReader('Диалог закрыт');
+    if (restoreMenu && gameState === GAME_STATES.MENU && !document.querySelector('.screen.modal.open')) {
+        startScreen.style.display = 'flex';
+        updateCoinUI();
+    }
+    updateTelegramBackButton();
 }
 
 // ============ КОНТЕНТ ============
@@ -96,22 +140,22 @@ const BASE_COLORS = ['#FF1744', '#F50057', '#D500F9', '#651FFF', '#2979FF', '#00
 // Объединяем все скины: базовые + престиж + события
 const SKINS = {
     default: { name: 'Классика', price: 0, colors: BASE_COLORS },
-    food: { name: 'Еда', price: 80, colors: ['#FF5722','#FF9800','#FFC107','#E64A19','#FF6F00','#D84315','#F57C00'] },
-    cats: { name: 'Котики', price: 120, colors: ['#FF4081','#F06292','#E91E63','#C2185B','#AB47BC','#CE93D8'] },
-    animals: { name: 'Звери', price: 180, colors: ['#8D6E63','#6D4C41','#795548','#5D4037','#8BC34A','#689F38','#558B2F'] },
-    space: { name: 'Космос', price: 250, colors: ['#1A237E','#283593','#311B92','#4527A0','#512DA8','#01579B','#0D47A1'] },
-    ocean: { name: 'Океан', price: 320, colors: ['#0288D1','#0277BD','#01579B','#006064','#00838F','#0097A7','#26C6DA'] },
-    retro: { name: 'Ретро 8-бит', price: 400, colors: ['#00C853','#00B248','#00897B','#00BFA5','#76FF03','#AA00FF'] },
-    neon: { name: 'Неон', price: 500, colors: ['#E91E63','#9C27B0','#3F51B5','#00BCD4','#8BC34A','#FFEB3B','#FF4081','#00E5FF'] },
-    ice: { name: 'Лёд', price: 200, colors: ['#81D4FA','#4FC3F7','#29B6F6','#03A9F4','#039BE5','#0288D1'], modifiers: { speedMult: 1.3, coinMult: 1.2 } },
-    stone: { name: 'Камень', price: 200, colors: ['#757575','#616161','#424242','#546E7A','#455A64','#37474F'], modifiers: { speedMult: 0.85, scoreMult: 1.2 } },
-    fire: { name: 'Огонь', price: 250, colors: ['#FF5722','#FF3D00','#E64A19','#F4511E','#D84315','#BF360C'], modifiers: { fireChance: 0.05 } },
+    food: { name: 'Еда', price: 80, colors: ['#FF5722', '#FF9800', '#FFC107', '#E64A19', '#FF6F00', '#D84315', '#F57C00'] },
+    cats: { name: 'Котики', price: 120, colors: ['#FF4081', '#F06292', '#E91E63', '#C2185B', '#AB47BC', '#CE93D8'] },
+    animals: { name: 'Звери', price: 180, colors: ['#8D6E63', '#6D4C41', '#795548', '#5D4037', '#8BC34A', '#689F38', '#558B2F'] },
+    space: { name: 'Космос', price: 250, colors: ['#1A237E', '#283593', '#311B92', '#4527A0', '#512DA8', '#01579B', '#0D47A1'] },
+    ocean: { name: 'Океан', price: 320, colors: ['#0288D1', '#0277BD', '#01579B', '#006064', '#00838F', '#0097A7', '#26C6DA'] },
+    retro: { name: 'Ретро 8-бит', price: 400, colors: ['#00C853', '#00B248', '#00897B', '#00BFA5', '#76FF03', '#AA00FF'] },
+    neon: { name: 'Неон', price: 500, colors: ['#E91E63', '#9C27B0', '#3F51B5', '#00BCD4', '#8BC34A', '#FFEB3B', '#FF4081', '#00E5FF'] },
+    ice: { name: 'Лёд', price: 200, colors: ['#81D4FA', '#4FC3F7', '#29B6F6', '#03A9F4', '#039BE5', '#0288D1'], modifiers: { speedMult: 1.3, coinMult: 1.2 } },
+    stone: { name: 'Камень', price: 200, colors: ['#757575', '#616161', '#424242', '#546E7A', '#455A64', '#37474F'], modifiers: { speedMult: 0.85, scoreMult: 1.2 } },
+    fire: { name: 'Огонь', price: 250, colors: ['#FF5722', '#FF3D00', '#E64A19', '#F4511E', '#D84315', '#BF360C'], modifiers: { fireChance: 0.05 } },
     holographic: { name: 'Голограмма', price: 600, colors: ['#00FFFF', '#FF00FF', '#FFFF00', '#00FF00', '#FF0080', '#0080FF'], effect: 'holographic', modifiers: { scoreMult: 1.15 } },
     fire_skin: { name: 'Пламя', price: 550, colors: ['#FF4500', '#FF6347', '#FF7F50', '#FFA07A', '#DC143C', '#B22222'], effect: 'fire', modifiers: { fireChance: 0.08 } },
     ice_skin: { name: 'Ледяной', price: 500, colors: ['#E0FFFF', '#AFEEEE', '#87CEEB', '#4682B4', '#5F9EA0', '#B0E0E6'], effect: 'ice', modifiers: { speedMult: 0.9, coinMult: 1.15 } },
     neon_skin: { name: 'Неон+', price: 700, colors: ['#FF00FF', '#00FFFF', '#FFFF00', '#FF0080', '#800080', '#00CED1'], effect: 'neon', modifiers: { scoreMult: 1.2 } },
     galaxy_skin: { name: 'Галактика', price: 800, colors: ['#191970', '#4B0082', '#8A2BE2', '#9370DB', '#663399', '#483D8B'], effect: 'stars', modifiers: { xpMult: 1.25 } },
-    legend: { name: 'Легенда', price: 999999, notBuyable: true, colors: ['#FFD700','#FFA000','#FF6F00','#F57C00','#FFEB3B','#FFC107'] },
+    legend: { name: 'Легенда', price: 999999, notBuyable: true, colors: ['#FFD700', '#FFA000', '#FF6F00', '#F57C00', '#FFEB3B', '#FFC107'] },
     ...PRESTIGE_SKINS,
     ...EVENT_SKINS,
 };
@@ -277,7 +321,7 @@ let currentBackground = (typeof safeGetItem(STORAGE_KEYS.BACKGROUND, 'default') 
 let unlockedBackgrounds = validateArray(safeGetItem(STORAGE_KEYS.BACKGROUNDS, ['default']), ['default']);
 let unlockedFeatures = validateObject(safeGetItem(STORAGE_KEYS.FEATURES, {}), {});
 
-let gameState = 'menu', gameMode = 'classic';
+let gameState = GAME_STATES.MENU, gameMode = GAME_MODES.CLASSIC;
 let windStrength = 0, windDirection = 1, windGustTimer = null;
 let movingAxis = 'x', currentSpeed = BASE_SPEED;
 let currentBiomeIndex = 0, targetBgColor = new THREE.Color(BACKGROUNDS.default.colors[0]), shakeIntensity = 0;
@@ -291,7 +335,7 @@ let dailyModifiers = {};
 let dailyChallengeActive = false;
 let savedBgBeforeDaily = null;
 let savedPaletteBeforeDaily = null;
-let currentLbMode = 'classic';
+let currentLbMode = GAME_MODES.CLASSIC;
 
 const DEFAULT_SETTINGS = { ...DEFAULTS.SETTINGS };
 const DEFAULT_STATS = { ...DEFAULTS.STATS, missionsCompleted: 0, eventsRewards: 0 };
@@ -331,6 +375,27 @@ function savePowerups() { safeSetItem(STORAGE_KEYS.POWERUPS, ownedPowerups); }
 
 let activePowerups = { ...DEFAULTS.ACTIVE_POWERUPS };
 let magnetUsed = false, ghostUsed = false, freezeTimer = null, pendingGameMode = null;
+let isFreezeActive = false, freezeEndTime = 0, freezeRemaining = 0;
+let gameOverTimers = [];
+
+function clearGameOverTimers() {
+    gameOverTimers.forEach(id => clearTimeout(id));
+    gameOverTimers = [];
+}
+
+function startFreezeTimer(duration) {
+    if (freezeTimer) clearTimeout(freezeTimer);
+    isFreezeActive = true;
+    freezeRemaining = duration;
+    freezeEndTime = Date.now() + duration;
+    freezeTimer = setTimeout(() => {
+        isFreezeActive = false;
+        freezeRemaining = 0;
+        freezeEndTime = 0;
+        freezeTimer = null;
+    }, duration);
+}
+
 let chests = validateArray(safeGetItem(STORAGE_KEYS.CHESTS, []), []);
 function saveChests() { safeSetItem(STORAGE_KEYS.CHESTS, chests); }
 
@@ -420,7 +485,6 @@ const dailyBannerEl = $('daily-challenge-banner'), dailyNameEl = $('daily-name')
 const seasonPillEl = $('season-pill');
 const victoryCrownEl = $('victory-crown');
 
-// Новые DOM-элементы
 const comboIndicatorEl = $('combo-indicator');
 const comboProgressFillEl = $('combo-progress-fill');
 const comboMultiplierTextEl = $('combo-multiplier-text');
@@ -520,10 +584,10 @@ function startDailyChallenge() {
     const challenge = getDailyChallenge();
     dailyChallengeActive = true;
     dailyModifiers = challenge.modifiers;
-    gameMode = 'classic';
+    gameMode = GAME_MODES.CLASSIC;
     markDailyChallengePlayed();
     renderDailyChallenge();
-    startGame('classic');
+    startGame(GAME_MODES.CLASSIC);
 }
 
 function restoreDailyVisuals() {
@@ -562,7 +626,7 @@ function updateComboIndicator() {
 function addCoins(amount) {
     if (amount <= 0) return;
     let mult = 1;
-    if (activePowerups.multiplier && gameState === 'playing') mult *= 2;
+    if (activePowerups.multiplier && gameState === GAME_STATES.PLAYING) mult *= 2;
     if (dailyModifiers.coinMult) mult *= dailyModifiers.coinMult;
     const skinMods = getSkinModifiers();
     if (skinMods.coinMult) mult *= skinMods.coinMult;
@@ -598,6 +662,8 @@ function addXP(amount) {
     if (amount <= 0) return;
     let mult = 1;
     if (dailyModifiers.xpMult) mult *= dailyModifiers.xpMult;
+    const skinMods = getSkinModifiers();
+    if (skinMods.xpMult) mult *= skinMods.xpMult;
     const season = getCurrentSeason();
     if (season.xpMult) mult *= season.xpMult;
     const prestigeBonus = getPrestigeBonus();
@@ -807,7 +873,7 @@ function initAudio() {
             const windOsc = audioCtx.createBufferSource(); windOsc.buffer = noiseBuffer; windOsc.loop = true;
             const windFilter = audioCtx.createBiquadFilter(); windFilter.type = 'lowpass'; windFilter.frequency.value = 400;
             windOsc.connect(windFilter); windFilter.connect(windGain); windOsc.start();
-        } catch(e) {}
+        } catch (e) {}
     }
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
 }
@@ -843,7 +909,7 @@ function playSound(type, level = 0) {
             src.connect(filter); filter.connect(g); g.connect(master);
             src.start(now + delay);
         };
-        
+
         if (type === 'drop') { tone(90, 40, 'sine', 0.15, 0.35); noise(0.08, 0.1); }
         else if (type === 'perfect') { const mult = Math.pow(1.059, Math.min(level, 12)); tone(523.25 * mult, null, 'sine', 0.4, 0.25); tone(659.25 * mult, null, 'sine', 0.4, 0.18); }
         else if (type === 'milestone') { [261.63, 329.63, 392.00, 523.25].forEach((f, i) => tone(f, null, 'triangle', 0.5, 0.12, i * 0.1)); }
@@ -855,25 +921,20 @@ function playSound(type, level = 0) {
         else if (type === 'gust') { tone(200, 900, 'sawtooth', 0.7, 0.08); noise(0.5, 0.22); }
         else if (type === 'chest') { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, null, 'triangle', 0.4, 0.2, i * 0.1)); tone(1318.51, null, 'sine', 0.6, 0.25, 0.5); }
         else if (type === 'victory') { [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98].forEach((f, i) => tone(f, null, 'triangle', 0.5, 0.22, i * 0.1)); }
-        // Комбо
         else if (type === 'combo_2x') { tone(523.25, null, 'sine', 0.15, 0.2); tone(659.25, null, 'sine', 0.15, 0.2, 0.08); }
         else if (type === 'combo_3x') { tone(523.25, null, 'sine', 0.12, 0.22); tone(659.25, null, 'sine', 0.12, 0.22, 0.07); tone(783.99, null, 'sine', 0.2, 0.22, 0.14); }
         else if (type === 'combo_5x') { tone(523.25, null, 'triangle', 0.1, 0.25); tone(659.25, null, 'triangle', 0.1, 0.25, 0.06); tone(783.99, null, 'triangle', 0.1, 0.25, 0.12); tone(1046.50, null, 'triangle', 0.25, 0.25, 0.18); }
         else if (type === 'combo_super') { [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((f, i) => tone(f, null, 'triangle', 0.15, 0.25, i * 0.05)); noise(0.3, 0.1, 0.25); }
         else if (type === 'combo_ultra') { [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98].forEach((f, i) => tone(f, null, 'sine', 0.12, 0.28, i * 0.04)); tone(2093, null, 'sine', 0.4, 0.2, 0.25); }
         else if (type === 'combo_insane') { [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093].forEach((f, i) => tone(f, null, 'triangle', 0.1, 0.3, i * 0.035)); tone(2637, null, 'sine', 0.5, 0.25, 0.25); noise(0.4, 0.15, 0.3); }
-        // Миссии
         else if (type === 'mission_complete') { [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => tone(f, null, 'triangle', 0.2, 0.25, i * 0.08)); tone(1318.51, null, 'sine', 0.4, 0.2, 0.35); }
-        // Престиж
         else if (type === 'prestige_activate') { [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00].forEach((f, i) => tone(f, null, 'sine', 0.15, 0.25, i * 0.05)); tone(2637, null, 'triangle', 0.8, 0.3, 0.4); noise(0.5, 0.15, 0.5); }
-        // События
         else if (type === 'event_start') { [392.00, 523.25, 659.25, 783.99, 1046.50].forEach((f, i) => tone(f, null, 'triangle', 0.25, 0.22, i * 0.1)); }
         else if (type === 'event_reward') { tone(659.25, null, 'sine', 0.15, 0.25); tone(783.99, null, 'sine', 0.15, 0.25, 0.1); tone(1046.50, null, 'sine', 0.3, 0.25, 0.2); }
-        // Системные
         else if (type === 'screen_transition') { tone(600, 800, 'sine', 0.1, 0.1); tone(800, 1000, 'sine', 0.1, 0.08, 0.05); }
         else if (type === 'notification') { tone(880, null, 'sine', 0.1, 0.2); tone(1174.66, null, 'sine', 0.15, 0.2, 0.1); }
         else if (type === 'unlock') { [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((f, i) => tone(f, null, 'sine', 0.15, 0.22, i * 0.07)); }
-    } catch(e) {}
+    } catch (e) {}
 }
 
 function playKick() {
@@ -886,7 +947,7 @@ function playKick() {
         g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
         osc.connect(g); g.connect(musicGain); osc.start();
         osc.stop(audioCtx.currentTime + 0.12);
-    } catch(e) {}
+    } catch (e) {}
 }
 
 function playHat() {
@@ -899,7 +960,7 @@ function playHat() {
         g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
         src.connect(filter); filter.connect(g); g.connect(musicGain);
         src.start(); src.stop(audioCtx.currentTime + 0.04);
-    } catch(e) {}
+    } catch (e) {}
 }
 
 function playBass() {
@@ -911,7 +972,7 @@ function playBass() {
         g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
         osc.connect(g); g.connect(musicGain); osc.start();
         osc.stop(audioCtx.currentTime + 0.2);
-    } catch(e) {}
+    } catch (e) {}
 }
 
 function playLeadNote(idx) {
@@ -923,7 +984,7 @@ function playLeadNote(idx) {
         g.gain.setValueAtTime(0.05, now);
         g.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
         osc.connect(g); g.connect(musicGain); osc.start(now); osc.stop(now + 0.35);
-    } catch(e) {}
+    } catch (e) {}
 }
 
 function playFuryLead() {
@@ -939,11 +1000,11 @@ function playFuryLead() {
         g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
         osc.connect(filter); filter.connect(g); g.connect(musicGain);
         osc.start(now); osc.stop(now + 0.2);
-    } catch(e) {}
+    } catch (e) {}
 }
 
 function musicTick() {
-    if (!musicPlaying || !settings.musicEnabled || gameState !== 'playing') return;
+    if (!musicPlaying || !settings.musicEnabled || gameState !== GAME_STATES.PLAYING) return;
     currentMusicPhase = getMusicPhase();
     const beat = musicBeat % 8;
     if (currentMusicPhase === 4) {
@@ -1036,7 +1097,7 @@ function updateCoinUI() {
     const coinsText = `🪙 ${coins}`;
     updateDOMText(coinsBalanceEl, coinsText);
     updateDOMText(menuCoinsEl, coinsText);
-    updateDOMText(gameCoinsEl, `🪙 ${gameState === 'playing' ? sessionCoins : coins}`);
+    updateDOMText(gameCoinsEl, `🪙 ${gameState === GAME_STATES.PLAYING ? sessionCoins : coins}`);
 }
 
 // ============ SHOP ============
@@ -1066,7 +1127,7 @@ function renderShop() {
         else btnHtml = `<button class="buy locked" disabled>${skin.price} 🪙</button>`;
         const colorDots = skin.colors.slice(0, 5).map(c => `<span style="background:${c}"></span>`).join('');
         const effectBadge = skin.effect ? `<span class="skin-effect-badge">${getEffectIcon(skin.effect)}</span>` : '';
-        const modifierHint = skin.modifiers ? `· <span style="color:var(--mint-dark);font-size:10px;font-weight:900">${skin.modifiers.speedMult ? (skin.modifiers.speedMult>1?'⚡ БЫСТРЕЕ':'🐌 МЕДЛЕННЕЕ') : ''} ${skin.modifiers.coinMult ? '+'+Math.round((skin.modifiers.coinMult-1)*100)+'%🪙' : ''} ${skin.modifiers.scoreMult ? '+'+Math.round((skin.modifiers.scoreMult-1)*100)+'%очк' : ''} ${skin.modifiers.fireChance ? '🔥 5%' : ''}</span>` : '';
+        const modifierHint = skin.modifiers ? `· <span style="color:var(--mint-dark);font-size:10px;font-weight:900">${skin.modifiers.speedMult ? (skin.modifiers.speedMult > 1 ? '⚡ БЫСТРЕЕ' : '🐌 МЕДЛЕННЕЕ') : ''} ${skin.modifiers.coinMult ? '+' + Math.round((skin.modifiers.coinMult - 1) * 100) + '%🪙' : ''} ${skin.modifiers.scoreMult ? '+' + Math.round((skin.modifiers.scoreMult - 1) * 100) + '%очк' : ''} ${skin.modifiers.fireChance ? '🔥 5%' : ''}</span>` : '';
         div.innerHTML = `<div class="skin-info"><span class="skin-preview ${skin.effect || ''}" style="background:linear-gradient(135deg,${skin.colors[0]},${skin.colors[1] || skin.colors[0]});border-radius:8px;padding:4px;position:relative;">${effectBadge}</span><div class="skin-details"><span class="skin-name">${skin.name}${modifierHint}</span><div class="skin-colors">${colorDots}</div></div></div>${btnHtml}`;
         skinListEl.appendChild(div);
     }
@@ -1186,12 +1247,16 @@ function applyBackground() {
         if (bgStarsGroup.material) bgStarsGroup.material.dispose();
         bgStarsGroup = null;
     }
+    if (scene) {
+        const particleType = getParticlesForBackground(currentBackground);
+        createEnvironmentParticles(scene, particleType, { density: window.innerWidth < 768 ? 0.6 : 1 });
+    }
 }
 
 function createStars() {
     const geo = new THREE.BufferGeometry();
     const positions = [];
-    for (let i = 0; i < 300; i++) positions.push((Math.random()-0.5)*200, Math.random()*150, (Math.random()-0.5)*200);
+    for (let i = 0; i < 300; i++) positions.push((Math.random() - 0.5) * 200, Math.random() * 150, (Math.random() - 0.5) * 200);
     geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     const mat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.6, transparent: true, opacity: 0.9 });
     bgStarsGroup = new THREE.Points(geo, mat);
@@ -1243,7 +1308,7 @@ function startGameWithPowerups() {
         if (activePowerups[key]) ownedPowerups[key] = Math.max(0, (ownedPowerups[key] || 0) - 1);
     }
     savePowerups();
-    hideModal(powerupsScreen);
+    hideModal(powerupsScreen, { restoreMenu: false });
     const mode = pendingGameMode;
     pendingGameMode = null;
     startGame(mode);
@@ -1263,7 +1328,7 @@ function updateActivePowerupsUI() {
 
 // ============ CHESTS ============
 function addChest(type, meta = {}) {
-    const isRare = Math.random() < 0.1;
+    const isRare = Boolean(meta.rare) || Math.random() < 0.1;
     chests.push({ type, isRare, ...meta, id: Date.now() + Math.random() });
     saveChests(); updateChestUI();
     if (isRare) { showPopup(bonusText, '✨ РЕДКИЙ СУНДУК!', 2200); triggerHaptic('success'); }
@@ -1486,7 +1551,7 @@ function activatePrestige() {
     saveLevelProgress(); saveStats(); saveTotalScore(); saveRecentScores();
     updateLevelUI(); updatePrestigeUI();
     highScoreEl.innerText = `РЕКОРД: ${highScore}`;
-    hideModal(prestigeConfirmScreen);
+    hideModal(prestigeConfirmScreen, { restoreMenu: false });
     playSound('prestige_activate');
     triggerHaptic('success');
     flashTransition('rgba(255, 215, 0, 0.7)', 500);
@@ -1555,7 +1620,7 @@ function handleLevelMilestones(oldLevel, newLevel) {
     newMilestones.forEach((milestoneLevel, index) => {
         setTimeout(() => {
             showMilestoneNotification(milestoneLevel);
-            addChest('milestone', { level: milestoneLevel });
+            addChest('milestone', { level: milestoneLevel, rare: true });
             playSound('chest');
             triggerHaptic('success');
         }, index * 1500);
@@ -1711,8 +1776,6 @@ function shadeEventColor(hex, percent) {
     b = Math.max(0, Math.min(255, b));
     return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
 }
-
-// Продолжение в следующем сообщении...
 // ============ THREE.JS ============
 function initThree() {
     scene = new THREE.Scene();
@@ -1745,9 +1808,18 @@ function initThree() {
 
 function disposeMesh(mesh) {
     if (!mesh) return;
+    if (mesh.userData?.glowSprite) {
+        const sprite = mesh.userData.glowSprite;
+        if (sprite.material) sprite.material.dispose();
+        mesh.remove(sprite);
+        mesh.userData.glowSprite = null;
+    }
     if (mesh.geometry) mesh.geometry.dispose();
-    if (Array.isArray(mesh.material)) mesh.material.forEach(m => { if (m.map) m.map.dispose(); m.dispose(); });
-    else if (mesh.material) { if (mesh.material.map) mesh.material.map.dispose(); mesh.material.dispose(); }
+    if (Array.isArray(mesh.material)) {
+        mesh.material.forEach(m => m.dispose());
+    } else if (mesh.material) {
+        mesh.material.dispose();
+    }
 }
 
 function createGlowTexture() {
@@ -1970,9 +2042,12 @@ function rollBlockType() {
 }
 
 function getBlockVisuals(type) {
-    const palette = getPaletteColors();
-    const rndColor = palette[Math.floor(Math.random() * palette.length)];
     if (BLOCK_COLORS[type]) return { color: BLOCK_COLORS[type] };
+    const skin = SKINS[currentSkin];
+    const colors = (!dailyModifiers.forcePalette && currentSkin !== 'default' && skin?.colors?.length)
+        ? skin.colors
+        : getPaletteColors();
+    const rndColor = colors[Math.floor(Math.random() * colors.length)];
     return { color: rndColor };
 }
 
@@ -2042,7 +2117,7 @@ function flashScreen() {
 }
 
 function dropBlock() {
-    if (gameState !== 'playing' || !currentBlock?.userData.moving) return;
+    if (gameState !== GAME_STATES.PLAYING || !currentBlock?.userData.moving) return;
     if (showTutorialHint) {
         tutorialEl.style.display = 'none';
         safeSetItem(STORAGE_KEYS.TUTORIAL_SHOWN, true);
@@ -2062,25 +2137,25 @@ function dropBlock() {
     }
     let absDiffX = Math.abs(diffX), absDiffZ = Math.abs(diffZ);
     let maxDiff = Math.max(absDiffX, absDiffZ);
-    
+
     if (activePowerups.magnet && !magnetUsed) {
         magnetUsed = true;
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         diffX = 0; diffZ = 0; absDiffX = 0; absDiffZ = 0; maxDiff = 0;
         showPopup(bonusText, '🧲 МАГНИТ!', 1200);
     }
-    
+
     if (bType === BLOCK_TYPES.DIAMOND) {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         diffX = 0; diffZ = 0; absDiffX = 0; absDiffZ = 0; maxDiff = 0;
     }
-    
+
     const missX = (movingAxis === 'x' || movingAxis === 'diag') && absDiffX >= sizeX / 2;
     const missZ = (movingAxis === 'z' || movingAxis === 'diag') && absDiffZ >= sizeZ / 2;
     const precisionMode = (gameMode === GAME_MODES.PRECISION);
     const noCutActive = dailyModifiers.noCut || precisionMode;
     const perfectThreshold = dailyModifiers.tightThreshold || GAME_CONFIG.PERFECT_THRESHOLD;
-    
+
     if (activePowerups.ghost && !ghostUsed && (missX || missZ || (noCutActive && maxDiff >= perfectThreshold))) {
         ghostUsed = true;
         showPopup(bonusText, '👻 ПРИЗРАК СПАС!', 1500);
@@ -2088,14 +2163,14 @@ function dropBlock() {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         diffX = 0; diffZ = 0; absDiffX = 0; absDiffZ = 0; maxDiff = 0;
     }
-    
+
     if (missX || missZ) { currentBlock.userData.falling = true; triggerGameOver(); return; }
     if (noCutActive && maxDiff >= perfectThreshold) { currentBlock.userData.falling = true; triggerGameOver(); return; }
     if (bType === BLOCK_TYPES.CRUMBLE && maxDiff < perfectThreshold) {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         spawnBombParticles(); triggerGameOver(); return;
     }
-    
+
     if (maxDiff < perfectThreshold) {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         if (!dailyModifiers.noCombo) combo++;
@@ -2120,16 +2195,16 @@ function dropBlock() {
             updateQuest('secret', 1); playSound('secret');
             showPopup(bonusText, `💎 АЛМАЗ +${GAME_CONFIG.POINTS_DIAMOND}!`, 1500);
         }
-        
+
         if (bType === BLOCK_TYPES.BOMB) { playSound('bomb'); showPopup(bonusText, '💥 БУМ! +2', 1000); shakeIntensity = GAME_CONFIG.SHAKE_BOMB; }
         else if (bType === BLOCK_TYPES.GOLDEN) { playSound('perfect', combo); showPopup(bonusText, '👑 ЗОЛОТО +3', 900); }
         else if (bType === BLOCK_TYPES.ICE) { playSound('perfect', combo); showPopup(bonusText, '❄️ ЛЕД +2', 900); }
         else if (!isSecret) { playSound('perfect', combo); showPopup(perfectText, null, 600); }
         flashScreen();
-        
+
         if (gameMode === GAME_MODES.TIME) { timeLeft += GAME_CONFIG.TIME_BONUS_PERFECT; updateTimerDisplay(); }
         if (gameMode === GAME_MODES.STORM) { windGustBoost = 0; windStrength *= 0.75; updateWindUI(); }
-        
+
         if (combo >= GAME_CONFIG.FURY_COMBO_REQUIRED && !isFury && !dailyModifiers.noFury) {
             isFury = true; furyBlocksLeft = GAME_CONFIG.FURY_BLOCKS_COUNT;
             document.body.classList.add('fury-active');
@@ -2137,10 +2212,9 @@ function dropBlock() {
             updateQuest('fury', 1); stats.totalFury++;
             updateMissionProgress(missions, 'fury', 1);
         }
-        
+
         if (combo > 1 && !isFury) showPopup(comboText, `СЕРИЯ x${combo}`, 800);
-        
-        // Комбо-множитель
+
         const comboResult = applyComboMultiplier(points, combo);
         points = comboResult.points;
         const tierUpgrade = checkTierUpgrade(combo - 1, combo);
@@ -2150,12 +2224,15 @@ function dropBlock() {
             triggerHaptic('success');
             shakeIntensity = 0.3 + tierUpgrade.tierIndex * 0.1;
         }
-        
+
         if (isFury) points *= GAME_CONFIG.FURY_MULTIPLIER;
         if (dailyModifiers.scoreMult) points = Math.round(points * dailyModifiers.scoreMult);
         const skinMods = getSkinModifiers();
         if (skinMods.scoreMult) points = Math.round(points * skinMods.scoreMult);
-        
+        const prestigeBonus = getPrestigeBonus();
+        if (prestigeBonus.scoreMult > 0) points = Math.round(points * (1 + prestigeBonus.scoreMult));
+        if (prestigeBonus.allMult > 0) points = Math.round(points * (1 + prestigeBonus.allMult));
+
         updateQuest('perfect', 1); updateQuest('combo', combo, true);
         updateMissionProgress(missions, 'perfect', 1);
         updateMissionProgress(missions, 'combo', combo, true);
@@ -2163,26 +2240,26 @@ function dropBlock() {
         if (bType === BLOCK_TYPES.BOMB) updateMissionProgress(missions, 'bomb', 1);
         if (bType === BLOCK_TYPES.ICE) updateMissionProgress(missions, 'ice', 1);
         if (isSecret) updateMissionProgress(missions, 'secret', 1);
-        
+
         triggerHaptic('light');
         const oldScore = score; score += points;
         updateMissionProgress(missions, 'score', score, true);
         checkMilestone(oldScore, score); triggerPerfectParticles();
-        
+
         if (skinMods.fireChance && Math.random() < skinMods.fireChance) {
             spawnDragonFire(); shakeIntensity = GAME_CONFIG.SHAKE_FIRE;
             addCoins(GAME_CONFIG.COINS_FIRE_BONUS);
             showPopup(bonusText, '🔥 ОГОНЬ!', 1200);
         }
         if (unlockedFeatures.goldenTrail) spawnGoldenTrail(currentBlock.position);
-        
+
         let coinReward = GAME_CONFIG.COINS_PERFECT;
         if (bType === BLOCK_TYPES.GOLDEN) coinReward += GAME_CONFIG.COINS_GOLDEN_BONUS;
         else if (bType === BLOCK_TYPES.BOMB) coinReward += GAME_CONFIG.COINS_BOMB_BONUS;
         else if (bType === BLOCK_TYPES.ICE) coinReward += GAME_CONFIG.COINS_ICE_BONUS;
         else if (isSecret) coinReward += GAME_CONFIG.COINS_SECRET_BONUS;
         addCoins(coinReward);
-        
+
         updateComboIndicator();
     } else {
         combo = 0; updateQuest('cut', 1);
@@ -2214,7 +2291,7 @@ function dropBlock() {
         if (bType !== BLOCK_TYPES.BOMB) score++;
         addCoins(GAME_CONFIG.COINS_NORMAL);
     }
-    
+
     currentBlock.userData.squash = 0;
     if (isFury) {
         furyBlocksLeft--;
@@ -2334,12 +2411,13 @@ function playLoseAnimation() {
     }
     blocks = [];
     blocksCopy.forEach((b, i) => {
-        setTimeout(() => {
-            if (!b.parent) return;
+        const id = setTimeout(() => {
+            if (gameState !== GAME_STATES.GAMEOVER || !b.parent) return;
             b.userData.vel = new THREE.Vector3((Math.random() - 0.5) * 0.4, -Math.random() * 0.4 - 0.2, (Math.random() - 0.5) * 0.4);
             b.userData.rotSpeed = new THREE.Vector3((Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3);
             debris.push(b);
         }, i * 25);
+        gameOverTimers.push(id);
     });
 }
 
@@ -2387,50 +2465,67 @@ const _updateWindUIInternal = function() {
 };
 const updateWindUI = throttle(_updateWindUIInternal, 100);
 
-function updateCamera() {
+function updateCamera(dt = 1) {
     if (!blocks.length && !debris.length) return;
     const top = blocks.length > 0 ? blocks[blocks.length - 1] : { position: { x: 0, y: 0, z: 0 } };
     const ty = top.position.y, tx = top.position.x * 0.5, tz = top.position.z * 0.5;
-    camera.position.x += (tx + GAME_CONFIG.CAMERA_OFFSET_X - camera.position.x) * GAME_CONFIG.CAMERA_LERP_FACTOR;
-    camera.position.y += (ty + GAME_CONFIG.CAMERA_OFFSET_Y - camera.position.y) * GAME_CONFIG.CAMERA_LERP_FACTOR;
-    camera.position.z += (tz + GAME_CONFIG.CAMERA_OFFSET_Z - camera.position.z) * GAME_CONFIG.CAMERA_LERP_FACTOR;
+    const lerpFactor = 1 - Math.pow(1 - GAME_CONFIG.CAMERA_LERP_FACTOR, dt);
+    camera.position.x += (tx + GAME_CONFIG.CAMERA_OFFSET_X - camera.position.x) * lerpFactor;
+    camera.position.y += (ty + GAME_CONFIG.CAMERA_OFFSET_Y - camera.position.y) * lerpFactor;
+    camera.position.z += (tz + GAME_CONFIG.CAMERA_OFFSET_Z - camera.position.z) * lerpFactor;
     camera.lookAt(tx, ty + GAME_CONFIG.CAMERA_LOOK_OFFSET_Y, tz);
     if (shakeIntensity > 0.01) {
         camera.position.x += (Math.random() - 0.5) * shakeIntensity;
         camera.position.y += (Math.random() - 0.5) * shakeIntensity;
         camera.position.z += (Math.random() - 0.5) * shakeIntensity;
-        shakeIntensity *= GAME_CONFIG.CAMERA_SHAKE_DECAY;
+        shakeIntensity *= Math.pow(GAME_CONFIG.CAMERA_SHAKE_DECAY, dt);
     }
 }
 
 function animate() {
     requestAnimationFrame(animate);
-    const time = clock.getElapsedTime();
+    const rawDelta = clock.getDelta();
+    const dt = Math.min(rawDelta, 0.05) * 60;
+    const time = clock.elapsedTime;
     updateFpsCounter();
     enforceParticleLimits(scene, debris, confetti, disposeMesh);
-    
+
     if (audioCtx && windGain && gameState === GAME_STATES.PLAYING) {
         const windVol = Math.min(0.15, score * 0.005);
-        try { windGain.gain.setTargetAtTime(windVol, audioCtx.currentTime, 0.5); } catch(e) {}
+        try { windGain.gain.setTargetAtTime(windVol, audioCtx.currentTime, 0.5); } catch (e) {}
     } else if (windGain && audioCtx) {
-        try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); } catch(e) {}
+        try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); } catch (e) {}
     }
-    if (bgStarsGroup) bgStarsGroup.rotation.y += 0.0003;
+
+    if (bgStarsGroup) bgStarsGroup.rotation.y += 0.0003 * dt;
+    updateEnvironmentParticles(rawDelta, camera.position);
+
     blocks.forEach(b => {
         const bt = b.userData.blockType;
         if (bt !== BLOCK_TYPES.NORMAL && bt !== BLOCK_TYPES.CRUMBLE) {
             const isSecret = bt === BLOCK_TYPES.RAINBOW || bt === BLOCK_TYPES.DRAGON || bt === BLOCK_TYPES.DIAMOND;
-            const pulse = bt === BLOCK_TYPES.BOMB ? (0.5 + Math.sin(time * 6) * 0.3) : (0.4 + Math.sin(time * (isSecret ? 8 : 4)) * 0.2);
+            const pulse = bt === BLOCK_TYPES.BOMB
+                ? (0.5 + Math.sin(time * 6) * 0.3)
+                : (0.4 + Math.sin(time * (isSecret ? 8 : 4)) * 0.2);
             b.material.forEach(m => { if (m.emissive) m.emissiveIntensity = pulse + (isSecret ? 0.3 : 0); });
             if (b.userData.glowSprite) b.userData.glowSprite.material.opacity = 0.4 + Math.sin(time * (isSecret ? 6 : 4)) * 0.3;
         }
     });
+
     if (gameState === GAME_STATES.PLAYING && currentBlock?.userData.moving) {
         let speed = currentSpeed;
         if (isFury) speed *= GAME_CONFIG.FURY_SPEED_MULTIPLIER;
+        if (isFreezeActive) speed *= 0.5;
         if (currentBlock.userData.blockType === BLOCK_TYPES.ICE || dailyModifiers.allIce) speed = Math.min(speed * 1.8, 0.8);
+
         let delta = speed * direction;
-        if (score > 20 && !isFury) delta += Math.sin(performance.now() * 0.003) * 0.02;
+        if (score > 20 && !isFury) delta += Math.sin(time * 3) * 0.02;
+        if (gameMode === GAME_MODES.STORM) {
+            const gust = 0.6 + Math.sin(time * 2.3) * 0.6 + Math.sin(time * 5.7) * 0.3;
+            delta += windStrength * (windGustBoost > 0 ? 1.4 : 1) * gust * windDirection * 0.1;
+        }
+        delta *= dt;
+
         if (movingAxis === 'x') {
             currentBlock.position.x += delta;
             if (currentBlock.position.x > GAME_CONFIG.MOVE_RANGE) direction = -1;
@@ -2445,60 +2540,75 @@ function animate() {
             if (currentBlock.position.x > GAME_CONFIG.MOVE_RANGE || currentBlock.position.z > GAME_CONFIG.MOVE_RANGE) direction = -1;
             if (currentBlock.position.x < -GAME_CONFIG.MOVE_RANGE || currentBlock.position.z < -GAME_CONFIG.MOVE_RANGE) direction = 1;
         }
-        if (gameMode === GAME_MODES.STORM) {
-            const gust = 0.6 + Math.sin(time * 2.3) * 0.6 + Math.sin(time * 5.7) * 0.3;
-            delta += windStrength * (windGustBoost > 0 ? 1.4 : 1) * gust * windDirection * 0.1;
-        }
     }
+
     if (gameMode === GAME_MODES.STORM && gameState === GAME_STATES.PLAYING) {
-        windGustBoost *= 0.992;
+        windGustBoost *= Math.pow(0.992, dt);
         if (windGustBoost < 0.005) windGustBoost = 0;
         if (windGustBoost === 0) {
             const target = getStormBaseWind();
-            windStrength += (target - windStrength) * 0.02;
-        } else windStrength += 0.012;
+            windStrength += (target - windStrength) * Math.min(1, 0.02 * dt);
+        } else {
+            windStrength += 0.012 * dt;
+        }
         if (windStrength > 0.9) windStrength = 0.9;
         if (windFrame++ % 3 === 0) updateWindUI();
     }
+
     blocks.forEach(b => {
         if (b.userData.squash !== undefined && b.userData.squash < 1) {
-            b.userData.squash += 0.1;
+            b.userData.squash += 0.1 * dt;
             if (b.userData.squash > 1) b.userData.squash = 1;
             const scaleY = 1 - Math.sin(b.userData.squash * Math.PI) * 0.3;
             const scaleXZ = 1 + Math.sin(b.userData.squash * Math.PI) * 0.15;
             b.scale.set(scaleXZ, scaleY, scaleXZ);
         }
     });
+
     if (currentBlock?.userData.falling) {
-        currentBlock.position.y -= 0.3;
-        currentBlock.rotation.x += 0.05;
-        currentBlock.rotation.z += 0.05;
+        currentBlock.position.y -= 0.3 * dt;
+        currentBlock.rotation.x += 0.05 * dt;
+        currentBlock.rotation.z += 0.05 * dt;
     }
+
     for (let i = debris.length - 1; i >= 0; i--) {
         const d = debris[i];
-        d.position.add(d.userData.vel); d.userData.vel.y -= 0.02;
+        d.position.addScaledVector(d.userData.vel, dt);
+        d.userData.vel.y -= 0.02 * dt;
         if (d.userData.rotSpeed) {
-            d.rotation.x += d.userData.rotSpeed.x;
-            d.rotation.y += d.userData.rotSpeed.y;
-            d.rotation.z += d.userData.rotSpeed.z;
+            d.rotation.x += d.userData.rotSpeed.x * dt;
+            d.rotation.y += d.userData.rotSpeed.y * dt;
+            d.rotation.z += d.userData.rotSpeed.z * dt;
         }
         if (d.userData.life !== undefined) {
-            d.userData.life -= 0.02; d.scale.setScalar(d.userData.life);
-            if (d.userData.life <= 0) { scene.remove(d); disposeMesh(d); debris.splice(i, 1); continue; }
+            d.userData.life -= 0.02 * dt;
+            if (d.userData.life <= 0) {
+                scene.remove(d); disposeMesh(d); debris.splice(i, 1); continue;
+            }
+            d.scale.setScalar(d.userData.life);
         }
-        if (d.position.y < camera.position.y - 40) { scene.remove(d); disposeMesh(d); debris.splice(i, 1); }
+        if (d.position.y < camera.position.y - 40) {
+            scene.remove(d); disposeMesh(d); debris.splice(i, 1);
+        }
     }
+
+    const confettiDrag = Math.pow(0.98, dt);
     for (let i = confetti.length - 1; i >= 0; i--) {
         const c = confetti[i];
-        c.position.add(c.userData.vel);
-        c.userData.vel.y -= 0.015; c.userData.vel.x *= 0.98; c.userData.vel.z *= 0.98;
-        c.rotation.x += c.userData.rotSpeed.x;
-        c.rotation.y += c.userData.rotSpeed.y;
-        c.rotation.z += c.userData.rotSpeed.z;
-        if (c.position.y < camera.position.y - 40) { scene.remove(c); disposeMesh(c); confetti.splice(i, 1); }
+        c.position.addScaledVector(c.userData.vel, dt);
+        c.userData.vel.y -= 0.015 * dt;
+        c.userData.vel.x *= confettiDrag;
+        c.userData.vel.z *= confettiDrag;
+        c.rotation.x += c.userData.rotSpeed.x * dt;
+        c.rotation.y += c.userData.rotSpeed.y * dt;
+        c.rotation.z += c.userData.rotSpeed.z * dt;
+        if (c.position.y < camera.position.y - 40) {
+            scene.remove(c); disposeMesh(c); confetti.splice(i, 1);
+        }
     }
-    if (gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.GAMEOVER) updateCamera();
-    scene.background.lerp(targetBgColor, 0.05);
+
+    if (gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.GAMEOVER) updateCamera(dt);
+    scene.background.lerp(targetBgColor, Math.min(1, 0.05 * dt));
     renderer.render(scene, camera);
 }
 
@@ -2512,17 +2622,19 @@ function clearScene() {
 // ============ STATE MANAGEMENT ============
 function startGame(mode) {
     try {
+        clearGameOverTimers();
         initAudio(); stopMusic(); clearScene();
         if (mode) gameMode = mode;
         score = 0; combo = 0; sessionCoins = 0; sessionXP = 0;
         isFury = false; furyBlocksLeft = 0;
         document.body.classList.remove('fury-active');
         magnetUsed = false; ghostUsed = false;
+        isFreezeActive = false; freezeRemaining = 0; freezeEndTime = 0;
         if (freezeTimer) { clearTimeout(freezeTimer); freezeTimer = null; }
         if (showTutorialHint) tutorialEl.style.display = 'block';
         updateActivePowerupsUI();
         updateComboIndicator();
-        
+
         if (dailyChallengeActive) {
             if (dailyModifiers.forceBg && !savedBgBeforeDaily) {
                 savedBgBeforeDaily = currentBackground;
@@ -2567,10 +2679,7 @@ function startGame(mode) {
         document.body.style.background = bgColors[0];
         document.body.classList.add('in-game');
         if (activePowerups.freeze) {
-            currentSpeed *= 0.5;
-            freezeTimer = setTimeout(() => {
-                if (gameState === GAME_STATES.PLAYING) currentSpeed = Math.min(dynamicMaxSpeed, baseSpeed + score * GAME_CONFIG.SPEED_ACCELERATION);
-            }, GAME_CONFIG.FREEZE_DURATION);
+            startFreezeTimer(GAME_CONFIG.FREEZE_DURATION);
         }
         if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
         const timeLimit = dailyModifiers.timeLimit || (gameMode === GAME_MODES.TIME ? GAME_CONFIG.DEFAULT_TIME_LIMIT : 0);
@@ -2587,7 +2696,8 @@ function startGame(mode) {
             modeLabel.innerText = `🎯 ${ch.name}`;
         } else modeLabel.innerText = GAME_MODE_NAMES[gameMode] || 'ИГРА';
         startScreen.style.display = 'none';
-        hideModal(gameOverEl); hideModal(pauseScreen);
+        hideModal(gameOverEl, { restoreMenu: false });
+        hideModal(pauseScreen, { restoreMenu: false });
         camera.position.set(GAME_CONFIG.CAMERA_OFFSET_X, GAME_CONFIG.CAMERA_OFFSET_Y, GAME_CONFIG.CAMERA_OFFSET_Z);
         camera.lookAt(0, 0, 0);
         const todayStr = new Date().toDateString();
@@ -2600,19 +2710,23 @@ function startGame(mode) {
         updateMissionProgress(missions, 'games', 1);
         if (gameMode === GAME_MODES.TIME) updateMissionProgress(missions, 'time_game', 1);
         if (gameMode === GAME_MODES.STORM) updateMissionProgress(missions, 'storm_game', 1);
-    } catch(err) {
+        updateTelegramBackButton();
+    } catch (err) {
         console.error('startGame error:', err);
         gameState = GAME_STATES.MENU; startScreen.style.display = 'flex';
+        updateTelegramBackButton();
     }
 }
 
 function resetActivePowerups() {
     activePowerups = { ...DEFAULTS.ACTIVE_POWERUPS };
+    isFreezeActive = false; freezeRemaining = 0; freezeEndTime = 0;
     if (freezeTimer) { clearTimeout(freezeTimer); freezeTimer = null; }
     updateActivePowerupsUI();
 }
 
 function goToMenu() {
+    clearGameOverTimers();
     if (gameState === GAME_STATES.PLAYING) saveCurrentScoreIfNeeded();
     stopMusic(); clearScene();
     clearTextureCache();
@@ -2624,21 +2738,31 @@ function goToMenu() {
     resetActivePowerups();
     dailyChallengeActive = false; dailyModifiers = {};
     restoreDailyVisuals();
-    hideModal(gameOverEl); hideModal(pauseScreen); hideModal(shopScreen); hideModal(rulesScreen);
-    hideModal(achScreen); hideModal(lbScreen); hideModal(settingsScreen); hideModal(powerupsScreen);
-    hideModal(chestScreen); hideModal(missionsScreen); hideModal(prestigeConfirmScreen);
-    hideModal(prestigeChestScreen); hideModal(eventScreen);
+    hideModal(gameOverEl, { restoreMenu: false });
+    hideModal(pauseScreen, { restoreMenu: false });
+    hideModal(shopScreen, { restoreMenu: false });
+    hideModal(rulesScreen, { restoreMenu: false });
+    hideModal(achScreen, { restoreMenu: false });
+    hideModal(lbScreen, { restoreMenu: false });
+    hideModal(settingsScreen, { restoreMenu: false });
+    hideModal(powerupsScreen, { restoreMenu: false });
+    hideModal(chestScreen, { restoreMenu: false });
+    hideModal(missionsScreen, { restoreMenu: false });
+    hideModal(prestigeConfirmScreen, { restoreMenu: false });
+    hideModal(prestigeChestScreen, { restoreMenu: false });
+    hideModal(eventScreen, { restoreMenu: false });
     startScreen.style.display = 'flex';
     const bgColors = getBgColors();
     scene.background.set(bgColors[0]); document.body.style.background = bgColors[0];
     camera.position.set(GAME_CONFIG.CAMERA_OFFSET_X, GAME_CONFIG.CAMERA_OFFSET_Y, GAME_CONFIG.CAMERA_OFFSET_Z);
     camera.lookAt(0, 0, 0);
-    if (windGain && audioCtx) try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); } catch(e) {}
+    if (windGain && audioCtx) try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); } catch (e) {}
     updateCoinUI(); updateLevelUI(); updateStreakUI(); updateChestUI();
     renderDailyChallenge(); updateComboIndicator();
     renderMissions(); updateMissionsBadge();
     stopMissionsTimer(); startMissionsTimer();
     renderEventBanner(); updateEventButton();
+    updateTelegramBackButton();
 }
 
 function saveCurrentScoreIfNeeded() {
@@ -2651,6 +2775,7 @@ function saveCurrentScoreIfNeeded() {
 
 function triggerGameOver() {
     if (gameState === GAME_STATES.GAMEOVER) return;
+    clearGameOverTimers();
     gameState = GAME_STATES.GAMEOVER;
     playSound('gameover'); stopMusic();
     shakeIntensity = GAME_CONFIG.SHAKE_GAMEOVER;
@@ -2658,6 +2783,7 @@ function triggerGameOver() {
     if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
     if (windGustTimer) { clearInterval(windGustTimer); windGustTimer = null; }
     windStrength = 0; updateWindUI();
+    isFreezeActive = false; freezeRemaining = 0; freezeEndTime = 0;
     if (freezeTimer) { clearTimeout(freezeTimer); freezeTimer = null; }
     stats.totalGames++;
     if (score > stats.maxScore) stats.maxScore = score;
@@ -2676,40 +2802,50 @@ function triggerGameOver() {
         highScore = score;
         safeSetItem(STORAGE_KEYS.HIGH_SCORE, highScore);
         highScoreEl.innerText = `РЕКОРД: ${highScore}`;
-        setTimeout(() => playWinAnimation(), 300);
+        gameOverTimers.push(setTimeout(() => playWinAnimation(), 300));
     }
     $('new-record').style.display = isNew ? 'block' : 'none';
     gameCoinsEarnedEl.innerText = `+${sessionCoins} 🪙 за игру`;
     gameCoinsEarnedEl.style.display = 'block';
     if (earnedXP > 0) { gameXPEarnedEl.innerText = `+${earnedXP} опыта`; gameXPEarnedEl.style.display = 'block'; }
     else gameXPEarnedEl.style.display = 'none';
-    setTimeout(() => playLoseAnimation(), 500);
+    gameOverTimers.push(setTimeout(() => playLoseAnimation(), 500));
     checkAchievements();
     resetActivePowerups();
     dailyChallengeActive = false; dailyModifiers = {};
     restoreDailyVisuals();
-    setTimeout(() => showModal(gameOverEl), 900);
+    gameOverTimers.push(setTimeout(() => showModal(gameOverEl), 900));
     triggerHaptic('error');
 }
 
 function togglePause() {
     if (gameState === GAME_STATES.PLAYING) {
-        gameState = GAME_STATES.PAUSED; showModal(pauseScreen);
+        gameState = GAME_STATES.PAUSED;
+        showModal(pauseScreen);
         document.body.classList.remove('in-game');
-        if (timeAttackTimer) clearInterval(timeAttackTimer);
-        if (freezeTimer) clearTimeout(freezeTimer);
+        if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
+        if (isFreezeActive && freezeTimer) {
+            freezeRemaining = Math.max(0, freezeEndTime - Date.now());
+            clearTimeout(freezeTimer);
+            freezeTimer = null;
+        }
     } else if (gameState === GAME_STATES.PAUSED) {
-        gameState = GAME_STATES.PLAYING; hideModal(pauseScreen);
+        gameState = GAME_STATES.PLAYING;
+        hideModal(pauseScreen, { restoreMenu: false });
         document.body.classList.add('in-game');
+        if (isFreezeActive && freezeRemaining > 0) {
+            startFreezeTimer(freezeRemaining);
+        }
         const timeLimit = dailyModifiers.timeLimit || (gameMode === GAME_MODES.TIME ? GAME_CONFIG.DEFAULT_TIME_LIMIT : 0);
         if (timeLimit > 0) {
             timeAttackTimer = setInterval(() => {
                 if (gameState !== GAME_STATES.PLAYING) return;
                 timeLeft--; updateTimerDisplay();
-                if (timeLeft <= 0) { clearInterval(timeAttackTimer); triggerGameOver(); }
+                if (timeLeft <= 0) { clearInterval(timeAttackTimer); timeAttackTimer = null; triggerGameOver(); }
             }, 1000);
         }
     }
+    updateTelegramBackButton();
 }
 
 // ============ INPUT ============
@@ -2756,39 +2892,39 @@ document.querySelectorAll('.mini-mode-btn').forEach(btn => {
 });
 
 // ============ BUTTONS ============
-safeClick($('restart-btn'), () => { activePowerups = { ...DEFAULTS.ACTIVE_POWERUPS }; hideModal(gameOverEl); startGame(); });
+safeClick($('restart-btn'), () => { activePowerups = { ...DEFAULTS.ACTIVE_POWERUPS }; hideModal(gameOverEl, { restoreMenu: false }); startGame(); });
 safeClick($('menu-btn'), () => goToMenu());
 safeClick(pauseBtn, () => togglePause());
 safeClick($('pause-resume'), () => togglePause());
 safeClick($('pause-menu'), () => goToMenu());
 safeClick(menuToggleBtn, () => { if (gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSED) goToMenu(); });
 safeClick($('shop-btn'), () => { switchShopTab('skins'); renderShop(); showModal(shopScreen); startScreen.style.display = 'none'; });
-safeClick($('close-shop'), () => { hideModal(shopScreen); startScreen.style.display = 'flex'; updateCoinUI(); });
+safeClick($('close-shop'), () => { hideModal(shopScreen); });
 safeClick($('rules-btn'), () => { showModal(rulesScreen); startScreen.style.display = 'none'; });
-safeClick($('close-rules'), () => { hideModal(rulesScreen); startScreen.style.display = 'flex'; });
+safeClick($('close-rules'), () => { hideModal(rulesScreen); });
 safeClick($('ach-btn'), () => { renderAchievements(); showModal(achScreen); startScreen.style.display = 'none'; });
-safeClick($('close-achievements'), () => { hideModal(achScreen); startScreen.style.display = 'flex'; });
+safeClick($('close-achievements'), () => { hideModal(achScreen); });
 safeClick($('lb-btn'), () => { currentLbMode = GAME_MODES.CLASSIC; renderLeaderboard(); showModal(lbScreen); startScreen.style.display = 'none'; });
-safeClick($('close-leaderboard'), () => { hideModal(lbScreen); startScreen.style.display = 'flex'; });
+safeClick($('close-leaderboard'), () => { hideModal(lbScreen); });
 safeClick($('settings-btn'), () => { updateSettingsUI(); showModal(settingsScreen); startScreen.style.display = 'none'; });
-safeClick($('close-settings'), () => { hideModal(settingsScreen); startScreen.style.display = 'flex'; });
+safeClick($('close-settings'), () => { hideModal(settingsScreen); });
 safeClick($('chest-btn'), () => showChestOpening());
 safeClick($('open-chest-btn'), () => openChest());
-safeClick($('close-chest'), () => { hideModal(chestScreen); startScreen.style.display = 'flex'; updateCoinUI(); });
-safeClick($('close-powerups'), () => { hideModal(powerupsScreen); startScreen.style.display = 'flex'; pendingGameMode = null; });
+safeClick($('close-chest'), () => { hideModal(chestScreen); });
+safeClick($('close-powerups'), () => { pendingGameMode = null; hideModal(powerupsScreen); });
 safeClick($('start-with-powerups'), () => startGameWithPowerups());
 safeClick(dailyPlayBtn, () => { if (!getDailyChallengeStatus()) startDailyChallenge(); });
 
 // Миссии
 safeClick($('missions-btn'), () => { renderMissions(); showModal(missionsScreen); startScreen.style.display = 'none'; });
-safeClick($('close-missions'), () => { hideModal(missionsScreen); startScreen.style.display = 'flex'; });
+safeClick($('close-missions'), () => { hideModal(missionsScreen); });
 
 // Престиж
 safeClick(prestigeActivateBtnEl, () => { if (canPrestige(level)) showPrestigeConfirm(); });
 safeClick(prestigeConfirmBtn, () => activatePrestige());
 safeClick(prestigeCancelBtn, () => hideModal(prestigeConfirmScreen));
 safeClick(openPrestigeChestBtn, () => openPrestigeChest());
-safeClick(closePrestigeChestBtn, () => { hideModal(prestigeChestScreen); startScreen.style.display = 'flex'; updateCoinUI(); updatePrestigeUI(); });
+safeClick(closePrestigeChestBtn, () => { hideModal(prestigeChestScreen); updatePrestigeUI(); });
 
 // События
 safeClick(eventBannerEl, () => showEventDetails());
@@ -2810,13 +2946,13 @@ safeClick($('claim-daily'), () => {
         dailyRewardPending = false;
         playSound('quest'); triggerHaptic('success');
     }
-    hideModal(dailyScreen); startScreen.style.display = 'flex';
+    hideModal(dailyScreen);
 });
 safeClick(muteBtn, () => {
     const allOn = settings.musicEnabled || settings.sfxEnabled;
     if (allOn) {
         settings.musicEnabled = false; settings.sfxEnabled = false; stopMusic();
-        if (windGain && audioCtx) try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); } catch(e) {}
+        if (windGain && audioCtx) try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); } catch (e) {}
     } else {
         settings.musicEnabled = true; settings.sfxEnabled = true;
         if (gameState === GAME_STATES.PLAYING) startMusic();
@@ -2825,9 +2961,10 @@ safeClick(muteBtn, () => {
 });
 safeClick($('challenge-btn'), () => {
     const text = `Я построил башню на ${score} этажей в игре «Башня хайпа»! Слабо побить мой рекорд? 🏗️`;
-    const url = window.location.href;
-    if (tg) tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
-    else window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+    const url = TELEGRAM_APP_URL.includes('YOUR_BOT_USERNAME') ? window.location.href : TELEGRAM_APP_URL;
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+    if (tg) tg.openTelegramLink(shareUrl);
+    else window.open(shareUrl, '_blank');
 });
 
 function onResize() {
@@ -2844,6 +2981,17 @@ function updateTimerDisplay() {
     updateDOMText(timerEl, `⏱ ${timeLeft}`);
     updateDOMStyle(timerEl, 'color', timeLeft <= 10 ? '#EF476F' : '#06D6A0');
 }
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        if (gameState === GAME_STATES.PLAYING) togglePause();
+        stopMusic();
+        if (audioCtx && audioCtx.state === 'running') audioCtx.suspend().catch(() => {});
+    } else {
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+        if (gameState === GAME_STATES.PLAYING && settings.musicEnabled) startMusic();
+    }
+});
 
 // ============ INIT ============
 initThree();
@@ -2884,4 +3032,5 @@ if (startContent) addDecorativeStars(startContent, 25);
 const modeButtons = document.querySelectorAll('.mode-btn, .mini-mode-btn');
 animateElementsSequentially(modeButtons, 'fadeInUp', 80);
 
+updateTelegramBackButton();
 animate();
