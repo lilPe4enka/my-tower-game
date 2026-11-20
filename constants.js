@@ -73,7 +73,7 @@ export const GAME_CONFIG = {
 };
 
 export const LIMITS = {
-    MAX_LEVEL: 50,
+    MAX_LEVEL: 100,
     MAX_LEADERBOARD_ENTRIES: 100,
     MAX_RECENT_SCORES: 10,
     MAX_CHESTS: 50,
