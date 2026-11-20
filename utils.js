@@ -87,7 +87,7 @@ export function showModalSafe(el) {
     requestAnimationFrame(() => {
         const firstFocusable = el.querySelector('button:not([disabled]), [tabindex="0"], input, select, textarea');
         if (firstFocusable) {
-            try { firstFocusable.focus({ preventScroll: true }); } catch(e) {}
+            try { firstFocusable.focus({ preventScroll: true }); } catch (e) {}
         }
     });
 }
@@ -99,7 +99,7 @@ export function hideModalSafe(el) {
 }
 
 export function isAnyModalOpen() {
-    return activeModal !== null;
+    return activeModal !== null || Boolean(document.querySelector('.screen.modal.open'));
 }
 
 // ============ ГЛОБАЛЬНАЯ ОБРАБОТКА ОШИБОК ============
