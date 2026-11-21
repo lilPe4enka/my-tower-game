@@ -359,6 +359,9 @@ let unlockedFeatures = validateObject(safeGetItem(STORAGE_KEYS.FEATURES, {}), {}
 let gameState = GAME_STATES.MENU, gameMode = GAME_MODES.CLASSIC;
 let windStrength = 0, windDirection = 1, windGustTimer = null;
 let movingAxis = 'x', currentSpeed = BASE_SPEED;
+let currentBaseSize = BLOCK_SIZE;
+let perfectWaves = [];
+let perfectWaveTexture = null;
 let currentBiomeIndex = 0, targetBgColor = new THREE.Color(BACKGROUNDS.default.colors[0]), shakeIntensity = 0;
 let timeLeft = GAME_CONFIG.DEFAULT_TIME_LIMIT, timeAttackTimer = null;
 let showTutorialHint = !safeGetItem(STORAGE_KEYS.TUTORIAL_SHOWN, false);
@@ -1997,6 +2000,7 @@ function initThree() {
     glowTexture = createGlowTexture();
     applyBackground();
     cacheCoinPopupAnchor();
+    initPerfectWaves();
 }
 
 function disposeMesh(mesh) {
@@ -2029,6 +2033,79 @@ function createGlowTexture() {
     grad.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = grad; ctx.fillRect(0, 0, 128, 128);
     return new THREE.CanvasTexture(c);
+}
+
+function createPerfectWaveTexture() {
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 10;
+    ctx.shadowColor = '#FFFFFF';
+    ctx.shadowBlur = 10;
+    ctx.strokeRect(10, 10, 108, 108);
+    const tex = new THREE.CanvasTexture(c);
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.generateMipmaps = false;
+    return tex;
+}
+
+function initPerfectWaves() {
+    perfectWaveTexture = createPerfectWaveTexture();
+    const geo = new THREE.PlaneGeometry(1, 1);
+    perfectWaves = [];
+    for (let i = 0; i < 4; i++) {
+        const mat = new THREE.MeshBasicMaterial({
+            map: perfectWaveTexture,
+            color: 0xFFFFFF,
+            transparent: true,
+            opacity: 0,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+            side: THREE.DoubleSide,
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.rotation.x = -Math.PI / 2;
+        mesh.visible = false;
+        mesh.userData = { active: false, age: 0, duration: 0.32, baseW: 1, baseD: 1 };
+        scene.add(mesh);
+        perfectWaves.push(mesh);
+    }
+}
+
+function spawnPerfectWave(pos, w, d, colorHex = 0xFFFFFF) {
+    if (!perfectWaves.length) return;
+    let wave = perfectWaves.find(item => !item.userData.active);
+    if (!wave) wave = perfectWaves[0];
+    wave.position.set(pos.x, pos.y + BLOCK_HEIGHT / 2 + 0.04, pos.z);
+    wave.scale.set(w, d, 1);
+    wave.material.color.setHex(colorHex);
+    wave.material.opacity = 0.9;
+    wave.visible = true;
+    wave.userData.active = true;
+    wave.userData.age = 0;
+    wave.userData.duration = 0.32;
+    wave.userData.baseW = w;
+    wave.userData.baseD = d;
+}
+
+function updatePerfectWaves(rawDelta) {
+    for (let i = 0; i < perfectWaves.length; i++) {
+        const wave = perfectWaves[i];
+        if (!wave.userData.active) continue;
+        wave.userData.age += rawDelta;
+        const t = wave.userData.age / wave.userData.duration;
+        if (t >= 1) {
+            wave.userData.active = false;
+            wave.visible = false;
+            continue;
+        }
+        const ease = 1 - Math.pow(1 - t, 3);
+        const scale = 1 + ease * 0.45;
+        wave.scale.set(wave.userData.baseW * scale, wave.userData.baseD * scale, 1);
+        wave.material.opacity = 0.9 * (1 - t);
+    }
 }
 
 function shadeColor(hex, percent) {
@@ -2290,6 +2367,7 @@ function createBaseBlock() {
     nextBlockData = generateNextBlockData();
     let baseSize = dailyModifiers.baseSize || BLOCK_SIZE;
     if (activePowerups.foundation) baseSize *= 1.35;
+    currentBaseSize = baseSize;
     const base = createBlockMesh(baseSize, BLOCK_HEIGHT, baseSize, '#FF1744', BLOCK_TYPES.NORMAL);
     base.position.set(0, 0, 0); scene.add(base); blocks.push(base);
     spawnNewBlock();
@@ -2451,6 +2529,34 @@ function dropBlock() {
         else if (bType === BLOCK_TYPES.ICE) coinReward += GAME_CONFIG.COINS_ICE_BONUS;
         else if (isSecret) coinReward += GAME_CONFIG.COINS_SECRET_BONUS;
         addCoins(coinReward);
+
+        let widthRecovered = false;
+        if (combo > 0 && combo % GAME_CONFIG.WIDTH_RECOVERY_COMBO === 0) {
+            const newW = Math.min(currentBaseSize, sizeX + GAME_CONFIG.WIDTH_RECOVERY_AMOUNT);
+            const newD = Math.min(currentBaseSize, sizeZ + GAME_CONFIG.WIDTH_RECOVERY_AMOUNT);
+            if (newW > sizeX + 0.001 || newD > sizeZ + 0.001) {
+                widthRecovered = true;
+                const prevColor = currentBlock.userData.color;
+                const prevY = currentBlock.position.y;
+                scene.remove(currentBlock);
+                disposeMesh(currentBlock);
+                const grown = createBlockMesh(newW, BLOCK_HEIGHT, newD, prevColor, bType);
+                grown.position.set(top.position.x, prevY, top.position.z);
+                grown.userData = { w: newW, d: newD, color: prevColor, blockType: bType, squash: 1 };
+                currentBlock = grown;
+                showPopup(bonusText, '✨ +ШИРИНА!', 1100);
+            }
+        }
+
+        const waveColor = widthRecovered
+            ? 0x06D6A0
+            : (isFury || combo >= 3 ? 0xFFD700 : 0xFFFFFF);
+        spawnPerfectWave(
+            currentBlock.position,
+            currentBlock.geometry.parameters.width,
+            currentBlock.geometry.parameters.depth,
+            waveColor
+        );
 
         updateComboIndicator();
     } else {
@@ -2731,6 +2837,7 @@ function animate() {
 
     if (bgStarsGroup) bgStarsGroup.rotation.y += 0.0003 * dt;
     updateEnvironmentParticles(rawDelta, camera.position);
+    updatePerfectWaves(rawDelta);
 
     const hideBelowY = camera.position.y - 42;
     for (let i = 0; i < blocks.length; i++) {
@@ -2849,11 +2956,15 @@ function clearScene() {
     debris.forEach(d => { scene.remove(d); disposeMesh(d); });
     confetti.forEach(c => { scene.remove(c); disposeMesh(c); });
     blocks = []; debris = []; confetti = []; currentBlock = null;
+    perfectWaves.forEach(w => { w.userData.active = false; w.visible = false; });
 }
 
 // ============ STATE MANAGEMENT ============
 function startGame(mode) {
     try {
+        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+            document.activeElement.blur();
+        }
         clearGameOverTimers();
         initAudio(); stopMusic(); clearScene();
         if (mode) gameMode = mode;
@@ -3080,6 +3191,36 @@ function handleInput(e) {
 
 window.addEventListener('mousedown', handleInput);
 window.addEventListener('touchstart', handleInput, { passive: false });
+window.addEventListener('keydown', (e) => {
+    if (e.repeat) return;
+
+    if (e.code === 'KeyP') {
+        if (gameState === GAME_STATES.PLAYING && !isAnyModalOpen()) {
+            e.preventDefault();
+            togglePause();
+        } else if (gameState === GAME_STATES.PAUSED && pauseScreen.classList.contains('open')) {
+            e.preventDefault();
+            togglePause();
+        }
+        return;
+    }
+
+    if (e.code === 'Escape') {
+        // Когда модалка паузы уже открыта, Escape обрабатывает accessibility.js
+        if (gameState === GAME_STATES.PLAYING && !isAnyModalOpen()) {
+            e.preventDefault();
+            togglePause();
+        }
+        return;
+    }
+
+    if (e.code === 'Space' || e.code === 'Enter') {
+        if (gameState === GAME_STATES.PLAYING && !isAnyModalOpen()) {
+            e.preventDefault();
+            dropBlock();
+        }
+    }
+});
 
 function bindModeButton(id, mode) {
     const btn = document.getElementById(id);
