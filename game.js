@@ -12,6 +12,7 @@ import { saveLastFocus, restoreLastFocus, trapFocus, releaseFocusTrap, setupEsca
 import { getCurrentEvent, getEventProgress, getAvailableRewards, claimEventReward, getEventStats, formatEventDate, isEventsSystemActive, getEventDay, EVENT_SKINS } from './seasonal-events.js';
 import { createEnvironmentParticles, updateEnvironmentParticles, getParticlesForBackground, removeEnvironmentParticles } from './environment-particles.js';
 import { MINIGAMES, canPlayMinigame, recordMinigamePlay, getCooldownRemaining, getRemainingDailyPlays, formatCooldown, createMinigame, calculateMinigameReward } from './minigames.js';
+import { initCloudSync, scheduleCloudSave, flushCloudSave, getCloudStatus, isCloudStorageAvailable } from './cloud-storage.js';
 
 setupGlobalErrorHandler();
 
@@ -32,7 +33,8 @@ function updateTelegramBackButton() {
     if (!tg?.BackButton || !tg.isVersionAtLeast('6.1')) return;
     const hasOpenModal = Boolean(document.querySelector('.screen.modal.open'));
     const inGame = gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSED;
-    if (hasOpenModal || inGame) tg.BackButton.show();
+    const onSubTab = gameState === GAME_STATES.MENU && currentMenuTab !== 'play';
+    if (hasOpenModal || inGame || onSubTab) tg.BackButton.show();
     else tg.BackButton.hide();
 }
 
@@ -43,6 +45,8 @@ if (tg?.BackButton && tg.isVersionAtLeast('6.1')) {
             handleModalDismiss(openModal);
         } else if (gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSED) {
             togglePause();
+        } else if (gameState === GAME_STATES.MENU && currentMenuTab !== 'play') {
+            switchMenuTab('play');
         }
     });
 }
@@ -76,6 +80,10 @@ function safeClick(el, handler) {
 
 // ============ МОДАЛКИ (с переходами) ============
 function handleModalDismiss(el) {
+    if (el === secondChanceOverlay && secondChanceActive) {
+        declineSecondChance();
+        return;
+    }
     if (el === pauseScreen && gameState === GAME_STATES.PAUSED) {
         togglePause();
         return;
@@ -290,7 +298,7 @@ const DAILY_CHALLENGES = [
 
 const POWERUP_DEFS = {
     foundation: { icon: '🧱', name: 'Фундамент',   desc: 'Стартовый блок шире на 35%',    price: 120 },
-    focus: { icon: '🎯', name: 'Точный глаз', desc: 'Зона идеала в 3.5 раза шире', price: 150 },
+    focus:      { icon: '🎯', name: 'Точный глаз', desc: 'Зона идеала в 3.5 раза шире',   price: 150 },
     luck:       { icon: '🍀', name: 'Удача',       desc: 'x2 редких, без бомб и хрупких', price: 180 },
     multiplier: { icon: '💰', name: 'Множитель',   desc: 'x2 монет за всю игру',          price: 200 }
 };
@@ -334,16 +342,6 @@ let lowPerfMode = false;
 let lastPerfCheck = 0;
 let lowFpsStrikes = 0;
 
-let secondChanceUsed = false;
-let secondChanceActive = false;
-let secondChanceEndTime = 0;
-let secondChanceRaf = null;
-let resumeDelayTimer = null;
-
-let overviewActive = false;
-let overviewTargetZoom = 1;
-let overviewTargetY = 0;
-
 const BLOCK_SIZE = GAME_CONFIG.BLOCK_SIZE;
 const BLOCK_HEIGHT = GAME_CONFIG.BLOCK_HEIGHT;
 const BASE_SPEED = GAME_CONFIG.BASE_SPEED;
@@ -367,6 +365,8 @@ let unlockedBackgrounds = validateArray(safeGetItem(STORAGE_KEYS.BACKGROUNDS, ['
 let unlockedFeatures = validateObject(safeGetItem(STORAGE_KEYS.FEATURES, {}), {});
 
 let gameState = GAME_STATES.MENU, gameMode = GAME_MODES.CLASSIC;
+let currentMenuTab = 'play';
+let currentShopTab = 'skins';
 let windStrength = 0, windDirection = 1, windGustTimer = null;
 let movingAxis = 'x', currentSpeed = BASE_SPEED;
 let currentBaseSize = BLOCK_SIZE;
@@ -385,16 +385,26 @@ let savedBgBeforeDaily = null;
 let savedPaletteBeforeDaily = null;
 let currentLbMode = GAME_MODES.CLASSIC;
 
+let secondChanceUsed = false;
+let secondChanceActive = false;
+let secondChanceEndTime = 0;
+let secondChanceRaf = null;
+let resumeDelayTimer = null;
+
+let overviewActive = false;
+let overviewTargetZoom = 1;
+let overviewTargetY = 0;
+
 const DEFAULT_SETTINGS = { ...DEFAULTS.SETTINGS };
 const DEFAULT_STATS = { ...DEFAULTS.STATS, missionsCompleted: 0, eventsRewards: 0 };
 
 let settings = { ...DEFAULT_SETTINGS, ...validateObject(safeGetItem(STORAGE_KEYS.SETTINGS, null), DEFAULT_SETTINGS) };
-function saveSettings() { safeSetItem(STORAGE_KEYS.SETTINGS, settings); }
+function saveSettings() { safeSetItem(STORAGE_KEYS.SETTINGS, settings); scheduleCloudSave(); }
 
 let stats = { ...DEFAULT_STATS, ...validateObject(safeGetItem(STORAGE_KEYS.STATS, null), DEFAULT_STATS) };
 if (stats.missionsCompleted === undefined) stats.missionsCompleted = 0;
 if (stats.eventsRewards === undefined) stats.eventsRewards = 0;
-function saveStats() { safeSetItem(STORAGE_KEYS.STATS, stats); }
+function saveStats() { safeSetItem(STORAGE_KEYS.STATS, stats); scheduleCloudSave(); }
 
 let totalScoreAllTime = safeParseInt(safeGetItem(STORAGE_KEYS.TOTAL_SCORE, '0'), 0);
 function saveTotalScore() { safeSetItem(STORAGE_KEYS.TOTAL_SCORE, String(totalScoreAllTime)); }
@@ -403,13 +413,14 @@ let recentScores = validateArray(safeGetItem(STORAGE_KEYS.RECENT_SCORES, []), []
 function saveRecentScores() { safeSetItem(STORAGE_KEYS.RECENT_SCORES, recentScores); }
 
 let unlockedAchievements = validateArray(safeGetItem(STORAGE_KEYS.ACHIEVEMENTS, []), []);
-function saveAchievements() { safeSetItem(STORAGE_KEYS.ACHIEVEMENTS, unlockedAchievements); }
+function saveAchievements() { safeSetItem(STORAGE_KEYS.ACHIEVEMENTS, unlockedAchievements); scheduleCloudSave(); }
 
 let xpTotal = safeParseInt(safeGetItem(STORAGE_KEYS.XP, '0'), 0);
 let level = safeParseInt(safeGetItem(STORAGE_KEYS.LEVEL, '1'), 1);
 function saveLevelProgress() {
     safeSetItem(STORAGE_KEYS.XP, String(xpTotal));
     safeSetItem(STORAGE_KEYS.LEVEL, String(level));
+    scheduleCloudSave();
 }
 
 let streak = safeParseInt(safeGetItem(STORAGE_KEYS.STREAK, '0'), 0);
@@ -432,7 +443,7 @@ if (ownedPowerups.magnet || ownedPowerups.freeze || ownedPowerups.ghost) {
     delete ownedPowerups.ghost;
     safeSetItem(STORAGE_KEYS.POWERUPS, ownedPowerups);
 }
-function savePowerups() { safeSetItem(STORAGE_KEYS.POWERUPS, ownedPowerups); }
+function savePowerups() { safeSetItem(STORAGE_KEYS.POWERUPS, ownedPowerups); scheduleCloudSave(); }
 
 let activePowerups = { ...DEFAULTS.ACTIVE_POWERUPS };
 let pendingGameMode = null;
@@ -444,7 +455,7 @@ function clearGameOverTimers() {
 }
 
 let chests = validateArray(safeGetItem(STORAGE_KEYS.CHESTS, []), []);
-function saveChests() { safeSetItem(STORAGE_KEYS.CHESTS, chests); }
+function saveChests() { safeSetItem(STORAGE_KEYS.CHESTS, chests); scheduleCloudSave(); }
 
 let currentMusicPhase = 1;
 
@@ -506,12 +517,11 @@ const QUESTS_POOL = [
 // ============ DOM ============
 const $ = id => document.getElementById(id);
 const scoreEl = $('score'), highScoreEl = $('high-score'), gameCoinsEl = $('game-coins');
-const gameOverEl = $('game-over'), pauseScreen = $('pause-screen'), shopScreen = $('shop-screen');
+const gameOverEl = $('game-over'), pauseScreen = $('pause-screen');
 const rulesScreen = $('rules-screen'), startScreen = $('start-screen');
 const achScreen = $('achievements-screen'), lbScreen = $('leaderboard-screen');
 const settingsScreen = $('settings-screen'), dailyScreen = $('daily-screen');
 const powerupsScreen = $('powerups-screen'), chestScreen = $('chest-screen');
-const missionsScreen = $('missions-screen');
 const prestigeConfirmScreen = $('prestige-confirm-screen');
 const prestigeChestScreen = $('prestige-chest-screen');
 const eventScreen = $('event-screen');
@@ -520,6 +530,15 @@ const minigamesStatusEl = $('minigames-status');
 const minigamesListEl = $('minigames-list');
 const minigameStageEl = $('minigame-stage');
 const minigameResultEl = $('minigame-result');
+const secondChanceOverlay = $('second-chance-overlay');
+const secondChanceSubEl = $('second-chance-sub');
+const secondChanceTimerFill = $('second-chance-timer-fill');
+const secondChanceBuyBtn = $('second-chance-buy');
+const secondChanceSkipBtn = $('second-chance-skip');
+const towerHeightBanner = $('tower-height-banner');
+const towerHeightMetersEl = $('tower-height-meters');
+const towerHeightCompareEl = $('tower-height-compare');
+const gameOverHeightEl = $('game-over-height');
 const perfectText = $('perfect-text'), comboText = $('combo-text'), milestoneText = $('milestone-text'), bonusText = $('bonus-text');
 const levelupPopup = $('levelup-popup'), achievementPopup = $('achievement-popup');
 const finalScoreVal = $('final-score-val'), gameCoinsEarnedEl = $('game-coins-earned'), gameXPEarnedEl = $('game-xp-earned');
@@ -527,7 +546,7 @@ const timerEl = $('timer'), modeLabel = $('mode-label');
 const windIndicatorEl = $('wind-indicator'), windFillEl = $('wind-fill');
 const questsEl = $('quests'), muteBtn = $('mute-btn'), pauseBtn = $('pause-btn'), menuToggleBtn = $('menu-toggle-btn');
 const tutorialEl = $('tutorial');
-const screenFlash = $('screen-flash'), coinsBalanceEl = $('coins-balance'), skinListEl = $('skin-list'), menuCoinsEl = $('menu-coins');
+const screenFlash = $('screen-flash'), skinListEl = $('skin-list'), menuCoinsEl = $('menu-coins');
 const shopProgressEl = $('shop-progress');
 const colorsListEl = $('colors-list'), backgroundsListEl = $('backgrounds-list');
 const achListEl = $('ach-list'), achProgressEl = $('ach-progress');
@@ -538,15 +557,6 @@ const activePowerupsEl = $('active-powerups');
 const dailyBannerEl = $('daily-challenge-banner'), dailyNameEl = $('daily-name'), dailyDescEl = $('daily-desc'), dailyIconEl = $('daily-icon'), dailyPlayBtn = $('daily-play-btn');
 const seasonPillEl = $('season-pill');
 const victoryCrownEl = $('victory-crown');
-const secondChanceOverlay = $('second-chance-overlay');
-const secondChanceSubEl = $('second-chance-sub');
-const secondChanceTimerFill = $('second-chance-timer-fill');
-const secondChanceBuyBtn = $('second-chance-buy');
-const secondChanceSkipBtn = $('second-chance-skip');
-const towerHeightBanner = $('tower-height-banner');
-const towerHeightMetersEl = $('tower-height-meters');
-const towerHeightCompareEl = $('tower-height-compare');
-const gameOverHeightEl = $('game-over-height');
 
 const comboIndicatorEl = $('combo-indicator');
 const comboProgressFillEl = $('combo-progress-fill');
@@ -709,6 +719,7 @@ function addCoins(amount) {
     amount = Math.round(amount * mult);
     coins += amount; sessionCoins += amount;
     safeSetItem(STORAGE_KEYS.COINS, coins);
+    scheduleCloudSave();
     updateCoinUI(); showCoinPopup(amount);
     updateMissionProgress(missions, 'coins', amount);
     gameCoinsEl.classList.remove('coin-pulse');
@@ -777,6 +788,7 @@ function checkDailyStreak() {
     lastVisitDate = today;
     safeSetItem(STORAGE_KEYS.LAST_VISIT, lastVisitDate);
     safeSetItem(STORAGE_KEYS.STREAK, streak);
+    scheduleCloudSave();
     dailyRewardAmount = Math.min(100, 10 + (streak - 1) * 5);
     dailyRewardPending = true;
     if (streak % 3 === 0 || streak === 7 || streak === 30 || streak === 100) addChest('daily', { streak });
@@ -923,6 +935,7 @@ function updateSettingsUI() {
     $('toggle-haptics').dataset.on = settings.hapticsEnabled;
     $('toggle-haptics').innerText = settings.hapticsEnabled ? 'ВКЛ' : 'ВЫКЛ';
     muteBtn.innerText = (settings.musicEnabled || settings.sfxEnabled) ? '🔊' : '🔇';
+    updateCloudStatusUI();
 }
 
 // ============ AUDIO ============
@@ -1164,12 +1177,38 @@ function renderQuests() {
 
 function updateCoinUI() {
     const coinsText = `🪙 ${coins}`;
-    updateDOMText(coinsBalanceEl, coinsText);
     updateDOMText(menuCoinsEl, coinsText);
     updateDOMText(gameCoinsEl, `🪙 ${gameState === GAME_STATES.PLAYING ? sessionCoins : coins}`);
 }
 
-// ============ SHOP ============
+// ============ ВКЛАДКИ МЕНЮ И МАГАЗИН ============
+function switchMenuTab(tabName) {
+    currentMenuTab = tabName;
+    document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        const isActive = btn.dataset.menuTab === tabName;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-selected', String(isActive));
+    });
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.toggle('active', pane.id === `tab-${tabName}`);
+    });
+
+    const viewport = $('tab-viewport');
+    if (viewport) viewport.scrollTop = 0;
+
+    if (tabName === 'shop') {
+        renderShop();
+        switchShopTab(currentShopTab);
+    } else if (tabName === 'tasks') {
+        renderMissions();
+        updateChestUI();
+    } else if (tabName === 'profile') {
+        updateLevelUI();
+        updatePrestigeUI();
+    }
+    updateTelegramBackButton();
+}
+
 function getEffectIcon(effect) {
     const icons = { holographic: '🌈', fire: '🔥', ice: '❄️', neon: '💡', stars: '✨' };
     return icons[effect] || '';
@@ -1204,6 +1243,7 @@ function renderShop() {
         safeClick(btn, () => {
             currentSkin = btn.dataset.skin;
             safeSetItem(STORAGE_KEYS.SKIN, currentSkin);
+            scheduleCloudSave();
             applySkinEffect();
             renderShop();
         });
@@ -1217,6 +1257,7 @@ function renderShop() {
                 const skin = btn.dataset.skin;
                 unlockedSkins.push(skin); safeSetItem(STORAGE_KEYS.SKINS, unlockedSkins);
                 currentSkin = skin; safeSetItem(STORAGE_KEYS.SKIN, currentSkin);
+                scheduleCloudSave();
                 applySkinEffect();
                 updateCoinUI(); renderShop(); triggerHaptic('success');
                 checkAchievements();
@@ -1267,6 +1308,7 @@ function renderCustomize(type) {
     listEl.querySelectorAll('button.equip').forEach(btn => {
         safeClick(btn, () => {
             safeSetItem(currentKey, btn.dataset.key);
+            scheduleCloudSave();
             if (type === 'colors') currentPalette = btn.dataset.key;
             else { currentBackground = btn.dataset.key; applyBackground(); }
             renderCustomize(type);
@@ -1280,6 +1322,7 @@ function renderCustomize(type) {
                 coins -= price; safeSetItem(STORAGE_KEYS.COINS, coins);
                 unlocked.push(btn.dataset.key); safeSetItem(saveKey, unlocked);
                 safeSetItem(currentKey, btn.dataset.key);
+                scheduleCloudSave();
                 if (type === 'colors') currentPalette = btn.dataset.key;
                 else { currentBackground = btn.dataset.key; applyBackground(); }
                 updateCoinUI(); renderCustomize(type); triggerHaptic('success');
@@ -1289,6 +1332,7 @@ function renderCustomize(type) {
 }
 
 function switchShopTab(tab) {
+    currentShopTab = tab;
     document.querySelectorAll('.shop-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
     skinListEl.style.display = tab === 'skins' ? 'flex' : 'none';
     colorsListEl.style.display = tab === 'colors' ? 'flex' : 'none';
@@ -1419,6 +1463,7 @@ function updateChestUI() {
         badge.innerText = count;
         if (hasRare) badge.classList.add('rare'); else badge.classList.remove('rare');
     } else container.style.display = 'none';
+    updateMissionsBadge();
 }
 
 function rollChestReward(isRare = false) {
@@ -1473,6 +1518,7 @@ function openChest() {
         } else if (reward.type === 'skin') {
             unlockedSkins.push(reward.skin);
             safeSetItem(STORAGE_KEYS.SKINS, unlockedSkins);
+            scheduleCloudSave();
             checkAchievements();
         }
         $('chest-icon').innerText = chest.isRare ? '✨' : '🎁';
@@ -1544,8 +1590,9 @@ function renderMissions() {
 function updateMissionsBadge() {
     if (!missionsBadgeEl) return;
     const mStats = getMissionsStats(missions);
-    if (mStats.available > 0) {
-        missionsBadgeEl.textContent = mStats.available;
+    const totalPending = mStats.available + chests.length;
+    if (totalPending > 0) {
+        missionsBadgeEl.textContent = totalPending;
         missionsBadgeEl.classList.remove('hidden');
     } else missionsBadgeEl.classList.add('hidden');
 }
@@ -1622,6 +1669,7 @@ function activatePrestige() {
     level = 1; xpTotal = 0; highScore = 0; totalScoreAllTime = 0; recentScores = [];
     stats.maxScore = 0; stats.maxCombo = 0; stats.maxTimeScore = 0;
     saveLevelProgress(); saveStats(); saveTotalScore(); saveRecentScores();
+    flushCloudSave();
     updateLevelUI(); updatePrestigeUI();
     highScoreEl.innerText = `РЕКОРД: ${highScore}`;
     hideModal(prestigeConfirmScreen, { restoreMenu: false });
@@ -1661,7 +1709,7 @@ function openPrestigeChest() {
         applyPrestigeReward(reward, {
             addCoins: (amount) => addCoins(amount),
             addPowerup: (pu, count) => { ownedPowerups[pu] = (ownedPowerups[pu] || 0) + count; savePowerups(); },
-            addSkin: (skinId) => { if (!unlockedSkins.includes(skinId)) { unlockedSkins.push(skinId); safeSetItem(STORAGE_KEYS.SKINS, unlockedSkins); } },
+            addSkin: (skinId) => { if (!unlockedSkins.includes(skinId)) { unlockedSkins.push(skinId); safeSetItem(STORAGE_KEYS.SKINS, unlockedSkins); scheduleCloudSave(); } },
             addChest: (type, meta) => addChest(type, meta),
             addPermanentBuff: (effect, value) => {
                 const bonus = getPrestigeBonus();
@@ -1669,6 +1717,7 @@ function openPrestigeChest() {
                 else if (effect === 'xp_boost') bonus.xpMult += value;
                 else if (effect === 'all_boost') bonus.allMult += value;
                 setPrestigeBonus(bonus);
+                scheduleCloudSave();
             },
         });
         if (prestigeChestIconEl) {
@@ -1790,7 +1839,7 @@ function renderEventRewardsTimeline() {
             const result = claimEventReward(currentEvent.id, rewardIndex, {
                 addCoins: (amount) => addCoins(amount),
                 addPowerup: (pu, count) => { ownedPowerups[pu] = (ownedPowerups[pu] || 0) + count; savePowerups(); },
-                addSkin: (skinId) => { if (!unlockedSkins.includes(skinId)) { unlockedSkins.push(skinId); safeSetItem(STORAGE_KEYS.SKINS, unlockedSkins); } },
+                addSkin: (skinId) => { if (!unlockedSkins.includes(skinId)) { unlockedSkins.push(skinId); safeSetItem(STORAGE_KEYS.SKINS, unlockedSkins); scheduleCloudSave(); } },
                 addChest: (type, meta) => addChest(type, meta),
             });
             if (result.success) {
@@ -1946,7 +1995,8 @@ function startMinigamesCooldownTimer() {
             stopMinigamesCooldownTimer();
         }
     }, 1000);
-}// ============ THREE.JS & ОПТИМИЗАЦИЯ ============
+}
+// ============ THREE.JS & ОПТИМИЗАЦИЯ ============
 const PARTICLE_GEOS = {
     trail: new THREE.SphereGeometry(0.1, 5, 5),
     perfect: new THREE.SphereGeometry(0.15, 6, 6),
@@ -2017,9 +2067,9 @@ function initThree() {
     window.addEventListener('resize', onResize);
     window.addEventListener('orientationchange', () => setTimeout(onResize, 100));
     glowTexture = createGlowTexture();
+    initPerfectWaves();
     applyBackground();
     cacheCoinPopupAnchor();
-    initPerfectWaves();
 }
 
 function disposeMesh(mesh) {
@@ -2499,11 +2549,11 @@ function acceptSecondChance() {
 
     coins -= GAME_CONFIG.SECOND_CHANCE_COST;
     safeSetItem(STORAGE_KEYS.COINS, coins);
+    scheduleCloudSave();
     updateCoinUI();
 
     hideModal(secondChanceOverlay, { restoreMenu: false });
 
-    // Удаляем промахнувшийся блок и спавним свежий
     if (currentBlock) {
         scene.remove(currentBlock);
         disposeMesh(currentBlock);
@@ -2519,7 +2569,6 @@ function acceptSecondChance() {
     triggerHaptic('success');
     showPopup(bonusText, '💖 ВТОРОЙ ШАНС!', 1200);
 
-    // Короткая пауза 0.5 сек, чтобы игрок успел сориентироваться
     if (resumeDelayTimer) clearTimeout(resumeDelayTimer);
     resumeDelayTimer = setTimeout(() => {
         resumeDelayTimer = null;
@@ -2546,7 +2595,6 @@ function declineSecondChance() {
     if (currentBlock) currentBlock.userData.falling = true;
     triggerGameOver();
 }
-
 
 // ============ GAME LOGIC ============
 function showPopup(el, text, duration = 800) {
@@ -2611,6 +2659,35 @@ function dropBlock() {
         if (!dailyModifiers.noCombo) combo++;
         stats.totalPerfect++;
         if (combo > stats.maxCombo) stats.maxCombo = combo;
+
+        let widthRecovered = false;
+        if (combo > 0 && combo % GAME_CONFIG.WIDTH_RECOVERY_COMBO === 0) {
+            const newW = Math.min(currentBaseSize, sizeX + GAME_CONFIG.WIDTH_RECOVERY_AMOUNT);
+            const newD = Math.min(currentBaseSize, sizeZ + GAME_CONFIG.WIDTH_RECOVERY_AMOUNT);
+            if (newW > sizeX + 0.001 || newD > sizeZ + 0.001) {
+                widthRecovered = true;
+                const prevColor = currentBlock.userData.color;
+                const prevY = currentBlock.position.y;
+                scene.remove(currentBlock);
+                disposeMesh(currentBlock);
+                const grown = createBlockMesh(newW, BLOCK_HEIGHT, newD, prevColor, bType);
+                grown.position.set(top.position.x, prevY, top.position.z);
+                grown.userData = { w: newW, d: newD, color: prevColor, blockType: bType, squash: 1 };
+                currentBlock = grown;
+                showPopup(bonusText, '✨ +ШИРИНА!', 1100);
+            }
+        }
+
+        const waveColor = widthRecovered
+            ? 0x06D6A0
+            : (isFury || combo >= 3 ? 0xFFD700 : 0xFFFFFF);
+        spawnPerfectWave(
+            currentBlock.position,
+            currentBlock.geometry.parameters.width,
+            currentBlock.geometry.parameters.depth,
+            waveColor
+        );
+
         let points = 1;
         let isSecret = false;
         if (bType === BLOCK_TYPES.GOLDEN) { points = GAME_CONFIG.POINTS_GOLDEN; updateQuest('golden', 1); stats.totalGolden++; }
@@ -2694,34 +2771,6 @@ function dropBlock() {
         else if (bType === BLOCK_TYPES.ICE) coinReward += GAME_CONFIG.COINS_ICE_BONUS;
         else if (isSecret) coinReward += GAME_CONFIG.COINS_SECRET_BONUS;
         addCoins(coinReward);
-
-        let widthRecovered = false;
-        if (combo > 0 && combo % GAME_CONFIG.WIDTH_RECOVERY_COMBO === 0) {
-            const newW = Math.min(currentBaseSize, sizeX + GAME_CONFIG.WIDTH_RECOVERY_AMOUNT);
-            const newD = Math.min(currentBaseSize, sizeZ + GAME_CONFIG.WIDTH_RECOVERY_AMOUNT);
-            if (newW > sizeX + 0.001 || newD > sizeZ + 0.001) {
-                widthRecovered = true;
-                const prevColor = currentBlock.userData.color;
-                const prevY = currentBlock.position.y;
-                scene.remove(currentBlock);
-                disposeMesh(currentBlock);
-                const grown = createBlockMesh(newW, BLOCK_HEIGHT, newD, prevColor, bType);
-                grown.position.set(top.position.x, prevY, top.position.z);
-                grown.userData = { w: newW, d: newD, color: prevColor, blockType: bType, squash: 1 };
-                currentBlock = grown;
-                showPopup(bonusText, '✨ +ШИРИНА!', 1100);
-            }
-        }
-
-        const waveColor = widthRecovered
-            ? 0x06D6A0
-            : (isFury || combo >= 3 ? 0xFFD700 : 0xFFFFFF);
-        spawnPerfectWave(
-            currentBlock.position,
-            currentBlock.geometry.parameters.width,
-            currentBlock.geometry.parameters.depth,
-            waveColor
-        );
 
         updateComboIndicator();
     } else {
@@ -3047,8 +3096,8 @@ function animate() {
         let speed = currentSpeed;
         if (isFury) speed *= GAME_CONFIG.FURY_SPEED_MULTIPLIER;
         if (currentBlock.userData.blockType === BLOCK_TYPES.ICE || dailyModifiers.allIce) {
-        speed = Math.min(speed * 1.45, 0.64);
-    }
+            speed = Math.min(speed * 1.45, 0.64);
+        }
 
         let delta = speed * direction;
         if (score > 20 && !isFury) delta += Math.sin(time * 3) * 0.02;
@@ -3144,6 +3193,15 @@ function startGame(mode) {
             document.activeElement.blur();
         }
         clearGameOverTimers();
+        stopSecondChanceLoop();
+        if (resumeDelayTimer) { clearTimeout(resumeDelayTimer); resumeDelayTimer = null; }
+        secondChanceUsed = false;
+        overviewActive = false;
+        hideTowerHeightBanner();
+        hideModal(secondChanceOverlay, { restoreMenu: false });
+        camera.zoom = 1;
+        camera.updateProjectionMatrix();
+
         initAudio(); stopMusic(); clearScene();
         if (mode) gameMode = mode;
         score = 0; combo = 0; sessionCoins = 0; sessionXP = 0;
@@ -3241,6 +3299,15 @@ function resetActivePowerups() {
 
 function goToMenu() {
     clearGameOverTimers();
+    stopSecondChanceLoop();
+    if (resumeDelayTimer) { clearTimeout(resumeDelayTimer); resumeDelayTimer = null; }
+    secondChanceUsed = false;
+    overviewActive = false;
+    hideTowerHeightBanner();
+    hideModal(secondChanceOverlay, { restoreMenu: false });
+    camera.zoom = 1;
+    camera.updateProjectionMatrix();
+
     stopActiveMinigame();
     stopMinigamesCooldownTimer();
     if (gameState === GAME_STATES.PLAYING) saveCurrentScoreIfNeeded();
@@ -3256,14 +3323,12 @@ function goToMenu() {
     restoreDailyVisuals();
     hideModal(gameOverEl, { restoreMenu: false });
     hideModal(pauseScreen, { restoreMenu: false });
-    hideModal(shopScreen, { restoreMenu: false });
     hideModal(rulesScreen, { restoreMenu: false });
     hideModal(achScreen, { restoreMenu: false });
     hideModal(lbScreen, { restoreMenu: false });
     hideModal(settingsScreen, { restoreMenu: false });
     hideModal(powerupsScreen, { restoreMenu: false });
     hideModal(chestScreen, { restoreMenu: false });
-    hideModal(missionsScreen, { restoreMenu: false });
     hideModal(prestigeConfirmScreen, { restoreMenu: false });
     hideModal(prestigeChestScreen, { restoreMenu: false });
     hideModal(eventScreen, { restoreMenu: false });
@@ -3279,6 +3344,7 @@ function goToMenu() {
     renderMissions(); updateMissionsBadge();
     stopMissionsTimer(); startMissionsTimer();
     renderEventBanner();
+    switchMenuTab(currentMenuTab);
     updateTelegramBackButton();
 }
 
@@ -3324,12 +3390,38 @@ function triggerGameOver() {
     gameCoinsEarnedEl.style.display = 'block';
     if (earnedXP > 0) { gameXPEarnedEl.innerText = `+${earnedXP} опыта`; gameXPEarnedEl.style.display = 'block'; }
     else gameXPEarnedEl.style.display = 'none';
-    gameOverTimers.push(setTimeout(() => playLoseAnimation(), 500));
+
+    const builtMeters = Math.max(0, blocks.length - 1);
+    const compareText = getHeightComparison(builtMeters);
+    if (gameOverHeightEl) {
+        gameOverHeightEl.textContent = builtMeters > 0
+            ? `🏗️ Высота: ${builtMeters} м — ${compareText}`
+            : '';
+    }
+
+    if (builtMeters >= 3) {
+        const aspect = window.innerWidth / window.innerHeight;
+        const d = getAdaptiveD(aspect);
+        const topY = blocks.length > 0 ? blocks[blocks.length - 1].position.y : 0;
+        overviewTargetY = topY * 0.5;
+        overviewTargetZoom = Math.max(0.24, Math.min(1, (d * 1.45) / Math.max(1, topY + 5)));
+        overviewActive = true;
+        blocks.forEach(b => { b.visible = true; });
+        showTowerHeightBanner(builtMeters);
+    }
+
+    const overviewDelay = builtMeters >= 3 ? GAME_CONFIG.OVERVIEW_DURATION : 400;
+    gameOverTimers.push(setTimeout(() => {
+        hideTowerHeightBanner();
+        playLoseAnimation();
+    }, overviewDelay));
+
     checkAchievements();
     resetActivePowerups();
     dailyChallengeActive = false; dailyModifiers = {};
     restoreDailyVisuals();
-    gameOverTimers.push(setTimeout(() => showModal(gameOverEl), 900));
+    flushCloudSave();
+    gameOverTimers.push(setTimeout(() => showModal(gameOverEl), overviewDelay + 550));
     triggerHaptic('error');
 }
 
@@ -3359,7 +3451,7 @@ function togglePause() {
 function handleInput(e) {
     const target = e.target;
     if (target && target.closest && target.closest('button, .mode-btn, .mini-mode-btn, #top-right-controls, .modal, .powerup-item, .daily-challenge-banner, .lb-mode-tab, .event-banner')) return;
-    if (target && target.closest && target.closest('#start-screen, #game-over, #pause-screen, #shop-screen, #rules-screen, #achievements-screen, #leaderboard-screen, #settings-screen, #daily-screen, #powerups-screen, #chest-screen, #missions-screen, #prestige-confirm-screen, #prestige-chest-screen, #event-screen, #minigames-screen')) return;
+    if (target && target.closest && target.closest('#start-screen, #game-over, #second-chance-overlay, #pause-screen, #rules-screen, #achievements-screen, #leaderboard-screen, #settings-screen, #daily-screen, #powerups-screen, #chest-screen, #prestige-confirm-screen, #prestige-chest-screen, #event-screen, #minigames-screen')) return;
     if (isAnyModalOpen()) return;
     if (gameState === GAME_STATES.PLAYING) {
         if (e.type === 'touchstart') e.preventDefault();
@@ -3369,6 +3461,7 @@ function handleInput(e) {
 
 window.addEventListener('mousedown', handleInput);
 window.addEventListener('touchstart', handleInput, { passive: false });
+
 window.addEventListener('keydown', (e) => {
     if (e.repeat) return;
 
@@ -3384,7 +3477,6 @@ window.addEventListener('keydown', (e) => {
     }
 
     if (e.code === 'Escape') {
-        // Когда модалка паузы уже открыта, Escape обрабатывает accessibility.js
         if (gameState === GAME_STATES.PLAYING && !isAnyModalOpen()) {
             e.preventDefault();
             togglePause();
@@ -3431,12 +3523,12 @@ document.querySelectorAll('.mini-mode-btn').forEach(btn => {
 // ============ BUTTONS ============
 safeClick($('restart-btn'), () => { activePowerups = { ...DEFAULTS.ACTIVE_POWERUPS }; hideModal(gameOverEl, { restoreMenu: false }); startGame(); });
 safeClick($('menu-btn'), () => goToMenu());
+safeClick(secondChanceBuyBtn, () => acceptSecondChance());
+safeClick(secondChanceSkipBtn, () => declineSecondChance());
 safeClick(pauseBtn, () => togglePause());
 safeClick($('pause-resume'), () => togglePause());
 safeClick($('pause-menu'), () => goToMenu());
 safeClick(menuToggleBtn, () => { if (gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSED) goToMenu(); });
-safeClick($('shop-btn'), () => { switchShopTab('skins'); renderShop(); showModal(shopScreen); startScreen.style.display = 'none'; });
-safeClick($('close-shop'), () => { hideModal(shopScreen); });
 safeClick($('rules-btn'), () => { showModal(rulesScreen); startScreen.style.display = 'none'; });
 safeClick($('close-rules'), () => { hideModal(rulesScreen); });
 safeClick($('ach-btn'), () => { renderAchievements(); showModal(achScreen); startScreen.style.display = 'none'; });
@@ -3452,9 +3544,10 @@ safeClick($('close-powerups'), () => { pendingGameMode = null; hideModal(powerup
 safeClick($('start-with-powerups'), () => startGameWithPowerups());
 safeClick(dailyPlayBtn, () => { if (!getDailyChallengeStatus()) startDailyChallenge(); });
 
-// Миссии
-safeClick($('missions-btn'), () => { renderMissions(); showModal(missionsScreen); startScreen.style.display = 'none'; });
-safeClick($('close-missions'), () => { hideModal(missionsScreen); });
+// Нижняя навигация (4 вкладки)
+document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+    safeClick(btn, () => switchMenuTab(btn.dataset.menuTab));
+});
 
 // Престиж
 safeClick(prestigeActivateBtnEl, () => { if (canPrestige(level)) showPrestigeConfirm(); });
@@ -3478,6 +3571,19 @@ safeClick($('close-minigames'), () => {
     stopActiveMinigame();
     stopMinigamesCooldownTimer();
     hideModal(minigamesScreen);
+});
+
+// Ручная синхронизация облака
+safeClick($('cloud-sync-btn'), async () => {
+    const statusEl = $('cloud-sync-status');
+    if (!isCloudStorageAvailable()) {
+        if (statusEl) statusEl.textContent = 'Доступно только в Telegram';
+        return;
+    }
+    if (statusEl) statusEl.textContent = 'Синхронизация...';
+    await flushCloudSave();
+    updateCloudStatusUI();
+    triggerHaptic('success');
 });
 
 document.querySelectorAll('.shop-tab').forEach(tab => { safeClick(tab, () => switchShopTab(tab.dataset.tab)); });
@@ -3537,12 +3643,60 @@ document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
         if (gameState === GAME_STATES.PLAYING) togglePause();
         stopMusic();
+        flushCloudSave();
         if (audioCtx && audioCtx.state === 'running') audioCtx.suspend().catch(() => {});
     } else {
         if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
         if (gameState === GAME_STATES.PLAYING && settings.musicEnabled) startMusic();
     }
 });
+
+// ============ ОБЛАЧНАЯ СИНХРОНИЗАЦИЯ (UI) ============
+function reloadStateFromStorage() {
+    coins = safeParseInt(safeGetItem(STORAGE_KEYS.COINS, '0'), 0);
+    highScore = safeParseInt(safeGetItem(STORAGE_KEYS.HIGH_SCORE, '0'), 0);
+    level = safeParseInt(safeGetItem(STORAGE_KEYS.LEVEL, '1'), 1);
+    xpTotal = safeParseInt(safeGetItem(STORAGE_KEYS.XP, '0'), 0);
+    streak = safeParseInt(safeGetItem(STORAGE_KEYS.STREAK, '0'), 0);
+    lastVisitDate = safeGetItem(STORAGE_KEYS.LAST_VISIT, '') || '';
+
+    currentSkin = safeGetItem(STORAGE_KEYS.SKIN, 'default') || 'default';
+    unlockedSkins = validateArray(safeGetItem(STORAGE_KEYS.SKINS, ['default']), ['default']);
+    currentPalette = safeGetItem(STORAGE_KEYS.PALETTE, 'standard') || 'standard';
+    unlockedPalettes = validateArray(safeGetItem(STORAGE_KEYS.PALETTES, ['standard']), ['standard']);
+    currentBackground = safeGetItem(STORAGE_KEYS.BACKGROUND, 'default') || 'default';
+    unlockedBackgrounds = validateArray(safeGetItem(STORAGE_KEYS.BACKGROUNDS, ['default']), ['default']);
+    unlockedFeatures = validateObject(safeGetItem(STORAGE_KEYS.FEATURES, {}), {});
+
+    settings = { ...DEFAULT_SETTINGS, ...validateObject(safeGetItem(STORAGE_KEYS.SETTINGS, null), DEFAULT_SETTINGS) };
+    stats = { ...DEFAULT_STATS, ...validateObject(safeGetItem(STORAGE_KEYS.STATS, null), DEFAULT_STATS) };
+    totalScoreAllTime = safeParseInt(safeGetItem(STORAGE_KEYS.TOTAL_SCORE, '0'), 0);
+    recentScores = validateArray(safeGetItem(STORAGE_KEYS.RECENT_SCORES, []), []);
+    unlockedAchievements = validateArray(safeGetItem(STORAGE_KEYS.ACHIEVEMENTS, []), []);
+    leaderboard = validateArray(safeGetItem(STORAGE_KEYS.LEADERBOARD, []), []);
+    ownedPowerups = { ...DEFAULTS.POWERUPS, ...validateObject(safeGetItem(STORAGE_KEYS.POWERUPS, null), {}) };
+    chests = validateArray(safeGetItem(STORAGE_KEYS.CHESTS, []), []);
+
+    highScoreEl.innerText = `РЕКОРД: ${highScore}`;
+    updateCoinUI();
+    updateLevelUI();
+    updateStreakUI();
+    updateChestUI();
+    updateSettingsUI();
+    renderEventBanner();
+
+    if (gameState === GAME_STATES.MENU) {
+        applySkinEffect();
+        applyBackground();
+        if (currentMenuTab === 'shop') renderShop();
+    }
+    updateCloudStatusUI();
+}
+
+function updateCloudStatusUI() {
+    const statusEl = $('cloud-sync-status');
+    if (statusEl) statusEl.textContent = getCloudStatus();
+}
 
 // ============ INIT ============
 initThree();
@@ -3575,13 +3729,21 @@ applySkinEffect();
 // Нормализуем размеры шрифтов
 normalizeFontSizes();
 
-// Декоративные звёзды на главном экране
-const startContent = document.querySelector('.start-content');
-if (startContent) addDecorativeStars(startContent, 25);
+// Декоративные звёзды на главном экране (только вкладка «Игра»)
+const startContent = document.querySelector('#tab-play');
+if (startContent) addDecorativeStars(startContent, 20);
 
 // Анимация появления кнопок режимов
 const modeButtons = document.querySelectorAll('.mode-btn, .mini-mode-btn');
 animateElementsSequentially(modeButtons, 'fadeInUp', 80);
+
+switchMenuTab('play');
+
+initCloudSync(() => {
+    reloadStateFromStorage();
+}).then(() => {
+    updateCloudStatusUI();
+});
 
 updateTelegramBackButton();
 animate();
