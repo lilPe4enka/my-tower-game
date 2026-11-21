@@ -1,4 +1,4 @@
-// minigames.js — система мини-игр
+// minigames.js — обновлённая система мини-игр
 
 import { safeGetItem, safeSetItem } from './utils.js';
 
@@ -11,49 +11,43 @@ export const MINIGAMES_CONFIG = {
 
 export const MINIGAMES = [
     {
-        id: 'catch_coin',
-        name: 'Поймай монету',
-        desc: 'Тапай по падающим монетам за 15 секунд',
-        icon: '🪙',
-        duration: 15000,
-        reward: { coins: 25, xp: 40 },
+        id: 'pop_lock',
+        name: 'Взлом сейфа',
+        desc: 'Тапай, когда стрелка в золотой зоне (8 замков)',
+        icon: '🔐',
+        reward: { coins: 35, xp: 55 },
         color: '#FFB020',
     },
     {
-        id: 'guess_color',
-        name: 'Угадай цвет',
-        desc: 'Угадай цвет следующего блока',
-        icon: '🎨',
-        rounds: 5,
-        reward: { coins: 20, xp: 35 },
+        id: 'treasure_grid',
+        name: 'Охота за золотом',
+        desc: 'Открывай монеты, обходи 3 бомбы и забирай куш вовремя',
+        icon: '🗺️',
+        reward: { coins: 40, xp: 50 },
+        color: '#F59E0B',
+    },
+    {
+        id: 'dodge_arena',
+        name: 'Звёздный дождь',
+        desc: 'Лови монеты и уворачивайся от бомб 18 секунд',
+        icon: '🚀',
+        reward: { coins: 35, xp: 60 },
+        color: '#4FACFE',
+    },
+    {
+        id: 'match_pairs',
+        name: 'Пары блоков',
+        desc: 'Найди все 6 пар за 30 секунд',
+        icon: '🃏',
+        reward: { coins: 30, xp: 50 },
         color: '#A855F7',
     },
     {
-        id: 'quick_tap',
-        name: 'Быстрый тап',
-        desc: 'Тапни 20 раз за 10 секунд',
-        icon: '👆',
-        duration: 10000,
-        target: 20,
-        reward: { coins: 15, xp: 25 },
-        color: '#4ECDC4',
-    },
-    {
-        id: 'memory_blocks',
-        name: 'Память блоков',
-        desc: 'Запомни последовательность цветов',
-        icon: '🧠',
-        rounds: 4,
-        reward: { coins: 30, xp: 50 },
-        color: '#FF6B9D',
-    },
-    {
-        id: 'reaction_test',
-        name: 'Тест реакции',
-        desc: 'Тапни как можно быстрее при зелёном сигнале',
-        icon: '⚡',
-        rounds: 3,
-        reward: { coins: 20, xp: 35 },
+        id: 'timing_bar',
+        name: 'Идеальный тайминг',
+        desc: 'Останови бегунок точно в центре в 5 раундах',
+        icon: '🎯',
+        reward: { coins: 30, xp: 45 },
         color: '#06D6A0',
     },
 ];
@@ -70,11 +64,10 @@ export function canPlayMinigame() {
     const now = Date.now();
 
     if (now - lastPlay < MINIGAMES_CONFIG.COOLDOWN_MS) {
-        const remaining = MINIGAMES_CONFIG.COOLDOWN_MS - (now - lastPlay);
         return {
             canPlay: false,
             reason: 'cooldown',
-            remainingMs: remaining,
+            remainingMs: MINIGAMES_CONFIG.COOLDOWN_MS - (now - lastPlay),
         };
     }
 
@@ -87,10 +80,7 @@ export function canPlayMinigame() {
     }
 
     if (playsData.count >= MINIGAMES_CONFIG.DAILY_PLAYS_LIMIT) {
-        return {
-            canPlay: false,
-            reason: 'daily_limit',
-        };
+        return { canPlay: false, reason: 'daily_limit' };
     }
 
     return { canPlay: true };
@@ -111,9 +101,7 @@ export function recordMinigamePlay() {
 
 export function getCooldownRemaining() {
     const lastPlay = safeGetItem(MINIGAMES_CONFIG.COOLDOWN_KEY, 0);
-    const now = Date.now();
-    const remaining = MINIGAMES_CONFIG.COOLDOWN_MS - (now - lastPlay);
-    return Math.max(0, remaining);
+    return Math.max(0, MINIGAMES_CONFIG.COOLDOWN_MS - (Date.now() - lastPlay));
 }
 
 export function formatCooldown(ms) {
@@ -122,522 +110,673 @@ export function formatCooldown(ms) {
     return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
-export const GUESS_COLORS = [
-    { name: 'Красный', hex: '#FF1744' },
-    { name: 'Синий', hex: '#2979FF' },
-    { name: 'Зелёный', hex: '#00E676' },
-    { name: 'Жёлтый', hex: '#FFEA00' },
-    { name: 'Фиолетовый', hex: '#D500F9' },
-    { name: 'Оранжевый', hex: '#FF9100' },
-];
-
-export const MEMORY_COLORS = ['#FF1744', '#2979FF', '#00E676', '#FFEA00'];
-
-export function createCatchCoinGame(container, onEnd) {
+// =========================================================
+// 1. ВЗЛОМ СЕЙФА (Pop the Lock)
+// =========================================================
+export function createPopLockGame(container, onEnd) {
+    const targetHits = 8;
     const game = {
-        score: 0,
-        timeLeft: 15,
-        coins: [],
-        spawnIntervalId: null,
-        timerIntervalId: null,
         active: true,
+        rafId: null,
+        hits: 0,
+        lives: 3,
+        angle: -Math.PI / 2,
+        dir: 1,
+        speed: 2.2,
+        targetAngle: Math.PI / 2,
+        arcHalf: 0.36,
+        flashColor: null,
+        flashTimer: 0,
+        lastTime: performance.now(),
         destroy() {
             game.active = false;
-            clearInterval(game.timerIntervalId);
-            clearInterval(game.spawnIntervalId);
-            game.coins.forEach(c => {
-                if (c._fallInterval) clearInterval(c._fallInterval);
-            });
-            game.coins = [];
+            if (game.rafId) cancelAnimationFrame(game.rafId);
         },
     };
 
     container.innerHTML = `
-        <div class="minigame-arena" id="catch-arena">
-            <div class="minigame-hud">
-                <div class="minigame-score">🪙 <span id="catch-score">0</span></div>
-                <div class="minigame-timer">⏱ <span id="catch-timer">15</span></div>
+        <div class="mg-lock-wrap">
+            <div class="mg-top-hud">
+                <span>🔓 <b id="lock-hits">0</b> / ${targetHits}</span>
+                <span id="lock-lives">❤️❤️❤️</span>
             </div>
+            <canvas id="lock-canvas" class="mg-canvas" width="240" height="240"></canvas>
+            <div class="mg-hint">Тапни по кругу, когда стрелка попадёт в золото!</div>
         </div>
     `;
 
-    const arena = container.querySelector('#catch-arena');
-    const scoreEl = container.querySelector('#catch-score');
-    const timerEl = container.querySelector('#catch-timer');
+    const canvas = container.querySelector('#lock-canvas');
+    const ctx = canvas.getContext('2d');
+    const hitsEl = container.querySelector('#lock-hits');
+    const livesEl = container.querySelector('#lock-lives');
 
-    function spawnCoin() {
-        if (!game.active) return;
-        const coin = document.createElement('div');
-        coin.className = 'minigame-coin';
-        coin.textContent = '🪙';
-
-        const arenaRect = arena.getBoundingClientRect();
-        const maxX = Math.max(0, arenaRect.width - 48);
-        const x = Math.random() * maxX;
-        coin.style.left = x + 'px';
-        coin.style.top = '-48px';
-
-        coin.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!game.active || coin.classList.contains('caught')) return;
-            game.score++;
-            scoreEl.textContent = game.score;
-            coin.classList.add('caught');
-            if (coin._fallInterval) clearInterval(coin._fallInterval);
-            setTimeout(() => coin.remove(), 250);
-        });
-
-        arena.appendChild(coin);
-        game.coins.push(coin);
-
-        let y = -48;
-        const fallInterval = setInterval(() => {
-            if (!game.active) {
-                clearInterval(fallInterval);
-                return;
-            }
-            y += 3.5;
-            coin.style.top = y + 'px';
-            if (y > (arenaRect.height || 260)) {
-                clearInterval(fallInterval);
-                coin.remove();
-            }
-        }, 30);
-
-        coin._fallInterval = fallInterval;
+    function spawnTarget() {
+        const offset = (1.3 + Math.random() * 2.6) * game.dir;
+        game.targetAngle = game.angle + offset;
+        game.arcHalf = Math.max(0.22, 0.36 - game.hits * 0.018);
     }
 
-    game.timerIntervalId = setInterval(() => {
-        if (!game.active) return;
-        game.timeLeft--;
-        timerEl.textContent = game.timeLeft;
-        if (game.timeLeft <= 0) {
-            endGame();
-        }
-    }, 1000);
+    function angleDist(a, b) {
+        return Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+    }
 
-    game.spawnIntervalId = setInterval(spawnCoin, 600);
-    setTimeout(spawnCoin, 50);
-
-    function endGame() {
+    function finish() {
         if (!game.active) return;
         game.destroy();
-
-        const success = game.score >= 10;
-        const multiplier = success ? 1 : game.score / 10;
-
+        const success = game.hits >= targetHits;
         onEnd({
             success,
-            score: game.score,
-            multiplier,
-            message: success ? `Поймано ${game.score} монет!` : `Поймано только ${game.score}. Нужно 10+`,
+            score: game.hits,
+            multiplier: Math.max(0.3, game.hits / targetHits),
+            message: success ? 'Сейф взломан! Все 8 замков открыты!' : `Открыто замков: ${game.hits} из ${targetHits}`,
         });
-    }
-
-    return game;
-}
-
-export function createGuessColorGame(container, onEnd) {
-    const game = {
-        round: 0,
-        maxRounds: 5,
-        correct: 0,
-        currentColor: null,
-        active: true,
-        nextTimer: null,
-        destroy() {
-            game.active = false;
-            if (game.nextTimer) clearTimeout(game.nextTimer);
-        },
-    };
-
-    function renderRound() {
-        if (!game.active) return;
-        if (game.round >= game.maxRounds) {
-            endGame();
-            return;
-        }
-
-        game.round++;
-        const correctColor = GUESS_COLORS[Math.floor(Math.random() * GUESS_COLORS.length)];
-        game.currentColor = correctColor;
-
-        const options = [...GUESS_COLORS].sort(() => Math.random() - 0.5).slice(0, 4);
-        if (!options.find(o => o.hex === correctColor.hex)) {
-            options[Math.floor(Math.random() * 4)] = correctColor;
-        }
-
-        container.innerHTML = `
-            <div class="minigame-guess">
-                <div class="minigame-round">Раунд ${game.round} / ${game.maxRounds}</div>
-                <div class="minigame-correct" style="background:${correctColor.hex}"></div>
-                <div class="minigame-question">Какой это цвет?</div>
-                <div class="minigame-options">
-                    ${options.map(o => `
-                        <button class="minigame-option" data-color="${o.hex}">
-                            ${o.name}
-                        </button>
-                    `).join('')}
-                </div>
-                <div class="minigame-progress">✅ ${game.correct} / ${game.round - 1}</div>
-            </div>
-        `;
-
-        container.querySelectorAll('.minigame-option').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (!game.active) return;
-                const chosen = btn.dataset.color;
-                if (chosen === correctColor.hex) {
-                    game.correct++;
-                    btn.classList.add('correct');
-                } else {
-                    btn.classList.add('wrong');
-                    container.querySelectorAll('.minigame-option').forEach(b => {
-                        if (b.dataset.color === correctColor.hex) b.classList.add('correct');
-                    });
-                }
-                container.querySelectorAll('.minigame-option').forEach(b => b.disabled = true);
-
-                game.nextTimer = setTimeout(renderRound, 700);
-            });
-        });
-    }
-
-    function endGame() {
-        if (!game.active) return;
-        game.destroy();
-        const success = game.correct >= 3;
-        const multiplier = game.correct / game.maxRounds;
-
-        onEnd({
-            success,
-            score: game.correct,
-            multiplier,
-            message: `Угадано ${game.correct} из ${game.maxRounds}!`,
-        });
-    }
-
-    renderRound();
-    return game;
-}
-
-export function createQuickTapGame(container, onEnd) {
-    const game = {
-        taps: 0,
-        target: 20,
-        timeLeft: 10,
-        timerIntervalId: null,
-        active: true,
-        destroy() {
-            game.active = false;
-            clearInterval(game.timerIntervalId);
-        },
-    };
-
-    container.innerHTML = `
-        <div class="minigame-tap">
-            <div class="minigame-tap-hud">
-                <div class="minigame-taps">Тапов: <span id="tap-count">0</span> / ${game.target}</div>
-                <div class="minigame-timer">⏱ <span id="tap-timer">10</span></div>
-            </div>
-            <button class="minigame-tap-btn" id="tap-btn">ТАПАЙ!</button>
-            <div class="minigame-progress-bar">
-                <div class="minigame-progress-fill" id="tap-progress"></div>
-            </div>
-        </div>
-    `;
-
-    const countEl = container.querySelector('#tap-count');
-    const timerEl = container.querySelector('#tap-timer');
-    const progressEl = container.querySelector('#tap-progress');
-    const tapBtn = container.querySelector('#tap-btn');
-
-    tapBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (!game.active) return;
-        game.taps++;
-        countEl.textContent = game.taps;
-        progressEl.style.width = `${Math.min(100, (game.taps / game.target) * 100)}%`;
-
-        if (game.taps >= game.target) {
-            endGame(true);
-        }
-    });
-
-    game.timerIntervalId = setInterval(() => {
-        if (!game.active) return;
-        game.timeLeft--;
-        timerEl.textContent = game.timeLeft;
-        if (game.timeLeft <= 0) {
-            endGame(false);
-        }
-    }, 1000);
-
-    function endGame(completed) {
-        if (!game.active) return;
-        game.destroy();
-
-        const success = completed;
-        const multiplier = game.taps / game.target;
-
-        onEnd({
-            success,
-            score: game.taps,
-            multiplier,
-            message: completed
-                ? `Успел! ${game.taps} тапов за ${10 - game.timeLeft} сек`
-                : `Не успел. Только ${game.taps} тапов`,
-        });
-    }
-
-    return game;
-}
-
-export function createMemoryBlocksGame(container, onEnd) {
-    const game = {
-        round: 0,
-        maxRounds: 4,
-        correct: 0,
-        sequence: [],
-        playerSequence: [],
-        showing: false,
-        active: true,
-        showInterval: null,
-        nextTimer: null,
-        destroy() {
-            game.active = false;
-            if (game.showInterval) clearInterval(game.showInterval);
-            if (game.nextTimer) clearTimeout(game.nextTimer);
-        },
-    };
-
-    function renderRound() {
-        if (!game.active) return;
-        if (game.round >= game.maxRounds) {
-            endGame();
-            return;
-        }
-
-        game.round++;
-        game.sequence.push(MEMORY_COLORS[Math.floor(Math.random() * MEMORY_COLORS.length)]);
-        game.playerSequence = [];
-
-        container.innerHTML = `
-            <div class="minigame-memory">
-                <div class="minigame-round">Раунд ${game.round} / ${game.maxRounds}</div>
-                <div class="minigame-status" id="memory-status">Запоминай...</div>
-                <div class="minigame-colors" id="memory-colors">
-                    ${MEMORY_COLORS.map(c => `
-                        <button class="minigame-color-btn" data-color="${c}" style="background:${c}" disabled></button>
-                    `).join('')}
-                </div>
-                <div class="minigame-sequence" id="memory-sequence"></div>
-            </div>
-        `;
-
-        showSequence();
-    }
-
-    function showSequence() {
-        game.showing = true;
-        const buttons = container.querySelectorAll('.minigame-color-btn');
-        buttons.forEach(b => b.disabled = true);
-
-        const statusEl = container.querySelector('#memory-status');
-        statusEl.textContent = 'Запоминай...';
-
-        let i = 0;
-        game.showInterval = setInterval(() => {
-            if (!game.active) {
-                clearInterval(game.showInterval);
-                return;
-            }
-            if (i >= game.sequence.length) {
-                clearInterval(game.showInterval);
-                game.showInterval = null;
-                game.showing = false;
-                statusEl.textContent = 'Твоя очередь!';
-                buttons.forEach(b => b.disabled = false);
-                setupPlayerInput();
-                return;
-            }
-
-            const color = game.sequence[i];
-            const btn = container.querySelector(`[data-color="${color}"]`);
-            if (btn) {
-                btn.classList.add('flash');
-                setTimeout(() => btn.classList.remove('flash'), 400);
-            }
-            i++;
-        }, 700);
-    }
-
-    function setupPlayerInput() {
-        const buttons = container.querySelectorAll('.minigame-color-btn');
-        buttons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (game.showing || !game.active) return;
-
-                const color = btn.dataset.color;
-                game.playerSequence.push(color);
-
-                const seqEl = container.querySelector('#memory-sequence');
-                const dot = document.createElement('div');
-                dot.className = 'memory-dot';
-                dot.style.background = color;
-                seqEl.appendChild(dot);
-
-                btn.classList.add('flash');
-                setTimeout(() => btn.classList.remove('flash'), 200);
-
-                const idx = game.playerSequence.length - 1;
-                if (game.playerSequence[idx] !== game.sequence[idx]) {
-                    endGame();
-                    return;
-                }
-
-                if (game.playerSequence.length === game.sequence.length) {
-                    game.correct++;
-                    game.showing = true;
-                    game.nextTimer = setTimeout(renderRound, 700);
-                }
-            });
-        });
-    }
-
-    function endGame() {
-        if (!game.active) return;
-        game.destroy();
-        const success = game.correct >= 2;
-        const multiplier = game.correct / game.maxRounds;
-
-        onEnd({
-            success,
-            score: game.correct,
-            multiplier,
-            message: `Пройдено раундов: ${game.correct} из ${game.maxRounds}`,
-        });
-    }
-
-    renderRound();
-    return game;
-}
-
-export function createReactionTestGame(container, onEnd) {
-    const game = {
-        round: 0,
-        maxRounds: 3,
-        times: [],
-        startTime: 0,
-        waiting: false,
-        locked: false,
-        active: true,
-        timeoutId: null,
-        nextTimer: null,
-        destroy() {
-            game.active = false;
-            if (game.timeoutId) clearTimeout(game.timeoutId);
-            if (game.nextTimer) clearTimeout(game.nextTimer);
-        },
-    };
-
-    function renderRound() {
-        if (!game.active) return;
-        if (game.round >= game.maxRounds) {
-            endGame();
-            return;
-        }
-
-        game.round++;
-        game.waiting = false;
-        game.locked = false;
-
-        container.innerHTML = `
-            <div class="minigame-reaction">
-                <div class="minigame-round">Раунд ${game.round} / ${game.maxRounds}</div>
-                <div class="minigame-signal red" id="reaction-signal">Жди зелёный...</div>
-                <div class="minigame-avg" id="reaction-avg">
-                    ${game.times.length > 0 ? `Среднее: ${Math.round(game.times.reduce((a, b) => a + b, 0) / game.times.length)} мс` : ''}
-                </div>
-            </div>
-        `;
-
-        const signal = container.querySelector('#reaction-signal');
-        const delay = 1000 + Math.random() * 3000;
-
-        game.timeoutId = setTimeout(() => {
-            if (!game.active) return;
-            game.timeoutId = null;
-            signal.classList.remove('red');
-            signal.classList.add('green');
-            signal.textContent = 'ТАПАЙ!';
-            game.startTime = performance.now();
-            game.waiting = true;
-        }, delay);
-
-        signal.addEventListener('click', handleTap);
     }
 
     function handleTap(e) {
         e.stopPropagation();
-        if (!game.active || game.locked) return;
-        game.locked = true;
-
-        const signal = container.querySelector('#reaction-signal');
-
-        if (!game.waiting) {
-            if (game.timeoutId) {
-                clearTimeout(game.timeoutId);
-                game.timeoutId = null;
-            }
-            signal.textContent = 'Слишком рано! 😅';
-            signal.classList.remove('red');
-            signal.classList.add('wrong');
-            game.times.push(2000);
-            game.nextTimer = setTimeout(renderRound, 1000);
-            return;
-        }
-
-        const reactionTime = performance.now() - game.startTime;
-        game.times.push(reactionTime);
-        game.waiting = false;
-
-        signal.textContent = `${Math.round(reactionTime)} мс`;
-        signal.classList.remove('green');
-        signal.classList.add('result');
-
-        game.nextTimer = setTimeout(renderRound, 900);
-    }
-
-    function endGame() {
         if (!game.active) return;
-        game.destroy();
 
-        const avgTime = Math.round(game.times.reduce((a, b) => a + b, 0) / game.times.length);
-        const success = avgTime < 500;
-        const multiplier = Math.max(0.5, Math.min(1.5, 1 - (avgTime - 300) / 1000));
-
-        onEnd({
-            success,
-            score: avgTime,
-            multiplier,
-            message: `Средняя реакция: ${avgTime} мс`,
-        });
+        if (angleDist(game.angle, game.targetAngle) <= game.arcHalf) {
+            game.hits++;
+            hitsEl.textContent = game.hits;
+            game.dir *= -1;
+            game.speed = Math.min(4.6, 2.2 + game.hits * 0.28);
+            game.flashColor = '#06D6A0';
+            game.flashTimer = 0.22;
+            if (game.hits >= targetHits) {
+                setTimeout(finish, 200);
+            } else {
+                spawnTarget();
+            }
+        } else {
+            game.lives--;
+            livesEl.textContent = '❤️'.repeat(Math.max(0, game.lives)) || '💔';
+            game.flashColor = '#EF476F';
+            game.flashTimer = 0.25;
+            if (game.lives <= 0) {
+                setTimeout(finish, 250);
+            }
+        }
     }
 
-    renderRound();
+    canvas.addEventListener('pointerdown', handleTap);
+    spawnTarget();
+
+    function draw(now) {
+        if (!game.active) return;
+        const dt = Math.min((now - game.lastTime) / 1000, 0.05);
+        game.lastTime = now;
+
+        game.angle += game.dir * game.speed * dt;
+        if (game.flashTimer > 0) game.flashTimer -= dt;
+
+        ctx.clearRect(0, 0, 240, 240);
+        const cx = 120, cy = 120, r = 86;
+
+        // Кольцо
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = '#E9E4F0';
+        ctx.lineWidth = 22;
+        ctx.stroke();
+
+        // Золотая зона
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, game.targetAngle - game.arcHalf, game.targetAngle + game.arcHalf);
+        ctx.strokeStyle = '#FFB020';
+        ctx.lineWidth = 22;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // Стрелка-бегунок
+        const px = cx + Math.cos(game.angle) * r;
+        const py = cy + Math.sin(game.angle) * r;
+        ctx.beginPath();
+        ctx.arc(px, py, 12, 0, Math.PI * 2);
+        ctx.fillStyle = '#4A4458';
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.stroke();
+
+        // Центр с прогрессом
+        ctx.beginPath();
+        ctx.arc(cx, cy, 46, 0, Math.PI * 2);
+        ctx.fillStyle = game.flashTimer > 0 ? game.flashColor : '#F8F6FA';
+        ctx.fill();
+
+        ctx.fillStyle = game.flashTimer > 0 ? '#FFFFFF' : '#4A4458';
+        ctx.font = '900 32px Rubik, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(targetHits - game.hits), cx, cy);
+
+        game.rafId = requestAnimationFrame(draw);
+    }
+
+    game.rafId = requestAnimationFrame(draw);
     return game;
 }
 
+// =========================================================
+// 2. ОХОТА ЗА ЗОЛОТОМ (Push-your-luck 4x4)
+// =========================================================
+export function createTreasureGridGame(container, onEnd) {
+    const items = [
+        'bomb', 'bomb', 'bomb',
+        'gem', 'gem',
+        'coin', 'coin', 'coin', 'coin', 'coin', 'coin', 'coin', 'coin', 'coin', 'coin', 'coin',
+    ].sort(() => Math.random() - 0.5);
+
+    const safeTotal = 13;
+    const game = {
+        active: true,
+        points: 0,
+        openedSafe: 0,
+        endTimer: null,
+        destroy() {
+            game.active = false;
+            if (game.endTimer) clearTimeout(game.endTimer);
+        },
+    };
+
+    container.innerHTML = `
+        <div class="mg-grid-wrap">
+            <div class="mg-top-hud">
+                <span>💰 Очки: <b id="grid-pts">0</b></span>
+                <span>💣 Бомб: <b>3</b></span>
+            </div>
+            <div class="mg-treasure-grid" id="treasure-grid">
+                ${items.map((_, idx) => `<button class="mg-tile" data-idx="${idx}">?</button>`).join('')}
+            </div>
+            <button class="btn-primary mg-cashout-btn" id="grid-cashout" disabled>💰 ЗАБРАТЬ НАГРАДУ</button>
+        </div>
+    `;
+
+    const ptsEl = container.querySelector('#grid-pts');
+    const cashoutBtn = container.querySelector('#grid-cashout');
+    const tiles = container.querySelectorAll('.mg-tile');
+
+    function revealAll() {
+        tiles.forEach((btn, idx) => {
+            if (btn.classList.contains('opened')) return;
+            const type = items[idx];
+            btn.disabled = true;
+            btn.classList.add('revealed');
+            btn.textContent = type === 'bomb' ? '💣' : type === 'gem' ? '💎' : '🪙';
+        });
+    }
+
+    function finish(busted) {
+        if (!game.active) return;
+        game.destroy();
+        if (busted) {
+            onEnd({
+                success: false,
+                score: game.points,
+                multiplier: 0.3,
+                message: `Бум! Нарвался на бомбу (было ${game.points} очк.)`,
+            });
+        } else {
+            const success = game.points >= 5;
+            onEnd({
+                success,
+                score: game.points,
+                multiplier: Math.min(1.6, Math.max(0.4, game.points / 7)),
+                message: game.openedSafe === safeTotal
+                    ? `ДЖЕКПОТ! Открыто всё поле (${game.points} очк.)!`
+                    : `Успешно забрал добычу: ${game.points} очк.!`,
+            });
+        }
+    }
+
+    tiles.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!game.active || btn.classList.contains('opened')) return;
+            const idx = Number(btn.dataset.idx);
+            const type = items[idx];
+            btn.classList.add('opened', type);
+            btn.disabled = true;
+
+            if (type === 'bomb') {
+                btn.textContent = '💥';
+                cashoutBtn.disabled = true;
+                revealAll();
+                game.endTimer = setTimeout(() => finish(true), 850);
+                return;
+            }
+
+            const gain = type === 'gem' ? 3 : 1;
+            btn.textContent = type === 'gem' ? '💎' : '🪙';
+            game.points += gain;
+            game.openedSafe++;
+            ptsEl.textContent = game.points;
+            cashoutBtn.disabled = false;
+            cashoutBtn.textContent = `💰 ЗАБРАТЬ (${game.points} очк.)`;
+
+            if (game.openedSafe >= safeTotal) {
+                cashoutBtn.disabled = true;
+                revealAll();
+                game.endTimer = setTimeout(() => finish(false), 600);
+            }
+        });
+    });
+
+    cashoutBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!game.active || game.openedSafe === 0) return;
+        revealAll();
+        finish(false);
+    });
+
+    return game;
+}
+
+// =========================================================
+// 3. ЗВЁЗДНЫЙ ДОЖДЬ (Аркада на Canvas)
+// =========================================================
+export function createDodgeArenaGame(container, onEnd) {
+    const W = 280, H = 260;
+    const game = {
+        active: true,
+        rafId: null,
+        timerId: null,
+        timeLeft: 18,
+        score: 0,
+        lives: 3,
+        invuln: 0,
+        playerX: W / 2,
+        targetX: W / 2,
+        entities: [],
+        spawnAcc: 0,
+        lastTime: performance.now(),
+        destroy() {
+            game.active = false;
+            if (game.rafId) cancelAnimationFrame(game.rafId);
+            if (game.timerId) clearInterval(game.timerId);
+        },
+    };
+
+    container.innerHTML = `
+        <div class="mg-dodge-wrap">
+            <div class="mg-top-hud">
+                <span>🪙 <b id="dodge-score">0</b></span>
+                <span id="dodge-lives">❤️❤️❤️</span>
+                <span>⏱ <b id="dodge-time">18</b></span>
+            </div>
+            <canvas id="dodge-canvas" class="mg-canvas mg-dodge-canvas" width="${W}" height="${H}"></canvas>
+            <div class="mg-hint">Води пальцем по экрану: лови 🪙, избегай 💣</div>
+        </div>
+    `;
+
+    const canvas = container.querySelector('#dodge-canvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = container.querySelector('#dodge-score');
+    const livesEl = container.querySelector('#dodge-lives');
+    const timeEl = container.querySelector('#dodge-time');
+
+    function updateTargetFromEvent(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const relX = ((clientX - rect.left) / rect.width) * W;
+        game.targetX = Math.max(20, Math.min(W - 20, relX));
+    }
+
+    canvas.addEventListener('pointerdown', (e) => { e.stopPropagation(); updateTargetFromEvent(e); });
+    canvas.addEventListener('pointermove', (e) => {
+        if (e.buttons > 0 || e.pointerType === 'touch') {
+            e.stopPropagation();
+            updateTargetFromEvent(e);
+        }
+    });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); e.stopPropagation(); updateTargetFromEvent(e); }, { passive: false });
+
+    function finish() {
+        if (!game.active) return;
+        game.destroy();
+        const success = game.lives > 0 && game.score >= 10;
+        onEnd({
+            success,
+            score: game.score,
+            multiplier: Math.min(1.5, Math.max(0.35, game.score / 12)),
+            message: game.lives <= 0
+                ? `Щиты пробиты! Собрано ${game.score} монет`
+                : `Отлично! Собрано ${game.score} монет!`,
+        });
+    }
+
+    game.timerId = setInterval(() => {
+        if (!game.active) return;
+        game.timeLeft--;
+        timeEl.textContent = game.timeLeft;
+        if (game.timeLeft <= 0) finish();
+    }, 1000);
+
+    function loop(now) {
+        if (!game.active) return;
+        const dt = Math.min((now - game.lastTime) / 1000, 0.05);
+        game.lastTime = now;
+
+        game.playerX += (game.targetX - game.playerX) * Math.min(1, dt * 16);
+        if (game.invuln > 0) game.invuln -= dt;
+
+        game.spawnAcc += dt;
+        const spawnEvery = Math.max(0.28, 0.52 - (18 - game.timeLeft) * 0.012);
+        if (game.spawnAcc >= spawnEvery) {
+            game.spawnAcc = 0;
+            const isBomb = Math.random() < 0.36;
+            game.entities.push({
+                x: 18 + Math.random() * (W - 36),
+                y: -16,
+                vy: (isBomb ? 145 : 120) + Math.random() * 55,
+                r: isBomb ? 13 : 12,
+                type: isBomb ? 'bomb' : 'coin',
+            });
+        }
+
+        // Фон
+        const grad = ctx.createLinearGradient(0, 0, 0, H);
+        grad.addColorStop(0, '#141B3A');
+        grad.addColorStop(1, '#2B2D5C');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        // Объекты
+        for (let i = game.entities.length - 1; i >= 0; i--) {
+            const o = game.entities[i];
+            o.y += o.vy * dt;
+
+            const dx = o.x - game.playerX;
+            const dy = o.y - (H - 30);
+            if (Math.hypot(dx, dy) < o.r + 15) {
+                game.entities.splice(i, 1);
+                if (o.type === 'coin') {
+                    game.score++;
+                    scoreEl.textContent = game.score;
+                } else if (game.invuln <= 0) {
+                    game.lives--;
+                    game.invuln = 0.7;
+                    livesEl.textContent = '❤️'.repeat(Math.max(0, game.lives)) || '💔';
+                    if (game.lives <= 0) { finish(); return; }
+                }
+                continue;
+            }
+
+            if (o.y > H + 20) {
+                game.entities.splice(i, 1);
+                continue;
+            }
+
+            ctx.beginPath();
+            ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
+            ctx.fillStyle = o.type === 'coin' ? '#FFD93D' : '#EF476F';
+            ctx.fill();
+            ctx.font = '15px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(o.type === 'coin' ? '🪙' : '💣', o.x, o.y + 1);
+        }
+
+        // Игрок
+        ctx.save();
+        if (game.invuln > 0 && Math.floor(now / 70) % 2 === 0) ctx.globalAlpha = 0.4;
+        ctx.fillStyle = '#4ECDC4';
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(game.playerX - 16, H - 44, 32, 28, 8);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        game.rafId = requestAnimationFrame(loop);
+    }
+
+    game.rafId = requestAnimationFrame(loop);
+    return game;
+}
+
+// =========================================================
+// 4. ПАРЫ БЛОКОВ (Memory Match 4x3)
+// =========================================================
+export function createMatchPairsGame(container, onEnd) {
+    const icons = ['👑', '💎', '🐉', '🌈', '❄️', '🔥'];
+    const deck = [...icons, ...icons].sort(() => Math.random() - 0.5);
+
+    const game = {
+        active: true,
+        timeLeft: 30,
+        matched: 0,
+        combo: 0,
+        bonusPts: 0,
+        flipped: [],
+        locked: false,
+        timerId: null,
+        flipTimer: null,
+        destroy() {
+            game.active = false;
+            if (game.timerId) clearInterval(game.timerId);
+            if (game.flipTimer) clearTimeout(game.flipTimer);
+        },
+    };
+
+    container.innerHTML = `
+        <div class="mg-pairs-wrap">
+            <div class="mg-top-hud">
+                <span>🃏 Пар: <b id="pairs-count">0</b> / 6</span>
+                <span>⏱ <b id="pairs-time">30</b></span>
+            </div>
+            <div class="mg-pairs-grid">
+                ${deck.map((icon, idx) => `<button class="mg-pair-card" data-idx="${idx}" data-icon="${icon}">?</button>`).join('')}
+            </div>
+        </div>
+    `;
+
+    const countEl = container.querySelector('#pairs-count');
+    const timeEl = container.querySelector('#pairs-time');
+    const cards = container.querySelectorAll('.mg-pair-card');
+
+    function finish() {
+        if (!game.active) return;
+        game.destroy();
+        const success = game.matched === 6;
+        const speedBonus = success ? Math.min(0.4, game.timeLeft / 40) : 0;
+        onEnd({
+            success,
+            score: game.matched,
+            multiplier: Math.max(0.3, game.matched / 6 + speedBonus),
+            message: success
+                ? `Все 6 пар найдены! Осталось ${game.timeLeft} сек`
+                : `Найдено пар: ${game.matched} из 6`,
+        });
+    }
+
+    game.timerId = setInterval(() => {
+        if (!game.active) return;
+        game.timeLeft--;
+        timeEl.textContent = game.timeLeft;
+        if (game.timeLeft <= 0) finish();
+    }, 1000);
+
+    cards.forEach(card => {
+        card.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!game.active || game.locked || card.classList.contains('open') || card.classList.contains('matched')) return;
+
+            card.classList.add('open');
+            card.textContent = card.dataset.icon;
+            game.flipped.push(card);
+
+            if (game.flipped.length === 2) {
+                game.locked = true;
+                const [a, b] = game.flipped;
+                if (a.dataset.icon === b.dataset.icon) {
+                    a.classList.add('matched');
+                    b.classList.add('matched');
+                    game.matched++;
+                    game.combo++;
+                    countEl.textContent = game.matched;
+                    game.flipped = [];
+                    game.locked = false;
+                    if (game.matched === 6) {
+                        game.flipTimer = setTimeout(finish, 350);
+                    }
+                } else {
+                    game.combo = 0;
+                    game.flipTimer = setTimeout(() => {
+                        if (!game.active) return;
+                        a.classList.remove('open');
+                        b.classList.remove('open');
+                        a.textContent = '?';
+                        b.textContent = '?';
+                        game.flipped = [];
+                        game.locked = false;
+                    }, 550);
+                }
+            }
+        });
+    });
+
+    return game;
+}
+
+// =========================================================
+// 5. ИДЕАЛЬНЫЙ ТАЙМИНГ (5 раундов)
+// =========================================================
+export function createTimingBarGame(container, onEnd) {
+    const maxRounds = 5;
+    const game = {
+        active: true,
+        rafId: null,
+        nextTimer: null,
+        round: 1,
+        points: 0,
+        pos: 0,
+        dir: 1,
+        speed: 95,
+        zoneCenter: 50,
+        greenHalf: 15,
+        goldHalf: 5,
+        locked: false,
+        lastTime: performance.now(),
+        destroy() {
+            game.active = false;
+            if (game.rafId) cancelAnimationFrame(game.rafId);
+            if (game.nextTimer) clearTimeout(game.nextTimer);
+        },
+    };
+
+    container.innerHTML = `
+        <div class="mg-timing-wrap">
+            <div class="mg-top-hud">
+                <span>Раунд <b id="timing-round">1</b> / ${maxRounds}</span>
+                <span>⭐ Очки: <b id="timing-pts">0</b></span>
+            </div>
+            <div class="mg-timing-feedback" id="timing-fb">Попади в золото!</div>
+            <div class="mg-timing-track" id="timing-track">
+                <div class="mg-timing-green" id="timing-green"></div>
+                <div class="mg-timing-gold" id="timing-gold"></div>
+                <div class="mg-timing-cursor" id="timing-cursor"></div>
+            </div>
+            <button class="btn-primary mg-stop-btn" id="timing-stop">🎯 СТОП!</button>
+        </div>
+    `;
+
+    const roundEl = container.querySelector('#timing-round');
+    const ptsEl = container.querySelector('#timing-pts');
+    const fbEl = container.querySelector('#timing-fb');
+    const greenEl = container.querySelector('#timing-green');
+    const goldEl = container.querySelector('#timing-gold');
+    const cursorEl = container.querySelector('#timing-cursor');
+    const stopBtn = container.querySelector('#timing-stop');
+
+    function setupRound() {
+        game.locked = false;
+        game.zoneCenter = 28 + Math.random() * 44;
+        game.greenHalf = Math.max(9, 16 - (game.round - 1) * 1.6);
+        game.goldHalf = Math.max(3.5, 5.5 - (game.round - 1) * 0.45);
+        game.speed = 95 + (game.round - 1) * 26;
+
+        roundEl.textContent = game.round;
+        fbEl.textContent = 'Попади в золотую зону!';
+        fbEl.style.color = '';
+        greenEl.style.left = `${game.zoneCenter - game.greenHalf}%`;
+        greenEl.style.width = `${game.greenHalf * 2}%`;
+        goldEl.style.left = `${game.zoneCenter - game.goldHalf}%`;
+        goldEl.style.width = `${game.goldHalf * 2}%`;
+    }
+
+    function handleStop(e) {
+        e.stopPropagation();
+        if (!game.active || game.locked) return;
+        game.locked = true;
+
+        const dist = Math.abs(game.pos - game.zoneCenter);
+        if (dist <= game.goldHalf) {
+            game.points += 2;
+            fbEl.textContent = '✨ ИДЕАЛЬНО! +2';
+            fbEl.style.color = '#FFB020';
+        } else if (dist <= game.greenHalf) {
+            game.points += 1;
+            fbEl.textContent = '✅ ХОРОШО! +1';
+            fbEl.style.color = '#06D6A0';
+        } else {
+            fbEl.textContent = '❌ МИМО!';
+            fbEl.style.color = '#EF476F';
+        }
+        ptsEl.textContent = game.points;
+
+        game.nextTimer = setTimeout(() => {
+            if (!game.active) return;
+            if (game.round >= maxRounds) {
+                game.destroy();
+                const success = game.points >= 6;
+                onEnd({
+                    success,
+                    score: game.points,
+                    multiplier: Math.max(0.3, game.points / 8),
+                    message: `Набрано ${game.points} из ${maxRounds * 2} очков!`,
+                });
+            } else {
+                game.round++;
+                setupRound();
+            }
+        }, 650);
+    }
+
+    stopBtn.addEventListener('pointerdown', handleStop);
+    setupRound();
+
+    function tick(now) {
+        if (!game.active) return;
+        const dt = Math.min((now - game.lastTime) / 1000, 0.05);
+        game.lastTime = now;
+
+        if (!game.locked) {
+            game.pos += game.dir * game.speed * dt;
+            if (game.pos >= 100) { game.pos = 100; game.dir = -1; }
+            if (game.pos <= 0) { game.pos = 0; game.dir = 1; }
+            cursorEl.style.left = `${game.pos}%`;
+        }
+
+        game.rafId = requestAnimationFrame(tick);
+    }
+
+    game.rafId = requestAnimationFrame(tick);
+    return game;
+}
+
+// =========================================================
+// ФАБРИКА И НАГРАДЫ
+// =========================================================
 export function createMinigame(gameId, container, onEnd) {
     switch (gameId) {
-        case 'catch_coin': return createCatchCoinGame(container, onEnd);
-        case 'guess_color': return createGuessColorGame(container, onEnd);
-        case 'quick_tap': return createQuickTapGame(container, onEnd);
-        case 'memory_blocks': return createMemoryBlocksGame(container, onEnd);
-        case 'reaction_test': return createReactionTestGame(container, onEnd);
+        case 'pop_lock': return createPopLockGame(container, onEnd);
+        case 'treasure_grid': return createTreasureGridGame(container, onEnd);
+        case 'dodge_arena': return createDodgeArenaGame(container, onEnd);
+        case 'match_pairs': return createMatchPairsGame(container, onEnd);
+        case 'timing_bar': return createTimingBarGame(container, onEnd);
         default:
             console.error('Unknown minigame:', gameId);
             return null;
@@ -647,7 +786,6 @@ export function createMinigame(gameId, container, onEnd) {
 export function calculateMinigameReward(gameDef, result) {
     const baseCoins = gameDef.reward.coins;
     const baseXP = gameDef.reward.xp;
-
     const mult = result.multiplier || 1;
     const successBonus = result.success ? 1.5 : 1;
 
