@@ -846,6 +846,87 @@ VICTORY CROWN
 #victory-crown.show { animation: crownDrop 2s var(--ease-out-back) forwards; }
 
 /* =========================================
+ВТОРОЙ ШАНС И ОБЗОР БАШНИ
+========================================= */
+.second-chance-content {
+    width: min(88vw, 360px);
+    padding: 22px 20px;
+}
+.second-chance-icon {
+    font-size: 52px;
+    line-height: 1;
+    margin-bottom: 6px;
+    animation: badgePulse 0.9s infinite;
+}
+#second-chance-title {
+    margin: 0 0 6px 0;
+    font-size: clamp(20px, 5.5vw, 24px);
+    font-weight: 900;
+    color: var(--pink);
+}
+#second-chance-sub {
+    margin: 0 0 14px 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+.second-chance-timer-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(74, 68, 88, 0.12);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+#second-chance-timer-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, var(--pink), var(--orange));
+    border-radius: 4px;
+    transform-origin: left center;
+}
+
+#tower-height-banner {
+    position: absolute;
+    bottom: max(calc(var(--safe-bottom) + 28px), 34px);
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(255, 255, 255, 0.92);
+    padding: 12px 22px;
+    border-radius: 18px;
+    box-shadow: var(--shadow-lg);
+    border: 2px solid rgba(255, 255, 255, 0.95);
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s var(--ease-smooth), transform 0.4s var(--ease-out-back);
+    z-index: 25;
+    max-width: 88vw;
+    will-change: transform, opacity;
+}
+#tower-height-banner.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+#tower-height-meters {
+    font-size: clamp(16px, 4.5vw, 20px);
+    font-weight: 900;
+    color: var(--text-primary);
+}
+#tower-height-compare {
+    font-size: clamp(12px, 3.2vw, 14px);
+    font-weight: 700;
+    color: var(--purple);
+    margin-top: 2px;
+}
+#game-over-height {
+    font-size: clamp(12px, 3.2vw, 14px);
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin: 0 0 6px 0;
+}
+
+/* =========================================
 МЕДИА-ЗАПРОСЫ
 ========================================= */
 @media (max-width: 540px) and (orientation: portrait) {
