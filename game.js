@@ -290,7 +290,7 @@ const DAILY_CHALLENGES = [
 
 const POWERUP_DEFS = {
     foundation: { icon: '🧱', name: 'Фундамент',   desc: 'Стартовый блок шире на 35%',    price: 120 },
-    focus:      { icon: '🎯', name: 'Точный глаз', desc: 'Зона идеала шире в 2 раза',     price: 150 },
+    focus: { icon: '🎯', name: 'Точный глаз', desc: 'Зона идеала в 3.5 раза шире', price: 150 },
     luck:       { icon: '🍀', name: 'Удача',       desc: 'x2 редких, без бомб и хрупких', price: 180 },
     multiplier: { icon: '💰', name: 'Множитель',   desc: 'x2 монет за всю игру',          price: 200 }
 };
@@ -2351,7 +2351,10 @@ function dropBlock() {
     const precisionMode = (gameMode === GAME_MODES.PRECISION);
     const noCutActive = dailyModifiers.noCut || precisionMode;
     let perfectThreshold = dailyModifiers.tightThreshold || GAME_CONFIG.PERFECT_THRESHOLD;
-    if (activePowerups.focus) perfectThreshold *= 2;
+    if (activePowerups.focus) {
+        const activeSize = movingAxis === 'x' ? sizeX : sizeZ;
+        perfectThreshold = Math.min(Math.max(perfectThreshold * 3.5, 0.55), activeSize * 0.45);
+    }
 
     if (missX || missZ) { currentBlock.userData.falling = true; triggerGameOver(); return; }
     if (noCutActive && maxDiff >= perfectThreshold) { currentBlock.userData.falling = true; triggerGameOver(); return; }
@@ -2758,7 +2761,9 @@ function animate() {
     if (gameState === GAME_STATES.PLAYING && currentBlock?.userData.moving) {
         let speed = currentSpeed;
         if (isFury) speed *= GAME_CONFIG.FURY_SPEED_MULTIPLIER;
-        if (currentBlock.userData.blockType === BLOCK_TYPES.ICE || dailyModifiers.allIce) speed = Math.min(speed * 1.8, 0.8);
+        if (currentBlock.userData.blockType === BLOCK_TYPES.ICE || dailyModifiers.allIce) {
+        speed = Math.min(speed * 1.45, 0.64);
+    }
 
         let delta = speed * direction;
         if (score > 20 && !isFury) delta += Math.sin(time * 3) * 0.02;
