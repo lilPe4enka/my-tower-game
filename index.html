@@ -31,6 +31,10 @@
       <div id="score-container">
         <div id="score" aria-live="polite">0</div>
         <div id="high-score">РЕКОРД: 0</div>
+        <div id="tower-height-banner" aria-live="polite">
+            <div id="tower-height-meters">🏗️ Высота: 0 м</div>
+            <div id="tower-height-compare"></div>
+        </div>
         <div id="game-coins">🪙 0</div>
         <div id="timer" aria-live="polite">⏱ 60</div>
         <div id="mode-label">КЛАССИКА</div>
@@ -83,11 +87,29 @@
       role="dialog"
       aria-labelledby="game-over-title"
     >
+
+      <!-- Second Chance -->
+    <div id="second-chance-overlay" class="screen modal" role="dialog" aria-labelledby="second-chance-title">
+        <div class="modal-content second-chance-content">
+            <div class="second-chance-icon">💖</div>
+            <h2 id="second-chance-title">ВТОРОЙ ШАНС!</h2>
+            <p id="second-chance-sub">Не бросай такую башню — продолжи с этого же места!</p>
+            <div class="second-chance-timer-bar">
+                <div id="second-chance-timer-fill"></div>
+            </div>
+            <div class="btn-group">
+                <button id="second-chance-buy" class="btn-primary">💖 ПРОДОЛЖИТЬ (50 🪙)</button>
+                <button id="second-chance-skip" class="btn-ghost">Пропустить</button>
+            </div>
+        </div>
+    </div>
+      
       <div class="modal-content">
         <h1 id="game-over-title">БАШНЯ РУХНУЛА</h1>
         <div id="new-record">🏆 НОВЫЙ РЕКОРД!</div>
         <p>Твой результат:</p>
         <div class="final-score"><span id="final-score-val">0</span></div>
+        <div id="game-over-height"></div>
         <div id="game-coins-earned">+0 🪙 за игру</div>
         <div id="game-xp-earned">+0 опыта</div>
         <div class="btn-group">
@@ -173,6 +195,8 @@
             часть блока. Полный промах — конец игры. Точное попадание сохраняет
             ширину, увеличивает серию и даёт бонусные очки и монеты.
           </p>
+
+          <p><strong>💖 Второй шанс:</strong> При промахе (от 15 очков или рядом с рекордом) можно 1 раз за игру продолжить за 50 🪙.</p>
 
           <div class="rules-section-title">🎮 Режимы игры</div>
           <div class="rule-block">
