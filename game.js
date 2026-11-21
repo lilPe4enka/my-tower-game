@@ -17,7 +17,7 @@ import { initCloudSync, scheduleCloudSave, flushCloudSave, getCloudStatus, isClo
 setupGlobalErrorHandler();
 
 // ============ TELEGRAM & HAPTICS ============
-const TELEGRAM_APP_URL = 'https://t.me/TowerGameeee_bot'; // замени на реальную ссылку на Mini App
+const TELEGRAM_APP_URL = 'https://t.me/YOUR_BOT_USERNAME/app'; // замени на реальную ссылку на Mini App
 const tg = window.Telegram?.WebApp;
 
 if (tg) {
@@ -27,6 +27,30 @@ if (tg) {
         if (tg.isVersionAtLeast('7.7')) tg.disableVerticalSwipes();
         tg.onEvent('viewportChanged', () => { if (typeof onResize === 'function') onResize(); });
     } catch (err) {}
+}
+
+function syncTelegramSafeAreas() {
+    const root = document.documentElement;
+    const safeTop = tg?.safeAreaInset?.top || 0;
+    let contentTop = tg?.contentSafeAreaInset?.top || 0;
+    const safeBottom = tg?.safeAreaInset?.bottom || 0;
+
+    // Подстраховка для iOS / Swiftgram в полноэкранном режиме, если клиент не прислал contentSafeAreaInset
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || tg?.platform === 'ios';
+    if (tg && contentTop === 0 && (tg.isFullscreen || isIOS)) {
+        contentTop = 48;
+    }
+
+    if (safeTop > 0) root.style.setProperty('--safe-top', `${safeTop}px`);
+    root.style.setProperty('--tg-content-top', `${contentTop}px`);
+    if (safeBottom > 0) root.style.setProperty('--safe-bottom', `${safeBottom}px`);
+}
+
+syncTelegramSafeAreas();
+if (tg?.onEvent) {
+    tg.onEvent('safeAreaChanged', syncTelegramSafeAreas);
+    tg.onEvent('contentSafeAreaChanged', syncTelegramSafeAreas);
+    tg.onEvent('viewportChanged', syncTelegramSafeAreas);
 }
 
 function updateTelegramBackButton() {
@@ -599,7 +623,7 @@ const eventRewardsTimelineEl = $('event-rewards-timeline');
 
 let pendingPrestigeRewards = [];
 
-highScoreEl.innerText = `РЕКОРД: ${highScore}`;
+if (highScoreEl) highScoreEl.innerText = `РЕКОРД: ${highScore}`;
 
 // ============ СЕЗОН ============
 function initSeason() {
@@ -722,8 +746,10 @@ function addCoins(amount) {
     scheduleCloudSave();
     updateCoinUI(); showCoinPopup(amount);
     updateMissionProgress(missions, 'coins', amount);
-    gameCoinsEl.classList.remove('coin-pulse');
-    requestAnimationFrame(() => gameCoinsEl.classList.add('coin-pulse'));
+    if (gameCoinsEl) {
+        gameCoinsEl.classList.remove('coin-pulse');
+        requestAnimationFrame(() => gameCoinsEl.classList.add('coin-pulse'));
+    }
     announceToScreenReader(`Получено ${amount} монет`);
 }
 
@@ -797,6 +823,7 @@ function checkDailyStreak() {
 }
 
 function updateStreakUI() {
+    if (!menuStreakEl) return;
     if (streak > 0) {
         updateDOMText(menuStreakEl, `🔥 ${streak}`);
         menuStreakEl.classList.remove('hidden');
@@ -846,6 +873,7 @@ function checkAchievements() {
 }
 
 function renderAchievements() {
+    if (!achListEl) return;
     achListEl.innerHTML = '';
     ACHIEVEMENTS.forEach(a => {
         const unlocked = unlockedAchievements.includes(a.id);
@@ -854,7 +882,7 @@ function renderAchievements() {
         div.innerHTML = `<span class="ach-icon">${a.icon}</span><div class="ach-info"><span class="ach-name">${a.name}${unlocked ? ' ✓' : ''}</span><span class="ach-desc">${a.desc}</span></div>`;
         achListEl.appendChild(div);
     });
-    achProgressEl.innerText = `${unlockedAchievements.length}/${ACHIEVEMENTS.length}`;
+    if (achProgressEl) achProgressEl.innerText = `${unlockedAchievements.length}/${ACHIEVEMENTS.length}`;
 }
 
 // ============ LEADERBOARD ============
@@ -883,14 +911,15 @@ function renderLeaderboard() {
     if (modeEntries.length > 0) {
         const sorted = [...modeEntries].sort((a, b) => b.score - a.score);
         const best = sorted[0];
-        bestValEl.innerText = best.score;
-        bestSubEl.innerText = `Установлен ${best.date}`;
+        if (bestValEl) bestValEl.innerText = best.score;
+        if (bestSubEl) bestSubEl.innerText = `Установлен ${best.date}`;
     } else {
-        bestValEl.innerText = '0';
-        bestSubEl.innerText = 'Играй, чтобы установить рекорд';
+        if (bestValEl) bestValEl.innerText = '0';
+        if (bestSubEl) bestSubEl.innerText = 'Играй, чтобы установить рекорд';
     }
     const recentEntries = [...modeEntries].sort((a, b) => (b.ts || 0) - (a.ts || 0)).slice(0, 5);
     const attemptsEl = document.getElementById('lb-attempts');
+    if (!attemptsEl) return;
     attemptsEl.innerHTML = '';
     if (recentEntries.length === 0) {
         attemptsEl.innerHTML = '<div class="lb-empty-attempts">Пока нет попыток в этом режиме</div>';
@@ -928,13 +957,13 @@ function getSmartDifficultyMultiplier() {
 
 // ============ НАСТРОЙКИ ============
 function updateSettingsUI() {
-    $('toggle-music').dataset.on = settings.musicEnabled;
-    $('toggle-music').innerText = settings.musicEnabled ? 'ВКЛ' : 'ВЫКЛ';
-    $('toggle-sfx').dataset.on = settings.sfxEnabled;
-    $('toggle-sfx').innerText = settings.sfxEnabled ? 'ВКЛ' : 'ВЫКЛ';
-    $('toggle-haptics').dataset.on = settings.hapticsEnabled;
-    $('toggle-haptics').innerText = settings.hapticsEnabled ? 'ВКЛ' : 'ВЫКЛ';
-    muteBtn.innerText = (settings.musicEnabled || settings.sfxEnabled) ? '🔊' : '🔇';
+    const tMusic = $('toggle-music');
+    const tSfx = $('toggle-sfx');
+    const tHap = $('toggle-haptics');
+    if (tMusic) { tMusic.dataset.on = settings.musicEnabled; tMusic.innerText = settings.musicEnabled ? 'ВКЛ' : 'ВЫКЛ'; }
+    if (tSfx) { tSfx.dataset.on = settings.sfxEnabled; tSfx.innerText = settings.sfxEnabled ? 'ВКЛ' : 'ВЫКЛ'; }
+    if (tHap) { tHap.dataset.on = settings.hapticsEnabled; tHap.innerText = settings.hapticsEnabled ? 'ВКЛ' : 'ВЫКЛ'; }
+    if (muteBtn) muteBtn.innerText = (settings.musicEnabled || settings.sfxEnabled) ? '🔊' : '🔇';
     updateCloudStatusUI();
 }
 
@@ -1166,6 +1195,7 @@ function updateQuest(type, value, isMax = false) {
 }
 
 function renderQuests() {
+    if (!questsEl) return;
     questsEl.innerHTML = '';
     quests.forEach(q => {
         const chip = document.createElement('div');
@@ -1215,10 +1245,11 @@ function getEffectIcon(effect) {
 }
 
 function renderShop() {
+    if (!skinListEl) return;
     skinListEl.innerHTML = '';
     const buyableCount = Object.keys(SKINS).filter(k => !SKINS[k].notBuyable).length;
     const unlockedBuyable = unlockedSkins.filter(k => !SKINS[k] || !SKINS[k].notBuyable).length;
-    shopProgressEl.innerText = `Открыто: ${unlockedBuyable}/${buyableCount}${unlockedSkins.includes('legend') ? ' + 👑 Легенда' : ''}`;
+    if (shopProgressEl) shopProgressEl.innerText = `Открыто: ${unlockedBuyable}/${buyableCount}${unlockedSkins.includes('legend') ? ' + 👑 Легенда' : ''}`;
     for (const [key, skin] of Object.entries(SKINS)) {
         if (key === 'legend' && !unlockedSkins.includes('legend')) continue;
         if ((skin.prestigeOnly || skin.eventOnly) && !unlockedSkins.includes(key)) continue;
@@ -1277,6 +1308,7 @@ function applySkinEffect() {
 
 function renderCustomize(type) {
     const listEl = type === 'colors' ? colorsListEl : backgroundsListEl;
+    if (!listEl) return;
     const data = type === 'colors' ? PALETTES : BACKGROUNDS;
     const current = type === 'colors' ? currentPalette : currentBackground;
     const unlocked = type === 'colors' ? unlockedPalettes : unlockedBackgrounds;
@@ -1334,9 +1366,10 @@ function renderCustomize(type) {
 function switchShopTab(tab) {
     currentShopTab = tab;
     document.querySelectorAll('.shop-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-    skinListEl.style.display = tab === 'skins' ? 'flex' : 'none';
-    colorsListEl.style.display = tab === 'colors' ? 'flex' : 'none';
-    backgroundsListEl.style.display = tab === 'backgrounds' ? 'flex' : 'none';
+    if (skinListEl) skinListEl.style.display = tab === 'skins' ? 'flex' : 'none';
+    if (colorsListEl) colorsListEl.style.display = tab === 'colors' ? 'flex' : 'none';
+    if (backgroundsListEl) backgroundsListEl.style.display = tab === 'backgrounds' ? 'flex' : 'none';
+    if (!shopProgressEl) return;
     if (tab === 'skins') {
         const buyableCount = Object.keys(SKINS).filter(k => !SKINS[k].notBuyable).length;
         const unlockedBuyable = unlockedSkins.filter(k => !SKINS[k] || !SKINS[k].notBuyable).length;
@@ -1392,6 +1425,7 @@ function showPowerupSelection(mode) {
 
 function renderPowerupList() {
     const list = $('powerup-list');
+    if (!list) return;
     list.innerHTML = '';
     for (const [key, def] of Object.entries(POWERUP_DEFS)) {
         const owned = ownedPowerups[key] || 0;
@@ -1432,6 +1466,7 @@ function startGameWithPowerups() {
 }
 
 function updateActivePowerupsUI() {
+    if (!activePowerupsEl) return;
     activePowerupsEl.innerHTML = '';
     for (const [key, isActive] of Object.entries(activePowerups)) {
         if (isActive && POWERUP_DEFS[key]) {
@@ -1458,11 +1493,13 @@ function updateChestUI() {
     const hasRare = chests.some(c => c.isRare);
     const container = $('chest-btn-container');
     const badge = $('chest-count-badge');
-    if (count > 0) {
-        container.style.display = 'block';
-        badge.innerText = count;
-        if (hasRare) badge.classList.add('rare'); else badge.classList.remove('rare');
-    } else container.style.display = 'none';
+    if (container && badge) {
+        if (count > 0) {
+            container.style.display = 'block';
+            badge.innerText = count;
+            if (hasRare) badge.classList.add('rare'); else badge.classList.remove('rare');
+        } else container.style.display = 'none';
+    }
     updateMissionsBadge();
 }
 
@@ -1671,7 +1708,7 @@ function activatePrestige() {
     saveLevelProgress(); saveStats(); saveTotalScore(); saveRecentScores();
     flushCloudSave();
     updateLevelUI(); updatePrestigeUI();
-    highScoreEl.innerText = `РЕКОРД: ${highScore}`;
+    if (highScoreEl) highScoreEl.innerText = `РЕКОРД: ${highScore}`;
     hideModal(prestigeConfirmScreen, { restoreMenu: false });
     playSound('prestige_activate');
     triggerHaptic('success');
@@ -2611,7 +2648,7 @@ function flashScreen() {
 function dropBlock() {
     if (gameState !== GAME_STATES.PLAYING || !currentBlock?.userData.moving) return;
     if (showTutorialHint) {
-        tutorialEl.style.display = 'none';
+        if (tutorialEl) tutorialEl.style.display = 'none';
         safeSetItem(STORAGE_KEYS.TUTORIAL_SHOWN, true);
         showTutorialHint = false;
     }
@@ -2819,8 +2856,10 @@ function dropBlock() {
 
 function updateScoreUI() {
     updateDOMText(scoreEl, score);
-    scoreEl.classList.add('score-pop');
-    setTimeout(() => scoreEl.classList.remove('score-pop'), 150);
+    if (scoreEl) {
+        scoreEl.classList.add('score-pop');
+        setTimeout(() => scoreEl.classList.remove('score-pop'), 150);
+    }
     updateQuest('stack', score, true);
     if (score % 10 === 0 && score > 0) announceToScreenReader(`${score} этажей!`);
 }
@@ -3045,7 +3084,7 @@ function updateCamera(dt = 1) {
 function animate() {
     requestAnimationFrame(animate);
     const rawDelta = clock.getDelta();
-    if (document.hidden || (gameState === GAME_STATES.MENU && startScreen.style.display !== 'none')) {
+    if (document.hidden || (gameState === GAME_STATES.MENU && startScreen && startScreen.style.display !== 'none')) {
         return;
     }
 
@@ -3207,7 +3246,7 @@ function startGame(mode) {
         score = 0; combo = 0; sessionCoins = 0; sessionXP = 0;
         isFury = false; furyBlocksLeft = 0;
         document.body.classList.remove('fury-active');
-        if (showTutorialHint) tutorialEl.style.display = 'block';
+        if (showTutorialHint && tutorialEl) tutorialEl.style.display = 'block';
         updateActivePowerupsUI();
         updateComboIndicator();
 
@@ -3257,18 +3296,20 @@ function startGame(mode) {
         if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
         const timeLimit = dailyModifiers.timeLimit || (gameMode === GAME_MODES.TIME ? GAME_CONFIG.DEFAULT_TIME_LIMIT : 0);
         if (timeLimit > 0) {
-            timeLeft = timeLimit; timerEl.style.display = 'block'; updateTimerDisplay();
+            timeLeft = timeLimit; if (timerEl) timerEl.style.display = 'block'; updateTimerDisplay();
             timeAttackTimer = setInterval(() => {
                 if (gameState !== GAME_STATES.PLAYING) return;
                 timeLeft--; updateTimerDisplay();
                 if (timeLeft <= 0) { clearInterval(timeAttackTimer); timeAttackTimer = null; triggerGameOver(); }
             }, 1000);
-        } else timerEl.style.display = 'none';
-        if (dailyChallengeActive) {
-            const ch = getDailyChallenge();
-            modeLabel.innerText = `🎯 ${ch.name}`;
-        } else modeLabel.innerText = GAME_MODE_NAMES[gameMode] || 'ИГРА';
-        startScreen.style.display = 'none';
+        } else if (timerEl) timerEl.style.display = 'none';
+        if (modeLabel) {
+            if (dailyChallengeActive) {
+                const ch = getDailyChallenge();
+                modeLabel.innerText = `🎯 ${ch.name}`;
+            } else modeLabel.innerText = GAME_MODE_NAMES[gameMode] || 'ИГРА';
+        }
+        if (startScreen) startScreen.style.display = 'none';
         hideModal(gameOverEl, { restoreMenu: false });
         hideModal(pauseScreen, { restoreMenu: false });
         camera.position.set(GAME_CONFIG.CAMERA_OFFSET_X, GAME_CONFIG.CAMERA_OFFSET_Y, GAME_CONFIG.CAMERA_OFFSET_Z);
@@ -3287,7 +3328,7 @@ function startGame(mode) {
         cacheCoinPopupAnchor();
     } catch (err) {
         console.error('startGame error:', err);
-        gameState = GAME_STATES.MENU; startScreen.style.display = 'flex';
+        gameState = GAME_STATES.MENU; if (startScreen) startScreen.style.display = 'flex';
         updateTelegramBackButton();
     }
 }
@@ -3333,7 +3374,7 @@ function goToMenu() {
     hideModal(prestigeChestScreen, { restoreMenu: false });
     hideModal(eventScreen, { restoreMenu: false });
     hideModal(minigamesScreen, { restoreMenu: false });
-    startScreen.style.display = 'flex';
+    if (startScreen) startScreen.style.display = 'flex';
     const bgColors = getBgColors();
     scene.background.set(bgColors[0]); document.body.style.background = bgColors[0];
     camera.position.set(GAME_CONFIG.CAMERA_OFFSET_X, GAME_CONFIG.CAMERA_OFFSET_Y, GAME_CONFIG.CAMERA_OFFSET_Z);
@@ -3352,7 +3393,7 @@ function saveCurrentScoreIfNeeded() {
     if (score > 0 && score > highScore) {
         highScore = score;
         safeSetItem(STORAGE_KEYS.HIGH_SCORE, highScore);
-        highScoreEl.innerText = `РЕКОРД: ${highScore}`;
+        if (highScoreEl) highScoreEl.innerText = `РЕКОРД: ${highScore}`;
     }
 }
 
@@ -3377,19 +3418,24 @@ function triggerGameOver() {
     addXP(earnedXP);
     if (gameMode === GAME_MODES.TIME && score > 0) updateQuest('time_game', 1);
     addToLeaderboard(score, gameMode);
-    finalScoreVal.innerText = score;
+    if (finalScoreVal) finalScoreVal.innerText = score;
     const isNew = score > highScore;
     if (isNew) {
         highScore = score;
         safeSetItem(STORAGE_KEYS.HIGH_SCORE, highScore);
-        highScoreEl.innerText = `РЕКОРД: ${highScore}`;
+        if (highScoreEl) highScoreEl.innerText = `РЕКОРД: ${highScore}`;
         gameOverTimers.push(setTimeout(() => playWinAnimation(), 300));
     }
-    $('new-record').style.display = isNew ? 'block' : 'none';
-    gameCoinsEarnedEl.innerText = `+${sessionCoins} 🪙 за игру`;
-    gameCoinsEarnedEl.style.display = 'block';
-    if (earnedXP > 0) { gameXPEarnedEl.innerText = `+${earnedXP} опыта`; gameXPEarnedEl.style.display = 'block'; }
-    else gameXPEarnedEl.style.display = 'none';
+    const newRecEl = $('new-record');
+    if (newRecEl) newRecEl.style.display = isNew ? 'block' : 'none';
+    if (gameCoinsEarnedEl) {
+        gameCoinsEarnedEl.innerText = `+${sessionCoins} 🪙 за игру`;
+        gameCoinsEarnedEl.style.display = 'block';
+    }
+    if (gameXPEarnedEl) {
+        if (earnedXP > 0) { gameXPEarnedEl.innerText = `+${earnedXP} опыта`; gameXPEarnedEl.style.display = 'block'; }
+        else gameXPEarnedEl.style.display = 'none';
+    }
 
     const builtMeters = Math.max(0, blocks.length - 1);
     const compareText = getHeightComparison(builtMeters);
@@ -3469,7 +3515,7 @@ window.addEventListener('keydown', (e) => {
         if (gameState === GAME_STATES.PLAYING && !isAnyModalOpen()) {
             e.preventDefault();
             togglePause();
-        } else if (gameState === GAME_STATES.PAUSED && pauseScreen.classList.contains('open')) {
+        } else if (gameState === GAME_STATES.PAUSED && pauseScreen && pauseScreen.classList.contains('open')) {
             e.preventDefault();
             togglePause();
         }
@@ -3529,13 +3575,13 @@ safeClick(pauseBtn, () => togglePause());
 safeClick($('pause-resume'), () => togglePause());
 safeClick($('pause-menu'), () => goToMenu());
 safeClick(menuToggleBtn, () => { if (gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSED) goToMenu(); });
-safeClick($('rules-btn'), () => { showModal(rulesScreen); startScreen.style.display = 'none'; });
+safeClick($('rules-btn'), () => { showModal(rulesScreen); if (startScreen) startScreen.style.display = 'none'; });
 safeClick($('close-rules'), () => { hideModal(rulesScreen); });
-safeClick($('ach-btn'), () => { renderAchievements(); showModal(achScreen); startScreen.style.display = 'none'; });
+safeClick($('ach-btn'), () => { renderAchievements(); showModal(achScreen); if (startScreen) startScreen.style.display = 'none'; });
 safeClick($('close-achievements'), () => { hideModal(achScreen); });
-safeClick($('lb-btn'), () => { currentLbMode = GAME_MODES.CLASSIC; renderLeaderboard(); showModal(lbScreen); startScreen.style.display = 'none'; });
+safeClick($('lb-btn'), () => { currentLbMode = GAME_MODES.CLASSIC; renderLeaderboard(); showModal(lbScreen); if (startScreen) startScreen.style.display = 'none'; });
 safeClick($('close-leaderboard'), () => { hideModal(lbScreen); });
-safeClick($('settings-btn'), () => { updateSettingsUI(); showModal(settingsScreen); startScreen.style.display = 'none'; });
+safeClick($('settings-btn'), () => { updateSettingsUI(); showModal(settingsScreen); if (startScreen) startScreen.style.display = 'none'; });
 safeClick($('close-settings'), () => { hideModal(settingsScreen); });
 safeClick($('chest-btn'), () => showChestOpening());
 safeClick($('open-chest-btn'), () => openChest());
@@ -3565,7 +3611,7 @@ safeClick($('minigames-btn'), () => {
     renderMinigamesList();
     startMinigamesCooldownTimer();
     showModal(minigamesScreen);
-    startScreen.style.display = 'none';
+    if (startScreen) startScreen.style.display = 'none';
 });
 safeClick($('close-minigames'), () => {
     stopActiveMinigame();
@@ -3623,6 +3669,7 @@ safeClick($('challenge-btn'), () => {
 });
 
 function onResize() {
+    syncTelegramSafeAreas();
     if (!camera || !renderer) return;
     const aspect = window.innerWidth / window.innerHeight;
     const d = getAdaptiveD(aspect);
@@ -3677,7 +3724,7 @@ function reloadStateFromStorage() {
     ownedPowerups = { ...DEFAULTS.POWERUPS, ...validateObject(safeGetItem(STORAGE_KEYS.POWERUPS, null), {}) };
     chests = validateArray(safeGetItem(STORAGE_KEYS.CHESTS, []), []);
 
-    highScoreEl.innerText = `РЕКОРД: ${highScore}`;
+    if (highScoreEl) highScoreEl.innerText = `РЕКОРД: ${highScore}`;
     updateCoinUI();
     updateLevelUI();
     updateStreakUI();
