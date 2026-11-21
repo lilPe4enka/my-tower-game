@@ -334,6 +334,16 @@ let lowPerfMode = false;
 let lastPerfCheck = 0;
 let lowFpsStrikes = 0;
 
+let secondChanceUsed = false;
+let secondChanceActive = false;
+let secondChanceEndTime = 0;
+let secondChanceRaf = null;
+let resumeDelayTimer = null;
+
+let overviewActive = false;
+let overviewTargetZoom = 1;
+let overviewTargetY = 0;
+
 const BLOCK_SIZE = GAME_CONFIG.BLOCK_SIZE;
 const BLOCK_HEIGHT = GAME_CONFIG.BLOCK_HEIGHT;
 const BASE_SPEED = GAME_CONFIG.BASE_SPEED;
@@ -528,6 +538,15 @@ const activePowerupsEl = $('active-powerups');
 const dailyBannerEl = $('daily-challenge-banner'), dailyNameEl = $('daily-name'), dailyDescEl = $('daily-desc'), dailyIconEl = $('daily-icon'), dailyPlayBtn = $('daily-play-btn');
 const seasonPillEl = $('season-pill');
 const victoryCrownEl = $('victory-crown');
+const secondChanceOverlay = $('second-chance-overlay');
+const secondChanceSubEl = $('second-chance-sub');
+const secondChanceTimerFill = $('second-chance-timer-fill');
+const secondChanceBuyBtn = $('second-chance-buy');
+const secondChanceSkipBtn = $('second-chance-skip');
+const towerHeightBanner = $('tower-height-banner');
+const towerHeightMetersEl = $('tower-height-meters');
+const towerHeightCompareEl = $('tower-height-compare');
+const gameOverHeightEl = $('game-over-height');
 
 const comboIndicatorEl = $('combo-indicator');
 const comboProgressFillEl = $('combo-progress-fill');
@@ -2389,6 +2408,146 @@ function spawnNewBlock() {
     scene.add(currentBlock);
 }
 
+// ============ СРАВНЕНИЕ ВЫСОТЫ БАШНИ ============
+const HEIGHT_BENCHMARKS = [
+    { min: 150, text: 'выше пирамиды Хеопса 🏜️' },
+    { min: 100, text: 'выше Биг-Бена 🕰️' },
+    { min: 70,  text: 'выше 20-этажного небоскрёба 🏙️' },
+    { min: 50,  text: 'выше 16-этажного дома 🏢' },
+    { min: 35,  text: 'выше Статуи Свободы 🗽' },
+    { min: 25,  text: 'выше 9-этажного дома 🏬' },
+    { min: 15,  text: 'выше пятиэтажки 🏠' },
+    { min: 8,   text: 'выше двухэтажного автобуса 🚌' },
+    { min: 4,   text: 'выше жирафа 🦒' },
+    { min: 1,   text: 'отличное начало для башни 🧱' },
+];
+
+function getHeightComparison(meters) {
+    const found = HEIGHT_BENCHMARKS.find(b => meters >= b.min);
+    return found ? found.text : 'фундамент заложен 🧱';
+}
+
+function showTowerHeightBanner(meters) {
+    if (!towerHeightBanner) return;
+    const compare = getHeightComparison(meters);
+    if (towerHeightMetersEl) towerHeightMetersEl.textContent = `🏗️ Высота: ${meters} м`;
+    if (towerHeightCompareEl) towerHeightCompareEl.textContent = `— ${compare}`;
+    towerHeightBanner.classList.add('show');
+}
+
+function hideTowerHeightBanner() {
+    if (towerHeightBanner) towerHeightBanner.classList.remove('show');
+}
+
+// ============ ВТОРОЙ ШАНС ============
+function canOfferSecondChance() {
+    if (secondChanceUsed || secondChanceActive) return false;
+    if (gameMode === GAME_MODES.PRECISION || dailyModifiers.noCut) return false;
+    if (coins < GAME_CONFIG.SECOND_CHANCE_COST) return false;
+    const nearRecord = highScore > 0 && score >= Math.max(5, highScore - GAME_CONFIG.SECOND_CHANCE_NEAR_RECORD);
+    return score >= GAME_CONFIG.SECOND_CHANCE_MIN_SCORE || nearRecord;
+}
+
+function stopSecondChanceLoop() {
+    if (secondChanceRaf) {
+        cancelAnimationFrame(secondChanceRaf);
+        secondChanceRaf = null;
+    }
+    secondChanceActive = false;
+}
+
+function offerSecondChance() {
+    secondChanceActive = true;
+    gameState = GAME_STATES.PAUSED;
+    document.body.classList.remove('in-game');
+    if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
+
+    if (secondChanceSubEl) {
+        const diff = highScore - score;
+        secondChanceSubEl.textContent = (highScore > 0 && diff > 0 && diff <= GAME_CONFIG.SECOND_CHANCE_NEAR_RECORD)
+            ? `До рекорда всего ${diff}! Продолжи с этого же места!`
+            : `Отличная башня (${score} очк.)! Продолжи с этого же места?`;
+    }
+    if (secondChanceBuyBtn) {
+        secondChanceBuyBtn.textContent = `💖 ПРОДОЛЖИТЬ (${GAME_CONFIG.SECOND_CHANCE_COST} 🪙)`;
+    }
+
+    showModal(secondChanceOverlay);
+    secondChanceEndTime = performance.now() + GAME_CONFIG.SECOND_CHANCE_DURATION;
+
+    function tickTimer(now) {
+        if (!secondChanceActive) return;
+        const left = Math.max(0, secondChanceEndTime - now);
+        const pct = left / GAME_CONFIG.SECOND_CHANCE_DURATION;
+        if (secondChanceTimerFill) secondChanceTimerFill.style.transform = `scaleX(${pct})`;
+        if (left <= 0) {
+            declineSecondChance();
+            return;
+        }
+        secondChanceRaf = requestAnimationFrame(tickTimer);
+    }
+    secondChanceRaf = requestAnimationFrame(tickTimer);
+}
+
+function acceptSecondChance() {
+    if (!secondChanceActive || coins < GAME_CONFIG.SECOND_CHANCE_COST) {
+        declineSecondChance();
+        return;
+    }
+    stopSecondChanceLoop();
+    secondChanceUsed = true;
+
+    coins -= GAME_CONFIG.SECOND_CHANCE_COST;
+    safeSetItem(STORAGE_KEYS.COINS, coins);
+    updateCoinUI();
+
+    hideModal(secondChanceOverlay, { restoreMenu: false });
+
+    // Удаляем промахнувшийся блок и спавним свежий
+    if (currentBlock) {
+        scene.remove(currentBlock);
+        disposeMesh(currentBlock);
+        currentBlock = null;
+    }
+
+    gameState = GAME_STATES.PLAYING;
+    document.body.classList.add('in-game');
+    spawnNewBlock();
+    if (currentBlock) currentBlock.userData.moving = false;
+
+    playSound('quest');
+    triggerHaptic('success');
+    showPopup(bonusText, '💖 ВТОРОЙ ШАНС!', 1200);
+
+    // Короткая пауза 0.5 сек, чтобы игрок успел сориентироваться
+    if (resumeDelayTimer) clearTimeout(resumeDelayTimer);
+    resumeDelayTimer = setTimeout(() => {
+        resumeDelayTimer = null;
+        if (gameState === GAME_STATES.PLAYING && currentBlock) {
+            currentBlock.userData.moving = true;
+        }
+    }, 500);
+
+    const timeLimit = dailyModifiers.timeLimit || (gameMode === GAME_MODES.TIME ? GAME_CONFIG.DEFAULT_TIME_LIMIT : 0);
+    if (timeLimit > 0 && timeLeft > 0) {
+        timeAttackTimer = setInterval(() => {
+            if (gameState !== GAME_STATES.PLAYING) return;
+            timeLeft--; updateTimerDisplay();
+            if (timeLeft <= 0) { clearInterval(timeAttackTimer); timeAttackTimer = null; triggerGameOver(); }
+        }, 1000);
+    }
+    updateTelegramBackButton();
+}
+
+function declineSecondChance() {
+    if (!secondChanceActive) return;
+    stopSecondChanceLoop();
+    hideModal(secondChanceOverlay, { restoreMenu: false });
+    if (currentBlock) currentBlock.userData.falling = true;
+    triggerGameOver();
+}
+
+
 // ============ GAME LOGIC ============
 function showPopup(el, text, duration = 800) {
     if (!el) return;
@@ -2434,9 +2593,15 @@ function dropBlock() {
         perfectThreshold = Math.min(Math.max(perfectThreshold * 3.5, 0.55), activeSize * 0.45);
     }
 
-    if (missX || missZ) { currentBlock.userData.falling = true; triggerGameOver(); return; }
-    if (noCutActive && maxDiff >= perfectThreshold) { currentBlock.userData.falling = true; triggerGameOver(); return; }
+    if (missX || missZ) {
+        if (canOfferSecondChance()) { offerSecondChance(); return; }
+        currentBlock.userData.falling = true; triggerGameOver(); return;
+    }
+    if (noCutActive && maxDiff >= perfectThreshold) {
+        currentBlock.userData.falling = true; triggerGameOver(); return;
+    }
     if (bType === BLOCK_TYPES.CRUMBLE && maxDiff < perfectThreshold) {
+        if (canOfferSecondChance()) { offerSecondChance(); return; }
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
         spawnBombParticles(); triggerGameOver(); return;
     }
@@ -2800,9 +2965,22 @@ const updateWindUI = throttle(_updateWindUIInternal, 100);
 
 function updateCamera(dt = 1) {
     if (!blocks.length && !debris.length) return;
+    const lerpFactor = 1 - Math.pow(1 - GAME_CONFIG.CAMERA_LERP_FACTOR, dt);
+
+    if (overviewActive) {
+        const zoomLerp = 1 - Math.pow(1 - 0.07, dt);
+        camera.zoom += (overviewTargetZoom - camera.zoom) * zoomLerp;
+        camera.updateProjectionMatrix();
+
+        camera.position.x += (GAME_CONFIG.CAMERA_OFFSET_X - camera.position.x) * zoomLerp;
+        camera.position.y += ((overviewTargetY + GAME_CONFIG.CAMERA_OFFSET_Y) - camera.position.y) * zoomLerp;
+        camera.position.z += (GAME_CONFIG.CAMERA_OFFSET_Z - camera.position.z) * zoomLerp;
+        camera.lookAt(0, overviewTargetY, 0);
+        return;
+    }
+
     const top = blocks.length > 0 ? blocks[blocks.length - 1] : { position: { x: 0, y: 0, z: 0 } };
     const ty = top.position.y, tx = top.position.x * 0.5, tz = top.position.z * 0.5;
-    const lerpFactor = 1 - Math.pow(1 - GAME_CONFIG.CAMERA_LERP_FACTOR, dt);
     camera.position.x += (tx + GAME_CONFIG.CAMERA_OFFSET_X - camera.position.x) * lerpFactor;
     camera.position.y += (ty + GAME_CONFIG.CAMERA_OFFSET_Y - camera.position.y) * lerpFactor;
     camera.position.z += (tz + GAME_CONFIG.CAMERA_OFFSET_Z - camera.position.z) * lerpFactor;
@@ -2842,7 +3020,7 @@ function animate() {
     const hideBelowY = camera.position.y - 42;
     for (let i = 0; i < blocks.length; i++) {
         const b = blocks[i];
-        const visible = b.position.y >= hideBelowY;
+        const visible = overviewActive || b.position.y >= hideBelowY;
         if (b.visible !== visible) b.visible = visible;
         if (!visible) continue;
 
