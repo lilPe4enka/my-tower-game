@@ -1,6 +1,6 @@
-// minigames.js — обновлённая система мини-игр
+// minigames.js — система мини-игр с HiDPI-отрисовкой
 
-import { safeGetItem, safeSetItem } from './utils.js';
+import { safeGetItem, safeSetItem } from './utils.js?v=15';
 
 export const MINIGAMES_CONFIG = {
     COOLDOWN_KEY: 'towerMinigameCooldown',
@@ -110,6 +110,15 @@ export function formatCooldown(ms) {
     return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
+function setupHiDPICanvas(canvas, logicalWidth, logicalHeight) {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(logicalWidth * dpr);
+    canvas.height = Math.round(logicalHeight * dpr);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return ctx;
+}
+
 // =========================================================
 // 1. ВЗЛОМ СЕЙФА (Pop the Lock)
 // =========================================================
@@ -146,7 +155,7 @@ export function createPopLockGame(container, onEnd) {
     `;
 
     const canvas = container.querySelector('#lock-canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = setupHiDPICanvas(canvas, 240, 240);
     const hitsEl = container.querySelector('#lock-hits');
     const livesEl = container.querySelector('#lock-lives');
 
@@ -411,7 +420,7 @@ export function createDodgeArenaGame(container, onEnd) {
     `;
 
     const canvas = container.querySelector('#dodge-canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = setupHiDPICanvas(canvas, W, H);
     const scoreEl = container.querySelector('#dodge-score');
     const livesEl = container.querySelector('#dodge-lives');
     const timeEl = container.querySelector('#dodge-time');
