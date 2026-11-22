@@ -29,6 +29,20 @@
         }
     }
     </script>
+    <script>
+window.addEventListener('error', e => {
+    const box = document.createElement('pre');
+    box.style.cssText = 'position:fixed;inset:80px 10px auto 10px;z-index:99999;background:#1a0000;color:#ff8080;padding:12px;border-radius:10px;font-size:12px;white-space:pre-wrap;max-height:50vh;overflow:auto;';
+    box.textContent = 'ERR: ' + (e.message || e) + '\n' + (e.filename || '') + ':' + (e.lineno || '');
+    document.body.appendChild(box);
+});
+window.addEventListener('unhandledrejection', e => {
+    const box = document.createElement('pre');
+    box.style.cssText = 'position:fixed;inset:80px 10px auto 10px;z-index:99999;background:#1a0000;color:#ff8080;padding:12px;border-radius:10px;font-size:12px;white-space:pre-wrap;max-height:50vh;overflow:auto;';
+    box.textContent = 'PROMISE ERR: ' + (e.reason?.stack || e.reason);
+    document.body.appendChild(box);
+});
+</script>
 </head>
 <body>
     <!-- UI в игре -->
