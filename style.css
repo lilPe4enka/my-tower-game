@@ -1265,3 +1265,211 @@ button:focus-visible,
 outline: 3px solid var(--mint);
 outline-offset: 2px;
 }
+
+/* =========================================
+ФИКСЫ И СТИЛИ НОВЫХ МИНИ-ИГР
+========================================= */
+.mg-lock-wrap,
+.mg-grid-wrap,
+.mg-dodge-wrap,
+.mg-pairs-wrap,
+.mg-timing-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 4px 0;
+}
+
+.mg-top-hud {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #F8F6FA;
+    padding: 8px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.mg-hint {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.35;
+}
+
+/* Отменяем глобальный fixed 100vw/100dvh для canvas мини-игр */
+canvas.mg-canvas {
+    position: relative;
+    top: auto;
+    left: auto;
+    z-index: 2;
+    display: block;
+    width: 240px;
+    height: 240px;
+    max-width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 20px;
+    touch-action: none;
+    cursor: pointer;
+}
+
+/* Звёздный дождь: компактное поле с фиксированными пропорциями */
+canvas.mg-dodge-canvas {
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+    aspect-ratio: 280 / 260;
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    border: 2px solid rgba(74, 68, 88, 0.12);
+}
+
+/* Охота за золотом: крупные квадратные плитки 4x4 */
+.mg-treasure-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    width: 100%;
+    max-width: 340px;
+}
+
+.mg-tile {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    min-height: 64px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #F0ECF5, #E4DDF0);
+    border: 2px solid rgba(74, 68, 88, 0.08);
+    font-size: clamp(24px, 7vw, 30px);
+    font-weight: 900;
+    color: var(--purple);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s, background 0.2s, opacity 0.2s;
+}
+
+.mg-tile.opened.coin {
+    background: linear-gradient(135deg, #FFF8E1, #FFE082);
+    border-color: #FFD54F;
+}
+
+.mg-tile.opened.gem {
+    background: linear-gradient(135deg, #E0F7FA, #80DEEA);
+    border-color: #26C6DA;
+}
+
+.mg-tile.opened.bomb {
+    background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
+    border-color: var(--red);
+}
+
+.mg-tile.revealed {
+    opacity: 0.45;
+}
+
+.mg-cashout-btn {
+    width: 100%;
+    max-width: 340px;
+    padding: 13px 16px;
+    font-size: 14px;
+}
+
+.mg-cashout-btn:disabled {
+    opacity: 0.5;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* Пары блоков 4x3 */
+.mg-pairs-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    width: 100%;
+    max-width: 340px;
+}
+
+.mg-pair-card {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    min-height: 64px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #F3E8FF, #E9D5FF);
+    border: 2px solid #D8B4FE;
+    font-size: clamp(24px, 7vw, 30px);
+    font-weight: 900;
+    color: var(--purple);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-sm);
+}
+
+.mg-pair-card.open {
+    background: #FFFFFF;
+    border-color: var(--pink);
+}
+
+.mg-pair-card.matched {
+    background: linear-gradient(135deg, #E0F7F5, #C8F0EC);
+    border-color: var(--mint);
+    opacity: 0.85;
+}
+
+/* Идеальный тайминг */
+.mg-timing-feedback {
+    font-size: 15px;
+    font-weight: 900;
+    color: var(--text-primary);
+    min-height: 22px;
+}
+
+.mg-timing-track {
+    position: relative;
+    width: 100%;
+    height: 36px;
+    background: #EFEBF5;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 2px solid rgba(74, 68, 88, 0.1);
+}
+
+.mg-timing-green,
+.mg-timing-gold {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+}
+
+.mg-timing-green {
+    background: rgba(6, 214, 160, 0.45);
+}
+
+.mg-timing-gold {
+    background: #FFB020;
+}
+
+.mg-timing-cursor {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    width: 8px;
+    margin-left: -4px;
+    border-radius: 4px;
+    background: var(--text-primary);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+}
+
+.mg-stop-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+}
