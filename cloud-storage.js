@@ -44,3 +44,88 @@ function updateCloudStatusUI() {
     const statusEl = $('cloud-sync-status');
     if (statusEl) statusEl.textContent = getCloudStatus();
 }
+export async function flushCloudSave() {
+    if (saveTimer) {
+        clearTimeout(saveTimer);
+        saveTimer = null;
+    }
+    safeSetItem(LOCAL_UPDATED_KEY, String(Date.now()));
+
+    if (!isCloudStorageAvailable() || isSyncing) return false;
+    isSyncing = true;
+
+    try {
+        const { core, inventory, meta } = collectLocalPayload();
+
+        const coreStr = serializeWithCap(core);
+        const invStr = serializeWithCap(inventory);
+        const metaStr = serializeWithCap(meta, (m) => ({
+            ...m,
+            lb: (m.lb || []).slice(0, 15),
+            ch: (m.ch || []).slice(0, 15),
+        }));
+
+        const tasks = [];
+        if (coreStr) tasks.push(cloudSetItem(CLOUD_KEYS.CORE, coreStr));
+        if (invStr) tasks.push(cloudSetItem(CLOUD_KEYS.INVENTORY, invStr));
+        if (metaStr) tasks.push(cloudSetItem(CLOUD_KEYS.META, metaStr));
+
+        const results = await Promise.all(tasks);
+        const ok = results.length > 0 && results.every(Boolean);
+        lastCloudStatus = ok
+            ? `Сохранено в ${new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`
+            : 'Ошибка сохранения';
+        return ok;
+    } finally {
+        isSyncing = false;
+    }
+}
+
+export function scheduleCloudSave() {
+    safeSetItem(LOCAL_UPDATED_KEY, String(Date.now()));
+    if (!isCloudStorageAvailable()) return;
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+        saveTimer = null;
+        flushCloudSave();
+    }, SAVE_DEBOUNCE_MS);
+}
+
+export async function initCloudSync(onMergedCallback) {
+    if (!isCloudStorageAvailable()) {
+        lastCloudStatus = 'Локально (вне Telegram)';
+        return false;
+    }
+
+    lastCloudStatus = 'Синхронизация...';
+    const raw = await cloudGetItems([CLOUD_KEYS.CORE, CLOUD_KEYS.INVENTORY, CLOUD_KEYS.META]);
+    if (!raw) {
+        lastCloudStatus = 'Нет связи с облаком';
+        return false;
+    }
+
+    const cloudCore = parseJsonSafe(raw[CLOUD_KEYS.CORE]);
+    const cloudInv = parseJsonSafe(raw[CLOUD_KEYS.INVENTORY]);
+    const cloudMeta = parseJsonSafe(raw[CLOUD_KEYS.META]);
+    const hasCloudData = Boolean(cloudCore || cloudInv || cloudMeta);
+
+    const local = collectLocalPayload();
+
+    if (!hasCloudData) {
+        await flushCloudSave();
+        return false;
+    }
+
+    const merged = mergePayloads(
+        { core: cloudCore || {}, inventory: cloudInv || {}, meta: cloudMeta || {} },
+        local
+    );
+    applyPayloadToLocal(merged);
+
+    if (typeof onMergedCallback === 'function') {
+        onMergedCallback();
+    }
+
+    await flushCloudSave();
+    return true;
+}
