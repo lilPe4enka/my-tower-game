@@ -593,6 +593,13 @@
     <!-- Mute Button (только в игре) -->
     <button id="mute-btn" class="floating-settings" style="top:auto;bottom:max(calc(var(--safe-bottom) + 16px), 20px);" aria-label="Звук">🔊</button>
 
-    <script type="module" src="game.js?v=6"></script>
+    <script type="module">
+        import('./game.js?v=7').catch(err => {
+            const box = document.createElement('pre');
+            box.style.cssText = 'position:fixed;inset:70px 10px auto 10px;z-index:99999;background:#1a0000;color:#ff8080;padding:12px;border-radius:10px;font-size:12px;white-space:pre-wrap;max-height:60vh;overflow:auto;';
+            box.textContent = 'LOAD ERR:\n' + (err?.stack || err?.message || String(err));
+            document.body.appendChild(box);
+        });
+    </script>
 </body>
 </html>
