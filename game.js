@@ -1,23 +1,23 @@
 import * as THREE from 'three';
 
 // ============ ИМПОРТЫ МОДУЛЕЙ ============
-import { safeGetItem, safeSetItem, safeParseInt, PARTICLE_LIMITS, enforceParticleLimits, showModalSafe, hideModalSafe, isAnyModalOpen, setupGlobalErrorHandler, validateArray, validateObject } from './utils.js';
-import { GAME_CONFIG, LIMITS, GAME_MODES, GAME_STATES, GAME_MODE_NAMES, BLOCK_TYPES, BLOCK_COLORS, BLOCK_GLOW_COLORS, STORAGE_KEYS, DEFAULTS, xpForNextLevel, getAdaptiveD, CONFETTI_COLORS, MILESTONE_COLORS, LEAD_NOTES, FEATURE_NAMES } from './constants.js';
-import { getComboTier, applyComboMultiplier, checkTierUpgrade, formatComboDisplay } from './combo-system.js';
-import { applyTransition, getTransitionForScreen, staggerElements, flashTransition } from './transitions.js';
-import { loadMissions, updateMissionProgress, claimMissionReward, getMissionsStats, formatMissionReward, getMissionProgress } from './missions.js';
-import { getPrestigeCount, getPrestigeBonus, setPrestigeBonus, canPrestige, getPrestigeProgress, performPrestige, resetProgressForPrestige, rollPrestigeChestReward, applyPrestigeReward, formatPrestigeBonus, PRESTIGE_SKINS, PRESTIGE_CONFIG, checkNewMilestones } from './prestige.js';
-import { getCachedTexture, clearTextureCache, throttle, updateDOMText, updateDOMStyle, updateDOMClass, updateFpsCounter, getCurrentFps } from './performance.js';
-import { saveLastFocus, restoreLastFocus, trapFocus, releaseFocusTrap, setupEscapeKeyHandler, removeEscapeKeyHandler, updateAriaAttributes, announceToScreenReader, addDecorativeStars, normalizeFontSizes, animateElementsSequentially, addCloseButtonToModal } from './accessibility.js';
-import { getCurrentEvent, getEventProgress, getAvailableRewards, claimEventReward, getEventStats, formatEventDate, isEventsSystemActive, getEventDay, EVENT_SKINS } from './seasonal-events.js';
-import { createEnvironmentParticles, updateEnvironmentParticles, getParticlesForBackground, removeEnvironmentParticles } from './environment-particles.js';
-import { MINIGAMES, canPlayMinigame, recordMinigamePlay, getCooldownRemaining, getRemainingDailyPlays, formatCooldown, createMinigame, calculateMinigameReward } from './minigames.js';
-import { initCloudSync, scheduleCloudSave, flushCloudSave, getCloudStatus, isCloudStorageAvailable } from './cloud-storage.js?v=7';
+import { safeGetItem, safeSetItem, safeParseInt, PARTICLE_LIMITS, enforceParticleLimits, showModalSafe, hideModalSafe, isAnyModalOpen, setupGlobalErrorHandler, validateArray, validateObject } from './utils.js?v=15';
+import { GAME_CONFIG, LIMITS, GAME_MODES, GAME_STATES, GAME_MODE_NAMES, BLOCK_TYPES, BLOCK_COLORS, BLOCK_GLOW_COLORS, STORAGE_KEYS, DEFAULTS, xpForNextLevel, getAdaptiveD, CONFETTI_COLORS, MILESTONE_COLORS, LEAD_NOTES, FEATURE_NAMES } from './constants.js?v=15';
+import { getComboTier, applyComboMultiplier, checkTierUpgrade, formatComboDisplay } from './combo-system.js?v=15';
+import { applyTransition, getTransitionForScreen, staggerElements, flashTransition } from './transitions.js?v=15';
+import { loadMissions, updateMissionProgress, claimMissionReward, getMissionsStats, formatMissionReward, getMissionProgress } from './missions.js?v=15';
+import { getPrestigeCount, getPrestigeBonus, setPrestigeBonus, canPrestige, getPrestigeProgress, performPrestige, resetProgressForPrestige, rollPrestigeChestReward, applyPrestigeReward, formatPrestigeBonus, PRESTIGE_SKINS, PRESTIGE_CONFIG, checkNewMilestones } from './prestige.js?v=15';
+import { getCachedTexture, clearTextureCache, throttle, updateDOMText, updateDOMStyle, updateDOMClass, updateFpsCounter, getCurrentFps } from './performance.js?v=15';
+import { saveLastFocus, restoreLastFocus, trapFocus, releaseFocusTrap, setupEscapeKeyHandler, removeEscapeKeyHandler, updateAriaAttributes, announceToScreenReader, addDecorativeStars, normalizeFontSizes, animateElementsSequentially, addCloseButtonToModal } from './accessibility.js?v=15';
+import { getCurrentEvent, getEventProgress, getAvailableRewards, claimEventReward, getEventStats, formatEventDate, isEventsSystemActive, getEventDay, EVENT_SKINS } from './seasonal-events.js?v=15';
+import { createEnvironmentParticles, updateEnvironmentParticles, getParticlesForBackground, removeEnvironmentParticles } from './environment-particles.js?v=15';
+import { MINIGAMES, canPlayMinigame, recordMinigamePlay, getCooldownRemaining, getRemainingDailyPlays, formatCooldown, createMinigame, calculateMinigameReward } from './minigames.js?v=15';
+import { initCloudSync, scheduleCloudSave, flushCloudSave, getCloudStatus, isCloudStorageAvailable } from './cloud-storage.js?v=15';
 
 setupGlobalErrorHandler();
 
 // ============ TELEGRAM & HAPTICS ============
-const TELEGRAM_APP_URL = 'https://t.me/TowerGameeee_bot/app'; // замени на реальную ссылку на Mini App
+const TELEGRAM_APP_URL = 'https://t.me/YOUR_BOT_USERNAME/app'; // замени на реальную ссылку на Mini App
 const tg = window.Telegram?.WebApp;
 
 if (tg) {
@@ -44,6 +44,21 @@ function syncTelegramSafeAreas() {
     if (safeTop > 0) root.style.setProperty('--safe-top', `${safeTop}px`);
     root.style.setProperty('--tg-content-top', `${contentTop}px`);
     if (safeBottom > 0) root.style.setProperty('--safe-bottom', `${safeBottom}px`);
+}
+
+function syncTelegramTheme(hexColor) {
+    if (!tg || !hexColor) return;
+    try {
+        if (typeof tg.setHeaderColor === 'function' && tg.isVersionAtLeast('6.1')) {
+            tg.setHeaderColor(hexColor);
+        }
+        if (typeof tg.setBackgroundColor === 'function' && tg.isVersionAtLeast('6.1')) {
+            tg.setBackgroundColor(hexColor);
+        }
+        if (typeof tg.setBottomBarColor === 'function' && tg.isVersionAtLeast('7.10')) {
+            tg.setBottomBarColor(hexColor);
+        }
+    } catch (e) {}
 }
 
 syncTelegramSafeAreas();
@@ -365,6 +380,7 @@ const IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) |
 let lowPerfMode = false;
 let lastPerfCheck = 0;
 let lowFpsStrikes = 0;
+let rafId = null;
 
 const BLOCK_SIZE = GAME_CONFIG.BLOCK_SIZE;
 const BLOCK_HEIGHT = GAME_CONFIG.BLOCK_HEIGHT;
@@ -397,6 +413,7 @@ let currentBaseSize = BLOCK_SIZE;
 let perfectWaves = [];
 let perfectWaveTexture = null;
 let currentBiomeIndex = 0, targetBgColor = new THREE.Color(BACKGROUNDS.default.colors[0]), shakeIntensity = 0;
+let cameraZoomPulse = 0;
 let timeLeft = GAME_CONFIG.DEFAULT_TIME_LIMIT, timeAttackTimer = null;
 let showTutorialHint = !safeGetItem(STORAGE_KEYS.TUTORIAL_SHOWN, false);
 let clock = new THREE.Clock();
@@ -418,6 +435,8 @@ let resumeDelayTimer = null;
 let overviewActive = false;
 let overviewTargetZoom = 1;
 let overviewTargetY = 0;
+let overviewSkipped = false;
+let overviewSkipReadyAt = 0;
 
 const DEFAULT_SETTINGS = { ...DEFAULTS.SETTINGS };
 const DEFAULT_STATS = { ...DEFAULTS.STATS, missionsCompleted: 0, eventsRewards: 0 };
@@ -716,8 +735,11 @@ function updateComboIndicator() {
     }
 }
 
-// ============ МОНЕТЫ ============
+// ============ МОНЕТЫ (с пулом DOM-элементов) ============
 let coinPopupAnchor = { x: window.innerWidth / 2, y: 120 };
+const COIN_POPUP_POOL = [];
+const COIN_POPUP_POOL_SIZE = 6;
+let coinPopupPoolIdx = 0;
 
 function cacheCoinPopupAnchor() {
     if (!gameCoinsEl) return;
@@ -754,13 +776,30 @@ function addCoins(amount) {
 }
 
 function showCoinPopup(amount) {
-    const popup = document.createElement('div');
-    popup.className = 'coin-popup';
+    if (COIN_POPUP_POOL.length === 0) {
+        for (let i = 0; i < COIN_POPUP_POOL_SIZE; i++) {
+            const el = document.createElement('div');
+            el.className = 'coin-popup';
+            el.style.display = 'none';
+            el.addEventListener('animationend', () => {
+                el.style.display = 'none';
+            });
+            document.body.appendChild(el);
+            COIN_POPUP_POOL.push(el);
+        }
+    }
+
+    const popup = COIN_POPUP_POOL[coinPopupPoolIdx];
+    coinPopupPoolIdx = (coinPopupPoolIdx + 1) % COIN_POPUP_POOL_SIZE;
+
     popup.textContent = `+${amount} 🪙`;
     popup.style.left = coinPopupAnchor.x + 'px';
     popup.style.top = coinPopupAnchor.y + 'px';
-    document.body.appendChild(popup);
-    setTimeout(() => popup.remove(), 900);
+    popup.style.animation = 'none';
+    popup.style.display = 'block';
+    requestAnimationFrame(() => {
+        popup.style.animation = '';
+    });
 }
 
 // ============ XP & LEVEL ============
@@ -1386,6 +1425,7 @@ function applyBackground() {
     targetBgColor.set(bg.colors[0]);
     if (scene) scene.background.set(bg.colors[0]);
     document.body.style.background = bg.colors[0];
+    syncTelegramTheme(gameState === GAME_STATES.MENU ? '#FFE5EC' : bg.colors[0]);
     if (bg.stars && !bgStarsGroup) createStars();
     else if (!bg.stars && bgStarsGroup) {
         scene.remove(bgStarsGroup);
@@ -2033,359 +2073,310 @@ function startMinigamesCooldownTimer() {
         }
     }, 1000);
 }
+// ============ ОБЛАЧНЫЕ СОХРАНЕНИЯ ============
+function updateCloudStatusUI() {
+    const statusEl = $('cloud-sync-status');
+    const syncBtn = $('cloud-sync-btn');
+    if (statusEl) statusEl.textContent = getCloudStatus();
+    if (syncBtn) {
+        const available = isCloudStorageAvailable();
+        syncBtn.dataset.on = String(available);
+        syncBtn.disabled = !available;
+        syncBtn.textContent = available ? 'СИНХР.' : 'НЕТ';
+    }
+}
+
+function reloadFromLocalAfterCloudMerge() {
+    coins = safeParseInt(safeGetItem(STORAGE_KEYS.COINS, '0'), 0);
+    highScore = safeParseInt(safeGetItem(STORAGE_KEYS.HIGH_SCORE, '0'), 0);
+    level = safeParseInt(safeGetItem(STORAGE_KEYS.LEVEL, '1'), 1);
+    xpTotal = safeParseInt(safeGetItem(STORAGE_KEYS.XP, '0'), 0);
+    streak = safeParseInt(safeGetItem(STORAGE_KEYS.STREAK, '0'), 0);
+    lastVisitDate = safeGetItem(STORAGE_KEYS.LAST_VISIT, '') || '';
+    currentSkin = (typeof safeGetItem(STORAGE_KEYS.SKIN, 'default') === 'string') ? safeGetItem(STORAGE_KEYS.SKIN, 'default') : 'default';
+    unlockedSkins = validateArray(safeGetItem(STORAGE_KEYS.SKINS, ['default']), ['default']);
+    currentPalette = (typeof safeGetItem(STORAGE_KEYS.PALETTE, 'standard') === 'string') ? safeGetItem(STORAGE_KEYS.PALETTE, 'standard') : 'standard';
+    unlockedPalettes = validateArray(safeGetItem(STORAGE_KEYS.PALETTES, ['standard']), ['standard']);
+    currentBackground = (typeof safeGetItem(STORAGE_KEYS.BACKGROUND, 'default') === 'string') ? safeGetItem(STORAGE_KEYS.BACKGROUND, 'default') : 'default';
+    unlockedBackgrounds = validateArray(safeGetItem(STORAGE_KEYS.BACKGROUNDS, ['default']), ['default']);
+    unlockedFeatures = validateObject(safeGetItem(STORAGE_KEYS.FEATURES, {}), {});
+    settings = { ...DEFAULT_SETTINGS, ...validateObject(safeGetItem(STORAGE_KEYS.SETTINGS, null), DEFAULT_SETTINGS) };
+    stats = { ...DEFAULT_STATS, ...validateObject(safeGetItem(STORAGE_KEYS.STATS, null), DEFAULT_STATS) };
+    unlockedAchievements = validateArray(safeGetItem(STORAGE_KEYS.ACHIEVEMENTS, []), []);
+    leaderboard = validateArray(safeGetItem(STORAGE_KEYS.LEADERBOARD, []), []);
+    ownedPowerups = { ...DEFAULTS.POWERUPS, ...validateObject(safeGetItem(STORAGE_KEYS.POWERUPS, null), {}) };
+    chests = validateArray(safeGetItem(STORAGE_KEYS.CHESTS, []), []);
+    totalScoreAllTime = safeParseInt(safeGetItem(STORAGE_KEYS.TOTAL_SCORE, '0'), 0);
+    recentScores = validateArray(safeGetItem(STORAGE_KEYS.RECENT_SCORES, []), []);
+
+    if (highScoreEl) highScoreEl.innerText = `РЕКОРД: ${highScore}`;
+    updateCoinUI();
+    updateLevelUI();
+    updateStreakUI();
+    updateChestUI();
+    updateSettingsUI();
+    applyBackground();
+    applySkinEffect();
+    if (currentMenuTab === 'shop') renderShop();
+    if (currentMenuTab === 'tasks') renderMissions();
+}
 
 // ============ THREE.JS & ОПТИМИЗАЦИЯ ============
+const SHARED_UNIT_BOX_GEO = new THREE.BoxGeometry(1, 1, 1);
+const BLOCK_MATERIAL_CACHE = new Map();
+const DEBRIS_MATERIAL_CACHE = new Map();
+
 const PARTICLE_GEOS = {
-    trail: new THREE.SphereGeometry(0.1, 5, 5),
-    perfect: new THREE.SphereGeometry(0.15, 6, 6),
-    bomb: new THREE.SphereGeometry(0.2, 6, 6),
-    fire: new THREE.SphereGeometry(0.25, 6, 6),
-    milestoneConfetti: new THREE.BoxGeometry(0.2, 0.2, 0.02),
-    winConfetti: new THREE.BoxGeometry(0.25, 0.25, 0.03),
+    confetti: new THREE.BoxGeometry(0.18, 0.18, 0.05),
+    bomb: new THREE.BoxGeometry(0.24, 0.24, 0.24),
+    wave: new THREE.PlaneGeometry(1, 1),
 };
 const PARTICLE_MAT_CACHE = new Map();
 
 function getParticleMaterial(color) {
     if (!PARTICLE_MAT_CACHE.has(color)) {
-        PARTICLE_MAT_CACHE.set(color, new THREE.MeshBasicMaterial({ color }));
+        PARTICLE_MAT_CACHE.set(color, new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide }));
     }
     return PARTICLE_MAT_CACHE.get(color);
 }
 
-function getTargetPixelRatio() {
-    if (lowPerfMode) return 1;
-    return Math.min(window.devicePixelRatio || 1, IS_MOBILE ? 1.25 : 1.75);
-}
-
-function checkAdaptivePerformance() {
-    if (gameState !== GAME_STATES.PLAYING) return;
-    const now = performance.now();
-    if (now - lastPerfCheck < 3000) return;
-    lastPerfCheck = now;
-
-    const fps = getCurrentFps();
-    if (fps < 42) {
-        lowFpsStrikes++;
-        if (lowFpsStrikes >= 2 && !lowPerfMode) {
-            lowPerfMode = true;
-            if (renderer) renderer.setPixelRatio(1);
-            if (scene) removeEnvironmentParticles(scene);
-        }
-    } else {
-        lowFpsStrikes = 0;
+function getDebrisMaterial(color) {
+    if (!DEBRIS_MATERIAL_CACHE.has(color)) {
+        DEBRIS_MATERIAL_CACHE.set(color, new THREE.MeshLambertMaterial({ color }));
     }
+    return DEBRIS_MATERIAL_CACHE.get(color);
 }
 
-function initThree() {
-    scene = new THREE.Scene();
-    const bg = BACKGROUNDS[currentBackground] || BACKGROUNDS.default;
-    scene.background = new THREE.Color(bg.colors[0]);
-    scene.fog = new THREE.FogExp2(bg.colors[0], 0.02);
-    const aspect = window.innerWidth / window.innerHeight;
-    const d = getAdaptiveD(aspect);
-    camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 1000);
-    camera.position.set(20, 25, 20);
-    camera.lookAt(0, 0, 0);
-
-    renderer = new THREE.WebGLRenderer({
-        antialias: !IS_MOBILE,
-        powerPreference: 'high-performance',
-        stencil: false,
+function clearBlockMaterialCache() {
+    BLOCK_MATERIAL_CACHE.forEach(mats => {
+        if (Array.isArray(mats)) mats.forEach(m => m.dispose());
     });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(getTargetPixelRatio());
-    renderer.shadowMap.enabled = false;
-    document.body.appendChild(renderer.domElement);
-
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x333333, 0.75));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.05);
-    dirLight.position.set(10, 20, 10);
-    scene.add(dirLight);
-
-    window.addEventListener('resize', onResize);
-    window.addEventListener('orientationchange', () => setTimeout(onResize, 100));
-    glowTexture = createGlowTexture();
-    initPerfectWaves();
-    applyBackground();
-    cacheCoinPopupAnchor();
-}
-
-function disposeMesh(mesh) {
-    if (!mesh) return;
-    if (mesh.userData?.glowSprite) {
-        const sprite = mesh.userData.glowSprite;
-        if (sprite.material) sprite.material.dispose();
-        mesh.remove(sprite);
-        mesh.userData.glowSprite = null;
-    }
-    if (!mesh.userData?.sharedGeometry && mesh.geometry) {
-        mesh.geometry.dispose();
-    }
-    if (!mesh.userData?.sharedMaterial && mesh.material) {
-        if (Array.isArray(mesh.material)) {
-            mesh.material.forEach(m => m.dispose());
-        } else {
-            mesh.material.dispose();
-        }
-    }
+    BLOCK_MATERIAL_CACHE.clear();
 }
 
 function createGlowTexture() {
-    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 64;
     const ctx = c.getContext('2d');
-    const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-    grad.addColorStop(0, 'rgba(255,255,255,1)');
-    grad.addColorStop(0.3, 'rgba(255,255,255,0.6)');
-    grad.addColorStop(0.7, 'rgba(255,255,255,0.15)');
-    grad.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, 128, 128);
-    return new THREE.CanvasTexture(c);
+    const g = ctx.createRadialGradient(32, 32, 2, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,255,255,1)');
+    g.addColorStop(0.35, 'rgba(255,255,255,0.45)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 64, 64);
+    const tex = new THREE.CanvasTexture(c);
+    tex.needsUpdate = true;
+    return tex;
 }
 
 function createPerfectWaveTexture() {
     const c = document.createElement('canvas');
-    c.width = c.height = 128;
+    c.width = 128; c.height = 128;
     const ctx = c.getContext('2d');
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 10;
-    ctx.shadowColor = '#FFFFFF';
-    ctx.shadowBlur = 10;
-    ctx.strokeRect(10, 10, 108, 108);
+    ctx.strokeRect(8, 8, 112, 112);
     const tex = new THREE.CanvasTexture(c);
-    tex.minFilter = THREE.LinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    tex.generateMipmaps = false;
+    tex.needsUpdate = true;
     return tex;
 }
 
-function initPerfectWaves() {
-    perfectWaveTexture = createPerfectWaveTexture();
-    const geo = new THREE.PlaneGeometry(1, 1);
-    perfectWaves = [];
-    for (let i = 0; i < 4; i++) {
-        const mat = new THREE.MeshBasicMaterial({
-            map: perfectWaveTexture,
-            color: 0xFFFFFF,
-            transparent: true,
-            opacity: 0,
-            depthWrite: false,
-            blending: THREE.AdditiveBlending,
-            side: THREE.DoubleSide,
-        });
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.rotation.x = -Math.PI / 2;
-        mesh.visible = false;
-        mesh.userData = { active: false, age: 0, duration: 0.32, baseW: 1, baseD: 1 };
-        scene.add(mesh);
-        perfectWaves.push(mesh);
-    }
-}
-
-function spawnPerfectWave(pos, w, d, colorHex = 0xFFFFFF) {
-    if (!perfectWaves.length) return;
-    let wave = perfectWaves.find(item => !item.userData.active);
-    if (!wave) wave = perfectWaves[0];
-    wave.position.set(pos.x, pos.y + BLOCK_HEIGHT / 2 + 0.04, pos.z);
-    wave.scale.set(w, d, 1);
-    wave.material.color.setHex(colorHex);
-    wave.material.opacity = 0.9;
-    wave.visible = true;
-    wave.userData.active = true;
-    wave.userData.age = 0;
-    wave.userData.duration = 0.32;
-    wave.userData.baseW = w;
-    wave.userData.baseD = d;
-}
-
-function updatePerfectWaves(rawDelta) {
-    for (let i = 0; i < perfectWaves.length; i++) {
-        const wave = perfectWaves[i];
-        if (!wave.userData.active) continue;
-        wave.userData.age += rawDelta;
-        const t = wave.userData.age / wave.userData.duration;
-        if (t >= 1) {
-            wave.userData.active = false;
-            wave.visible = false;
-            continue;
-        }
-        const ease = 1 - Math.pow(1 - t, 3);
-        const scale = 1 + ease * 0.45;
-        wave.scale.set(wave.userData.baseW * scale, wave.userData.baseD * scale, 1);
-        wave.material.opacity = 0.9 * (1 - t);
-    }
-}
-
-function shadeColor(hex, percent) {
-    hex = hex.replace('#', '');
-    const num = parseInt(hex, 16);
-    let r = (num >> 16) + percent;
-    let g = ((num >> 8) & 0x00FF) + percent;
-    let b = (num & 0x0000FF) + percent;
-    r = Math.max(0, Math.min(255, r));
-    g = Math.max(0, Math.min(255, g));
-    b = Math.max(0, Math.min(255, b));
-    return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
-}
-
-function createTexture(color, type = 'normal') {
-    return getCachedTexture(color, type, () => {
+function createTexture(colorHex, type = BLOCK_TYPES.NORMAL) {
+    const key = `${currentSkin}_${type}_${colorHex}_${unlockedFeatures.redTheme ? 1 : 0}`;
+    return getCachedTexture(key, () => {
         const c = document.createElement('canvas');
-        c.width = c.height = 256;
+        c.width = 128; c.height = 128;
         const ctx = c.getContext('2d');
-        ctx.scale(0.5, 0.5);
 
-        if (type === BLOCK_TYPES.GOLDEN) {
-            const grad = ctx.createLinearGradient(0, 0, 512, 512);
-            grad.addColorStop(0, '#FFE082'); grad.addColorStop(0.3, '#FFD700');
-            grad.addColorStop(0.6, '#FFC107'); grad.addColorStop(1, '#FF8F00');
-            ctx.fillStyle = grad; ctx.fillRect(0, 0, 512, 512);
-            ctx.fillStyle = 'rgba(255,255,255,0.7)';
-            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(180, 0); ctx.lineTo(0, 180); ctx.closePath(); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(512, 512); ctx.lineTo(332, 512); ctx.lineTo(512, 332); ctx.closePath(); ctx.fill();
-            ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 3;
-            for (let i = -512; i < 1024; i += 40) {
-                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + 512, 512); ctx.stroke();
+        ctx.fillStyle = colorHex;
+        ctx.fillRect(0, 0, 128, 128);
+
+        if (type === BLOCK_TYPES.BOMB) {
+            ctx.fillStyle = '#141414';
+            ctx.fillRect(0, 0, 128, 128);
+            ctx.strokeStyle = '#FF1744';
+            ctx.lineWidth = 14;
+            for (let i = -128; i < 256; i += 32) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i + 128, 128);
+                ctx.stroke();
             }
-            ctx.strokeStyle = '#8D6E00'; ctx.lineWidth = 20; ctx.strokeRect(10, 10, 492, 492);
-        } else if (type === BLOCK_TYPES.BOMB) {
-            ctx.fillStyle = '#1A0000'; ctx.fillRect(0, 0, 512, 512);
-            ctx.save(); ctx.beginPath(); ctx.rect(0, 0, 512, 512); ctx.clip();
-            ctx.strokeStyle = '#FF1744'; ctx.lineWidth = 80;
-            for (let i = -512; i < 1024; i += 140) {
-                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + 512, 512); ctx.stroke();
-            }
-            ctx.restore();
-            ctx.strokeStyle = '#FF5252'; ctx.lineWidth = 25; ctx.strokeRect(12.5, 12.5, 487, 487);
-            ctx.fillStyle = 'rgba(255,82,82,0.2)'; ctx.fillRect(0, 0, 512, 512);
-            ctx.fillStyle = 'rgba(255,255,255,0.15)';
-            ctx.beginPath(); ctx.arc(256, 256, 100, 0, Math.PI * 2); ctx.fill();
+            ctx.font = 'bold 48px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('💣', 64, 66);
+        } else if (type === BLOCK_TYPES.GOLDEN) {
+            const grad = ctx.createLinearGradient(0, 0, 128, 128);
+            grad.addColorStop(0, '#FFF59D');
+            grad.addColorStop(0.5, '#FFD54F');
+            grad.addColorStop(1, '#FFB300');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 128, 128);
+            ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(8, 8, 112, 112);
         } else if (type === BLOCK_TYPES.ICE) {
-            ctx.fillStyle = '#00E5FF'; ctx.fillRect(0, 0, 512, 512);
-            ctx.fillStyle = 'rgba(255,255,255,0.35)';
-            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(220, 0); ctx.lineTo(0, 220); ctx.closePath(); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(512, 512); ctx.lineTo(292, 512); ctx.lineTo(512, 292); ctx.closePath(); ctx.fill();
-            ctx.fillStyle = 'rgba(255,255,255,0.15)';
-            ctx.beginPath(); ctx.moveTo(512, 0); ctx.lineTo(380, 0); ctx.lineTo(512, 150); ctx.closePath(); ctx.fill();
-            ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 6;
-            for (let i = 0; i < 12; i++) {
-                ctx.beginPath(); ctx.moveTo(Math.random() * 512, Math.random() * 512); ctx.lineTo(Math.random() * 512, Math.random() * 512); ctx.stroke();
-            }
-            ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 25; ctx.strokeRect(12.5, 12.5, 487, 487);
+            const grad = ctx.createLinearGradient(0, 0, 128, 128);
+            grad.addColorStop(0, '#E0F7FA');
+            grad.addColorStop(1, '#00B8D4');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 128, 128);
+            ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(16, 30); ctx.lineTo(112, 18);
+            ctx.moveTo(20, 92); ctx.lineTo(104, 72);
+            ctx.stroke();
         } else if (type === BLOCK_TYPES.CRUMBLE) {
-            ctx.fillStyle = '#5D4037'; ctx.fillRect(0, 0, 512, 512);
-            ctx.strokeStyle = '#1A0A00'; ctx.lineWidth = 20;
-            for (let i = 0; i < 20; i++) {
-                ctx.beginPath(); ctx.moveTo(Math.random() * 512, Math.random() * 512); ctx.lineTo(Math.random() * 512, Math.random() * 512); ctx.stroke();
-            }
-            ctx.fillStyle = 'rgba(0,0,0,0.2)';
-            for (let y = 0; y < 512; y += 60) {
-                for (let x = 0; x < 512; x += 100) {
-                    const offset = (y / 60) % 2 ? 50 : 0;
-                    ctx.fillRect(x + offset, y, 95, 55);
-                }
-            }
-            ctx.strokeStyle = '#8D6E63'; ctx.lineWidth = 25; ctx.strokeRect(12.5, 12.5, 487, 487);
+            ctx.fillStyle = '#5D4037';
+            ctx.fillRect(0, 0, 128, 128);
+            ctx.strokeStyle = '#3E2723';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(12, 18); ctx.lineTo(54, 62); ctx.lineTo(36, 110);
+            ctx.moveTo(54, 62); ctx.lineTo(108, 44);
+            ctx.moveTo(76, 60); ctx.lineTo(116, 108);
+            ctx.stroke();
         } else if (type === BLOCK_TYPES.RAINBOW) {
-            const grad = ctx.createLinearGradient(0, 0, 512, 512);
-            grad.addColorStop(0, '#FF1744'); grad.addColorStop(0.16, '#FF9100');
-            grad.addColorStop(0.33, '#FFEA00'); grad.addColorStop(0.5, '#00E676');
-            grad.addColorStop(0.66, '#00B0FF'); grad.addColorStop(0.83, '#651FFF');
+            const grad = ctx.createLinearGradient(0, 0, 128, 0);
+            grad.addColorStop(0, '#FF1744');
+            grad.addColorStop(0.25, '#FFEA00');
+            grad.addColorStop(0.5, '#00E676');
+            grad.addColorStop(0.75, '#00B0FF');
             grad.addColorStop(1, '#D500F9');
-            ctx.fillStyle = grad; ctx.fillRect(0, 0, 512, 512);
-            ctx.fillStyle = 'rgba(255,255,255,0.5)';
-            ctx.beginPath(); ctx.arc(140, 140, 70, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(360, 370, 50, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 25; ctx.strokeRect(12.5, 12.5, 487, 487);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 128, 128);
         } else if (type === BLOCK_TYPES.DRAGON) {
-            const grad = ctx.createLinearGradient(0, 0, 0, 512);
-            grad.addColorStop(0, '#FFEB3B'); grad.addColorStop(0.3, '#FF9800');
-            grad.addColorStop(0.7, '#E65100'); grad.addColorStop(1, '#B71C1C');
-            ctx.fillStyle = grad; ctx.fillRect(0, 0, 512, 512);
-            ctx.fillStyle = 'rgba(255,235,59,0.4)';
-            for (let i = 0; i < 12; i++) {
-                ctx.beginPath(); ctx.arc(Math.random() * 512, Math.random() * 512, 30 + Math.random() * 70, 0, Math.PI * 2); ctx.fill();
-            }
-            ctx.strokeStyle = '#FFEB3B'; ctx.lineWidth = 25; ctx.strokeRect(12.5, 12.5, 487, 487);
+            const grad = ctx.createLinearGradient(0, 0, 128, 128);
+            grad.addColorStop(0, '#B71C1C');
+            grad.addColorStop(0.5, '#FF6D00');
+            grad.addColorStop(1, '#FFD600');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 128, 128);
+            ctx.font = 'bold 46px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🐉', 64, 66);
         } else if (type === BLOCK_TYPES.DIAMOND) {
-            const grad = ctx.createRadialGradient(256, 256, 50, 256, 256, 400);
-            grad.addColorStop(0, '#E0F7FA'); grad.addColorStop(0.5, '#00BCD4'); grad.addColorStop(1, '#006064');
-            ctx.fillStyle = grad; ctx.fillRect(0, 0, 512, 512);
-            ctx.fillStyle = 'rgba(255,255,255,0.5)';
-            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(230, 0); ctx.lineTo(0, 230); ctx.closePath(); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(512, 0); ctx.lineTo(282, 0); ctx.lineTo(512, 230); ctx.closePath(); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(0, 512); ctx.lineTo(0, 282); ctx.lineTo(230, 512); ctx.closePath(); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(512, 512); ctx.lineTo(282, 512); ctx.lineTo(512, 282); ctx.closePath(); ctx.fill();
-            ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 25; ctx.strokeRect(12.5, 12.5, 487, 487);
+            const grad = ctx.createLinearGradient(0, 0, 128, 128);
+            grad.addColorStop(0, '#E0F7FA');
+            grad.addColorStop(0.5, '#00E5FF');
+            grad.addColorStop(1, '#006064');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 128, 128);
+            ctx.font = 'bold 46px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('💎', 64, 66);
         } else {
-            const grad = ctx.createLinearGradient(0, 0, 0, 512);
-            grad.addColorStop(0, color); grad.addColorStop(1, shadeColor(color, -20));
-            ctx.fillStyle = grad; ctx.fillRect(0, 0, 512, 512);
-            ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
-            for (let i = 0; i < 512; i += 24) {
-                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + 512, 512); ctx.stroke();
-            }
-            ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 15; ctx.strokeRect(7.5, 7.5, 497, 497);
-            const topGrad = ctx.createLinearGradient(0, 0, 0, 100);
-            topGrad.addColorStop(0, 'rgba(255,255,255,0.25)');
-            topGrad.addColorStop(1, 'rgba(255,255,255,0)');
-            ctx.fillStyle = topGrad; ctx.fillRect(10, 10, 492, 100);
+            // Subtle highlight & bevel
+            const grad = ctx.createLinearGradient(0, 0, 0, 128);
+            grad.addColorStop(0, 'rgba(255,255,255,0.22)');
+            grad.addColorStop(0.5, 'rgba(255,255,255,0)');
+            grad.addColorStop(1, 'rgba(0,0,0,0.18)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 128, 128);
+            ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(2, 2, 124, 124);
         }
 
         const tex = new THREE.CanvasTexture(c);
-        tex.colorSpace = THREE.SRGBColorSpace;
-        tex.anisotropy = Math.min(2, renderer.capabilities.getMaxAnisotropy());
-        tex.minFilter = THREE.LinearFilter;
-        tex.magFilter = THREE.LinearFilter;
-        tex.generateMipmaps = false;
+        tex.needsUpdate = true;
         return tex;
     });
 }
 
+function initThree() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(getBgColors()[0]);
+
+    const aspect = window.innerWidth / window.innerHeight;
+    const d = getAdaptiveD(aspect);
+    camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 1000);
+    camera.position.set(12, 12, 12);
+    camera.lookAt(0, 0, 0);
+
+    renderer = new THREE.WebGLRenderer({ antialias: !IS_MOBILE, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, IS_MOBILE ? 1.5 : 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.72);
+    scene.add(ambient);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.65);
+    dirLight.position.set(10, 22, 14);
+    scene.add(dirLight);
+
+    glowTexture = createGlowTexture();
+    perfectWaveTexture = createPerfectWaveTexture();
+
+    applyBackground();
+    applySkinEffect();
+}
+
 function createBlockMesh(w, h, d, color, type = BLOCK_TYPES.NORMAL) {
-    const geo = new THREE.BoxGeometry(w, h, d);
-    const tex = createTexture(color, type);
-    let sideOpts = { map: tex };
-    let topOpts = { color: color };
-    if (type === BLOCK_TYPES.GOLDEN) {
-        sideOpts.emissive = new THREE.Color(0xFFB300); sideOpts.emissiveIntensity = 0.5;
-        topOpts.emissive = new THREE.Color(0xFFB300); topOpts.emissiveIntensity = 0.5;
-        topOpts.color = new THREE.Color(0xFFC107);
-    } else if (type === BLOCK_TYPES.BOMB) {
-        sideOpts.emissive = new THREE.Color(0xFF0000); sideOpts.emissiveIntensity = 0.6;
-        topOpts.emissive = new THREE.Color(0xFF0000); topOpts.emissiveIntensity = 0.6;
-        topOpts.color = new THREE.Color(0x330000);
-    } else if (type === BLOCK_TYPES.ICE) {
-        sideOpts.transparent = true; sideOpts.opacity = 0.9;
-        topOpts.transparent = true; topOpts.opacity = 0.9;
-        sideOpts.emissive = new THREE.Color(0x00E5FF); sideOpts.emissiveIntensity = 0.5;
-        topOpts.emissive = new THREE.Color(0x00E5FF); topOpts.emissiveIntensity = 0.5;
-    } else if (type === BLOCK_TYPES.CRUMBLE) {
-        sideOpts.emissive = new THREE.Color(0x5D4037); sideOpts.emissiveIntensity = 0.3;
-        topOpts.emissive = new THREE.Color(0x5D4037); topOpts.emissiveIntensity = 0.3;
-    } else if (type === BLOCK_TYPES.RAINBOW) {
-        sideOpts.emissive = new THREE.Color(0xFF00FF); sideOpts.emissiveIntensity = 0.5;
-        topOpts.emissive = new THREE.Color(0xFF00FF); topOpts.emissiveIntensity = 0.5;
-        topOpts.color = new THREE.Color(0xFF00FF);
-    } else if (type === BLOCK_TYPES.DRAGON) {
-        sideOpts.emissive = new THREE.Color(0xFF6600); sideOpts.emissiveIntensity = 0.7;
-        topOpts.emissive = new THREE.Color(0xFF6600); topOpts.emissiveIntensity = 0.7;
-        topOpts.color = new THREE.Color(0xB71C1C);
-    } else if (type === BLOCK_TYPES.DIAMOND) {
-        sideOpts.emissive = new THREE.Color(0x00BCD4); sideOpts.emissiveIntensity = 0.6;
-        topOpts.emissive = new THREE.Color(0x00BCD4); topOpts.emissiveIntensity = 0.6;
-        topOpts.color = new THREE.Color(0x00BCD4);
-    } else {
-        sideOpts.emissive = new THREE.Color(color); sideOpts.emissiveIntensity = 0.12;
-        topOpts.emissive = new THREE.Color(color); topOpts.emissiveIntensity = 0.12;
-        if (unlockedFeatures.redTheme) {
-            sideOpts.emissive = new THREE.Color(0xFF4444);
-            sideOpts.emissiveIntensity = 0.2;
+    const cacheKey = `${currentSkin}_${type}_${color}_${unlockedFeatures.redTheme ? 1 : 0}`;
+    let materials = BLOCK_MATERIAL_CACHE.get(cacheKey);
+
+    if (!materials) {
+        const tex = createTexture(color, type);
+        let sideOpts = { map: tex };
+        let topOpts = { color: color };
+        if (type === BLOCK_TYPES.GOLDEN) {
+            sideOpts.emissive = new THREE.Color(0xFFB300); sideOpts.emissiveIntensity = 0.5;
+            topOpts.emissive = new THREE.Color(0xFFB300); topOpts.emissiveIntensity = 0.5;
+            topOpts.color = new THREE.Color(0xFFC107);
+        } else if (type === BLOCK_TYPES.BOMB) {
+            sideOpts.emissive = new THREE.Color(0xFF0000); sideOpts.emissiveIntensity = 0.6;
+            topOpts.emissive = new THREE.Color(0xFF0000); topOpts.emissiveIntensity = 0.6;
+            topOpts.color = new THREE.Color(0x330000);
+        } else if (type === BLOCK_TYPES.ICE) {
+            sideOpts.transparent = true; sideOpts.opacity = 0.9;
+            topOpts.transparent = true; topOpts.opacity = 0.9;
+            sideOpts.emissive = new THREE.Color(0x00E5FF); sideOpts.emissiveIntensity = 0.5;
+            topOpts.emissive = new THREE.Color(0x00E5FF); topOpts.emissiveIntensity = 0.5;
+        } else if (type === BLOCK_TYPES.CRUMBLE) {
+            sideOpts.emissive = new THREE.Color(0x5D4037); sideOpts.emissiveIntensity = 0.3;
+            topOpts.emissive = new THREE.Color(0x5D4037); topOpts.emissiveIntensity = 0.3;
+        } else if (type === BLOCK_TYPES.RAINBOW) {
+            sideOpts.emissive = new THREE.Color(0xFF00FF); sideOpts.emissiveIntensity = 0.5;
+            topOpts.emissive = new THREE.Color(0xFF00FF); topOpts.emissiveIntensity = 0.5;
+            topOpts.color = new THREE.Color(0xFF00FF);
+        } else if (type === BLOCK_TYPES.DRAGON) {
+            sideOpts.emissive = new THREE.Color(0xFF6600); sideOpts.emissiveIntensity = 0.7;
+            topOpts.emissive = new THREE.Color(0xFF6600); topOpts.emissiveIntensity = 0.7;
+            topOpts.color = new THREE.Color(0xB71C1C);
+        } else if (type === BLOCK_TYPES.DIAMOND) {
+            sideOpts.emissive = new THREE.Color(0x00BCD4); sideOpts.emissiveIntensity = 0.6;
+            topOpts.emissive = new THREE.Color(0x00BCD4); topOpts.emissiveIntensity = 0.6;
+            topOpts.color = new THREE.Color(0x00BCD4);
+        } else {
+            sideOpts.emissive = new THREE.Color(color); sideOpts.emissiveIntensity = 0.12;
+            topOpts.emissive = new THREE.Color(color); topOpts.emissiveIntensity = 0.12;
+            if (unlockedFeatures.redTheme) {
+                sideOpts.emissive = new THREE.Color(0xFF4444);
+                sideOpts.emissiveIntensity = 0.2;
+            }
         }
+        const side = new THREE.MeshLambertMaterial(sideOpts);
+        const top = new THREE.MeshLambertMaterial(topOpts);
+        materials = [side, side, top, top, side, side];
+        BLOCK_MATERIAL_CACHE.set(cacheKey, materials);
     }
-    const side = new THREE.MeshLambertMaterial(sideOpts);
-    const top = new THREE.MeshLambertMaterial(topOpts);
-    const mesh = new THREE.Mesh(geo, [side, side, top, top, side, side]);
-    mesh.userData.blockType = type;
+
+    const mesh = new THREE.Mesh(SHARED_UNIT_BOX_GEO, materials);
+    mesh.scale.set(w, h, d);
+    mesh.userData = {
+        w,
+        d,
+        blockType: type,
+        sharedGeometry: true,
+        sharedMaterial: true,
+    };
+
     if (type !== BLOCK_TYPES.NORMAL && type !== BLOCK_TYPES.CRUMBLE) {
         const glowColor = BLOCK_GLOW_COLORS[type];
         const isSecret = type === BLOCK_TYPES.RAINBOW || type === BLOCK_TYPES.DRAGON || type === BLOCK_TYPES.DIAMOND;
@@ -2396,7 +2387,7 @@ function createBlockMesh(w, h, d, color, type = BLOCK_TYPES.NORMAL) {
             blending: THREE.AdditiveBlending, depthWrite: false, opacity
         });
         const sprite = new THREE.Sprite(spriteMat);
-        sprite.scale.set(scale, scale, 1);
+        sprite.scale.set(scale / Math.max(0.2, w), scale / Math.max(0.2, h), 1);
         sprite.renderOrder = -1;
         mesh.add(sprite);
         mesh.userData.glowSprite = sprite;
@@ -2404,80 +2395,170 @@ function createBlockMesh(w, h, d, color, type = BLOCK_TYPES.NORMAL) {
     return mesh;
 }
 
-function rollBlockType() {
-    if (dailyModifiers.onlyType) return dailyModifiers.onlyType;
-    if (dailyModifiers.noSpecials) return BLOCK_TYPES.NORMAL;
-    if (score < 5) return BLOCK_TYPES.NORMAL;
-    const r = Math.random();
-
-    if (activePowerups.luck) {
-        if (r < GAME_CONFIG.PROB_RAINBOW * 2) return BLOCK_TYPES.RAINBOW;
-        if (r < GAME_CONFIG.PROB_DRAGON * 2) return BLOCK_TYPES.DRAGON;
-        if (r < GAME_CONFIG.PROB_DIAMOND * 2) return BLOCK_TYPES.DIAMOND;
-        if (r < GAME_CONFIG.PROB_GOLDEN * 2) {
-            return dailyModifiers.noGolden ? BLOCK_TYPES.NORMAL : BLOCK_TYPES.GOLDEN;
-        }
-        if (r < GAME_CONFIG.PROB_GOLDEN * 2 + 0.06) return BLOCK_TYPES.ICE;
-        return BLOCK_TYPES.NORMAL;
+function getBlockVisuals(type, stepIndex = blocks.length) {
+    if (type !== BLOCK_TYPES.NORMAL && BLOCK_COLORS[type]) {
+        return { color: BLOCK_COLORS[type] };
     }
-
-    if (r < GAME_CONFIG.PROB_RAINBOW) return BLOCK_TYPES.RAINBOW;
-    if (r < GAME_CONFIG.PROB_DRAGON) return BLOCK_TYPES.DRAGON;
-    if (r < GAME_CONFIG.PROB_DIAMOND) return BLOCK_TYPES.DIAMOND;
-    if (r < GAME_CONFIG.PROB_GOLDEN) {
-        if (dailyModifiers.noGolden) return BLOCK_TYPES.NORMAL;
-        return BLOCK_TYPES.GOLDEN;
-    }
-    if (r < GAME_CONFIG.PROB_BOMB) {
-        if (dailyModifiers.noBombs) return BLOCK_TYPES.NORMAL;
-        return BLOCK_TYPES.BOMB;
-    }
-    if (r < GAME_CONFIG.PROB_ICE) return BLOCK_TYPES.ICE;
-    if (r < GAME_CONFIG.PROB_CRUMBLE && score > 15) return BLOCK_TYPES.CRUMBLE;
-    return BLOCK_TYPES.NORMAL;
-}
-
-function getBlockVisuals(type) {
-    if (BLOCK_COLORS[type]) return { color: BLOCK_COLORS[type] };
-    const skin = SKINS[currentSkin];
-    const colors = (!dailyModifiers.forcePalette && currentSkin !== 'default' && skin?.colors?.length)
-        ? skin.colors
-        : getPaletteColors();
-    const rndColor = colors[Math.floor(Math.random() * colors.length)];
-    return { color: rndColor };
+    const palette = currentPalette !== 'standard'
+        ? getPaletteColors()
+        : (SKINS[currentSkin]?.colors || BASE_COLORS);
+    return { color: palette[stepIndex % palette.length] };
 }
 
 function generateNextBlockData() {
-    const type = rollBlockType();
-    const { color } = getBlockVisuals(type);
+    let type = BLOCK_TYPES.NORMAL;
+    if (dailyModifiers.onlyType) {
+        type = dailyModifiers.onlyType;
+    } else if (dailyModifiers.allIce) {
+        type = BLOCK_TYPES.ICE;
+    } else if (!dailyModifiers.noSpecials && blocks.length >= 2) {
+        const luckMult = activePowerups.luck ? 2 : 1;
+        const r = Math.random();
+        const secretChance = 0.015 * luckMult;
+        const goldChance = dailyModifiers.noGolden ? 0 : 0.09 * luckMult;
+        const iceChance = 0.08;
+        const bombChance = (dailyModifiers.noBombs || activePowerups.luck) ? 0 : 0.07;
+        const crumbleChance = (score >= 15 && !activePowerups.luck && !dailyModifiers.noBombs) ? 0.06 : 0;
+
+        if (r < secretChance) {
+            const secrets = [BLOCK_TYPES.RAINBOW, BLOCK_TYPES.DRAGON, BLOCK_TYPES.DIAMOND];
+            type = secrets[Math.floor(Math.random() * secrets.length)];
+        } else if (r < secretChance + goldChance) {
+            type = BLOCK_TYPES.GOLDEN;
+        } else if (r < secretChance + goldChance + iceChance) {
+            type = BLOCK_TYPES.ICE;
+        } else if (r < secretChance + goldChance + iceChance + bombChance) {
+            type = BLOCK_TYPES.BOMB;
+        } else if (r < secretChance + goldChance + iceChance + bombChance + crumbleChance) {
+            type = BLOCK_TYPES.CRUMBLE;
+        }
+    }
+
+    const { color } = getBlockVisuals(type, blocks.length + 1);
     return { type, color };
 }
 
 function updateNextBlockPreview(type, color) {
-    const el = document.getElementById('next-block-preview');
-    if (!el) return;
-    let bg;
-    switch (type) {
-        case BLOCK_TYPES.GOLDEN: bg = 'linear-gradient(135deg, #FFE082, #FFC107)'; break;
-        case BLOCK_TYPES.BOMB: bg = 'repeating-linear-gradient(45deg, #111, #111 8px, #FF1744 8px, #FF1744 16px)'; break;
-        case BLOCK_TYPES.ICE: bg = 'linear-gradient(135deg, #00E5FF, #4FC3F7)'; break;
-        case BLOCK_TYPES.CRUMBLE: bg = 'repeating-linear-gradient(45deg, #5D4037, #5D4037 6px, #3E2723 6px, #3E2723 12px)'; break;
-        case BLOCK_TYPES.RAINBOW: bg = 'linear-gradient(90deg, #FF1744, #FF9100, #FFEA00, #00E676, #00B0FF, #651FFF, #D500F9)'; break;
-        case BLOCK_TYPES.DRAGON: bg = 'linear-gradient(135deg, #FFEB3B, #B71C1C)'; break;
-        case BLOCK_TYPES.DIAMOND: bg = 'linear-gradient(135deg, #E0F7FA, #006064)'; break;
-        default: bg = color;
-    }
-    el.style.background = bg;
+    const preview = $('next-block-preview');
+    if (!preview) return;
+    preview.style.background = color;
+    preview.textContent = '';
+    preview.style.display = 'flex';
+    preview.style.alignItems = 'center';
+    preview.style.justifyContent = 'center';
+    preview.style.fontSize = '18px';
+    if (type === BLOCK_TYPES.BOMB) preview.textContent = '💣';
+    else if (type === BLOCK_TYPES.GOLDEN) preview.textContent = '👑';
+    else if (type === BLOCK_TYPES.ICE) preview.textContent = '❄️';
+    else if (type === BLOCK_TYPES.CRUMBLE) preview.textContent = '🧱';
+    else if (type === BLOCK_TYPES.RAINBOW) preview.textContent = '🌈';
+    else if (type === BLOCK_TYPES.DRAGON) preview.textContent = '🐉';
+    else if (type === BLOCK_TYPES.DIAMOND) preview.textContent = '💎';
 }
 
+function disposeMesh(mesh) {
+    if (!mesh) return;
+    if (mesh.userData?.glowSprite) {
+        if (mesh.userData.glowSprite.material) mesh.userData.glowSprite.material.dispose();
+        mesh.remove(mesh.userData.glowSprite);
+    }
+    if (!mesh.userData?.sharedGeometry && mesh.geometry) mesh.geometry.dispose();
+    if (!mesh.userData?.sharedMaterial && mesh.material) {
+        if (Array.isArray(mesh.material)) mesh.material.forEach(m => m.dispose());
+        else mesh.material.dispose();
+    }
+    scene.remove(mesh);
+}
+
+function clearScene() {
+    blocks.forEach(disposeMesh);
+    debris.forEach(disposeMesh);
+    confetti.forEach(disposeMesh);
+    perfectWaves.forEach(w => {
+        if (w.material) w.material.dispose();
+        scene.remove(w);
+    });
+    if (currentBlock) { disposeMesh(currentBlock); currentBlock = null; }
+    blocks = [];
+    debris = [];
+    confetti = [];
+    perfectWaves = [];
+}
+
+// ============ ШТОРМ (ВЕТЕР) ============
+function updateWindUI() {
+    if (!windIndicatorEl || !windFillEl) return;
+    if (gameMode !== GAME_MODES.STORM || gameState !== GAME_STATES.PLAYING) {
+        windIndicatorEl.style.display = 'none';
+        return;
+    }
+    windIndicatorEl.style.display = 'flex';
+    const pct = Math.min(100, Math.round((Math.abs(windStrength) / 0.085) * 100));
+    windFillEl.style.width = `${pct}%`;
+    const leftEl = $('wind-left');
+    const rightEl = $('wind-right');
+    if (leftEl) leftEl.classList.toggle('active', windDirection < 0 && windStrength > 0.005);
+    if (rightEl) rightEl.classList.toggle('active', windDirection > 0 && windStrength > 0.005);
+    windIndicatorEl.classList.toggle('wind-strong', pct >= 65);
+}
+
+function startWindSystem() {
+    stopWindSystem();
+    if (gameMode !== GAME_MODES.STORM) return;
+    windStrength = 0.02;
+    windDirection = Math.random() < 0.5 ? -1 : 1;
+    updateWindUI();
+    windGustTimer = setInterval(() => {
+        if (gameState !== GAME_STATES.PLAYING) return;
+        windDirection = Math.random() < 0.5 ? -1 : 1;
+        const heightScale = Math.min(1, score / 45);
+        windStrength = 0.02 + Math.random() * (0.04 + heightScale * 0.025);
+        if (windStrength > 0.055) playSound('gust');
+        updateWindUI();
+    }, 4500);
+}
+
+function stopWindSystem() {
+    if (windGustTimer) { clearInterval(windGustTimer); windGustTimer = null; }
+    windStrength = 0;
+    if (windGain && audioCtx) {
+        try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.15); } catch (e) {}
+    }
+    updateWindUI();
+}
+
+// ============ ПОПАПЫ ============
+const popupTimers = new WeakMap();
+function showPopup(el, text, duration = 900) {
+    if (!el) return;
+    el.innerText = text;
+    el.classList.remove('show-popup');
+    const prev = popupTimers.get(el);
+    if (prev) clearTimeout(prev);
+    requestAnimationFrame(() => {
+        el.classList.add('show-popup');
+        const id = setTimeout(() => {
+            el.classList.remove('show-popup');
+            popupTimers.delete(el);
+        }, duration);
+        popupTimers.set(el, id);
+    });
+}
+
+function triggerScreenFlash(duration = 120) {
+    if (!screenFlash) return;
+    screenFlash.style.opacity = '0.55';
+    setTimeout(() => { screenFlash.style.opacity = '0'; }, duration);
+}
+
+// ============ СТАРТ ИГРЫ ============
 function createBaseBlock() {
-    nextBlockData = generateNextBlockData();
-    let baseSize = dailyModifiers.baseSize || BLOCK_SIZE;
-    if (activePowerups.foundation) baseSize *= 1.35;
-    currentBaseSize = baseSize;
-    const base = createBlockMesh(baseSize, BLOCK_HEIGHT, baseSize, '#FF1744', BLOCK_TYPES.NORMAL);
-    base.position.set(0, 0, 0); scene.add(base); blocks.push(base);
-    spawnNewBlock();
+    const { color } = getBlockVisuals(BLOCK_TYPES.NORMAL, 0);
+    const base = createBlockMesh(currentBaseSize, BLOCK_HEIGHT, currentBaseSize, color, BLOCK_TYPES.NORMAL);
+    base.position.set(0, 0, 0);
+    Object.assign(base.userData, { w: currentBaseSize, d: currentBaseSize, color, blockType: BLOCK_TYPES.NORMAL });
+    scene.add(base);
+    blocks.push(base);
 }
 
 function spawnNewBlock(overrideSize = null) {
@@ -2487,69 +2568,264 @@ function spawnNewBlock(overrideSize = null) {
     nextBlockData = generateNextBlockData();
     updateNextBlockPreview(nextBlockData.type, nextBlockData.color);
 
-    // После «Второго шанса» гарантированно даём обычный блок (без бомбы/хрупкого)
+    // После «Второго шанса» гарантированно даём безопасный блок
     if (overrideSize && (type === BLOCK_TYPES.BOMB || type === BLOCK_TYPES.CRUMBLE)) {
         type = BLOCK_TYPES.NORMAL;
         color = getBlockVisuals(BLOCK_TYPES.NORMAL).color;
     }
 
-    const w = overrideSize ? overrideSize.w : top.geometry.parameters.width;
-    const d = overrideSize ? overrideSize.d : top.geometry.parameters.depth;
+    const w = overrideSize ? overrideSize.w : top.userData.w;
+    const d = overrideSize ? overrideSize.d : top.userData.d;
+    const mirrorSign = gameMode === GAME_MODES.MIRROR ? -1 : 1;
     let sx = top.position.x, sz = top.position.z;
-    if (movingAxis === 'x') sx = direction === 1 ? -GAME_CONFIG.MOVE_RANGE : GAME_CONFIG.MOVE_RANGE;
-    else sz = direction === 1 ? -GAME_CONFIG.MOVE_RANGE : GAME_CONFIG.MOVE_RANGE;
+    if (movingAxis === 'x') sx = (direction === 1 ? -GAME_CONFIG.MOVE_RANGE : GAME_CONFIG.MOVE_RANGE) * mirrorSign;
+    else sz = (direction === 1 ? -GAME_CONFIG.MOVE_RANGE : GAME_CONFIG.MOVE_RANGE) * mirrorSign;
+
     currentBlock = createBlockMesh(w, BLOCK_HEIGHT, d, color, type);
     currentBlock.position.set(sx, top.position.y + BLOCK_HEIGHT, sz);
-    currentBlock.userData = { w, d, moving: true, color, blockType: type, squash: 1 };
+    Object.assign(currentBlock.userData, { w, d, moving: true, color, blockType: type, squash: 1 });
     scene.add(currentBlock);
 }
 
-// ============ СРАВНЕНИЕ ВЫСОТЫ БАШНИ ============
-const HEIGHT_BENCHMARKS = [
-    { min: 150, text: 'выше пирамиды Хеопса 🏜️' },
-    { min: 100, text: 'выше Биг-Бена 🕰️' },
-    { min: 70,  text: 'выше 20-этажного небоскрёба 🏙️' },
-    { min: 50,  text: 'выше 16-этажного дома 🏢' },
-    { min: 35,  text: 'выше Статуи Свободы 🗽' },
-    { min: 25,  text: 'выше 9-этажного дома 🏬' },
-    { min: 15,  text: 'выше пятиэтажки 🏠' },
-    { min: 8,   text: 'выше двухэтажного автобуса 🚌' },
-    { min: 4,   text: 'выше жирафа 🦒' },
-    { min: 1,   text: 'отличное начало для башни 🧱' },
-];
+function startGame(mode = gameMode) {
+    clearGameOverTimers();
+    if (secondChanceRaf) { cancelAnimationFrame(secondChanceRaf); secondChanceRaf = null; }
+    if (resumeDelayTimer) { clearTimeout(resumeDelayTimer); resumeDelayTimer = null; }
+    if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
 
-function getHeightComparison(meters) {
-    const found = HEIGHT_BENCHMARKS.find(b => meters >= b.min);
-    return found ? found.text : 'фундамент заложен 🧱';
+    gameMode = mode;
+    gameState = GAME_STATES.PLAYING;
+    document.body.classList.add('in-game');
+    document.body.classList.remove('fury-active');
+
+    startScreen.style.display = 'none';
+    hideModal(gameOverEl, { restoreMenu: false });
+    hideModal(pauseScreen, { restoreMenu: false });
+    hideModal(secondChanceOverlay, { restoreMenu: false });
+    hideTowerHeightBanner();
+
+    if (dailyModifiers.forceBg && !savedBgBeforeDaily) {
+        savedBgBeforeDaily = currentBackground;
+        currentBackground = dailyModifiers.forceBg;
+        applyBackground();
+    }
+    if (dailyModifiers.forcePalette && !savedPaletteBeforeDaily) {
+        savedPaletteBeforeDaily = currentPalette;
+        currentPalette = dailyModifiers.forcePalette;
+    }
+
+    clearScene();
+    score = 0; combo = 0; sessionCoins = 0; sessionXP = 0;
+    direction = 1; isFury = false; furyBlocksLeft = 0;
+    secondChanceUsed = false; secondChanceActive = false;
+    overviewActive = false; overviewSkipped = false;
+    shakeIntensity = 0; cameraZoomPulse = 0;
+    currentBiomeIndex = 0;
+
+    let baseSize = dailyModifiers.baseSize || BLOCK_SIZE;
+    if (activePowerups.foundation) baseSize *= 1.35;
+    currentBaseSize = baseSize;
+
+    const skinMods = getSkinModifiers();
+    const smartMult = getSmartDifficultyMultiplier();
+    let startSpeed = dailyModifiers.startSpeed || BASE_SPEED;
+    if (gameMode === GAME_MODES.STORM) startSpeed *= 1.1;
+    if (gameMode === GAME_MODES.MIRROR) startSpeed *= 1.15;
+    if (dailyModifiers.speedMult) startSpeed *= dailyModifiers.speedMult;
+    if (skinMods.speedMult) startSpeed *= skinMods.speedMult;
+    currentSpeed = startSpeed * smartMult;
+    dynamicMaxSpeed = gameMode === GAME_MODES.ENDLESS
+        ? GAME_CONFIG.ENDLESS_MAX_SPEED
+        : GAME_CONFIG.DEFAULT_MAX_SPEED;
+
+    const bgColors = getBgColors();
+    targetBgColor.set(bgColors[0]);
+    if (scene) scene.background.set(bgColors[0]);
+    document.body.style.background = bgColors[0];
+    syncTelegramTheme(bgColors[0]);
+
+    camera.zoom = 1;
+    camera.position.set(12, 12, 12);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+
+    if (scoreEl) scoreEl.innerText = '0';
+    if (highScoreEl) highScoreEl.innerText = `РЕКОРД: ${highScore}`;
+    if (modeLabel) {
+        modeLabel.innerText = dailyChallengeActive
+            ? `📅 ${getDailyChallenge().name.toUpperCase()}`
+            : (GAME_MODE_NAMES[gameMode] || 'КЛАССИКА');
+    }
+    updateCoinUI();
+    updateComboIndicator();
+    updateActivePowerupsUI();
+    cacheCoinPopupAnchor();
+
+    const timeLimit = dailyModifiers.timeLimit || (gameMode === GAME_MODES.TIME ? GAME_CONFIG.DEFAULT_TIME_LIMIT : 0);
+    if (timeLimit > 0 && timerEl) {
+        timeLeft = timeLimit;
+        timerEl.style.display = 'block';
+        timerEl.innerText = `⏱ ${timeLeft}`;
+        timeAttackTimer = setInterval(() => {
+            if (gameState !== GAME_STATES.PLAYING) return;
+            timeLeft--;
+            timerEl.innerText = `⏱ ${timeLeft}`;
+            if (timeLeft <= 0) {
+                clearInterval(timeAttackTimer);
+                timeAttackTimer = null;
+                triggerGameOver();
+            }
+        }, 1000);
+    } else if (timerEl) {
+        timerEl.style.display = 'none';
+    }
+
+    if (tutorialEl) {
+        tutorialEl.style.display = showTutorialHint ? 'block' : 'none';
+    }
+
+    initAudio();
+    startMusic();
+    startWindSystem();
+    startRenderLoop();
+
+    createBaseBlock();
+    nextBlockData = generateNextBlockData();
+    spawnNewBlock();
+
+    stats.totalGames = (stats.totalGames || 0) + 1;
+    saveStats();
+    updateQuest('games', 1);
+    if (gameMode === GAME_MODES.TIME) updateQuest('time_game', 1);
+    updateMissionProgress(missions, 'games', 1);
+    updateTelegramBackButton();
 }
 
-function showTowerHeightBanner(meters) {
-    if (!towerHeightBanner) return;
-    const compare = getHeightComparison(meters);
-    if (towerHeightMetersEl) towerHeightMetersEl.textContent = `🏗️ Высота: ${meters} м`;
-    if (towerHeightCompareEl) towerHeightCompareEl.textContent = `— ${compare}`;
-    towerHeightBanner.classList.add('show');
+// ============ ЭФФЕКТЫ И ЧАСТИЦЫ ============
+function createDebris(diff, origSize, newSize, axis, top) {
+    const dSize = origSize - newSize;
+    if (dSize <= 0.01) return;
+    const dw = axis === 'x' ? dSize : currentBlock.userData.w;
+    const dd = axis === 'z' ? dSize : currentBlock.userData.d;
+    const mesh = new THREE.Mesh(SHARED_UNIT_BOX_GEO, getDebrisMaterial(currentBlock.userData.color));
+    mesh.scale.set(dw, BLOCK_HEIGHT, dd);
+    let px = currentBlock.position.x, pz = currentBlock.position.z;
+    if (axis === 'x') px = diff > 0 ? top.position.x + (origSize / 2) + (dSize / 2) : top.position.x - (origSize / 2) - (dSize / 2);
+    else pz = diff > 0 ? top.position.z + (origSize / 2) + (dSize / 2) : top.position.z - (origSize / 2) - (dSize / 2);
+    mesh.position.set(axis === 'x' ? px : currentBlock.position.x, currentBlock.position.y, axis === 'z' ? pz : currentBlock.position.z);
+    mesh.userData = {
+        sharedGeometry: true,
+        sharedMaterial: true,
+        vel: new THREE.Vector3(axis === 'x' ? (diff > 0 ? 0.15 : -0.15) : 0, 0.1, axis === 'z' ? (diff > 0 ? 0.15 : -0.15) : 0),
+        rotSpeed: new THREE.Vector3((Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3)
+    };
+    scene.add(mesh);
+    debris.push(mesh);
+    enforceParticleLimits(debris, lowPerfMode ? 12 : PARTICLE_LIMITS.MAX_DEBRIS, disposeMesh);
 }
 
-function hideTowerHeightBanner() {
-    if (towerHeightBanner) towerHeightBanner.classList.remove('show');
+function spawnPerfectWave(x, y, z, w, d, color = '#FFFFFF') {
+    if (lowPerfMode) return;
+    const mat = new THREE.MeshBasicMaterial({
+        map: perfectWaveTexture,
+        color: unlockedFeatures.goldenTrail ? '#FFD700' : color,
+        transparent: true,
+        opacity: 0.9,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+    });
+    const wave = new THREE.Mesh(PARTICLE_GEOS.wave, mat);
+    wave.rotation.x = -Math.PI / 2;
+    wave.position.set(x, y - BLOCK_HEIGHT * 0.45, z);
+    wave.scale.set(w * 1.05, d * 1.05, 1);
+    wave.userData = { age: 0, baseW: w, baseD: d };
+    scene.add(wave);
+    perfectWaves.push(wave);
+}
+
+function spawnConfetti(count = 16, originPos = null) {
+    if (lowPerfMode) count = Math.min(count, 6);
+    const top = originPos || (blocks.length > 0 ? blocks[blocks.length - 1].position : new THREE.Vector3(0, 0, 0));
+    for (let i = 0; i < count; i++) {
+        const color = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+        const m = new THREE.Mesh(PARTICLE_GEOS.confetti, getParticleMaterial(color));
+        m.position.set(
+            top.x + (Math.random() - 0.5) * 2.5,
+            top.y + 0.5 + Math.random() * 1.5,
+            top.z + (Math.random() - 0.5) * 2.5
+        );
+        m.userData = {
+            sharedGeometry: true,
+            sharedMaterial: true,
+            vel: new THREE.Vector3((Math.random() - 0.5) * 0.28, 0.18 + Math.random() * 0.25, (Math.random() - 0.5) * 0.28),
+            rot: new THREE.Vector3(Math.random() * 0.3, Math.random() * 0.3, Math.random() * 0.3),
+            life: 1.0,
+        };
+        scene.add(m);
+        confetti.push(m);
+    }
+    enforceParticleLimits(confetti, lowPerfMode ? 24 : PARTICLE_LIMITS.MAX_CONFETTI, disposeMesh);
+}
+
+function spawnBombParticles() {
+    const pos = currentBlock ? currentBlock.position : new THREE.Vector3(0, 0, 0);
+    const colors = ['#FF1744', '#FF9100', '#FFD600', '#212121'];
+    const count = lowPerfMode ? 8 : 18;
+    for (let i = 0; i < count; i++) {
+        const m = new THREE.Mesh(PARTICLE_GEOS.bomb, getParticleMaterial(colors[i % colors.length]));
+        m.position.copy(pos);
+        m.userData = {
+            sharedGeometry: true,
+            sharedMaterial: true,
+            vel: new THREE.Vector3((Math.random() - 0.5) * 0.4, 0.15 + Math.random() * 0.35, (Math.random() - 0.5) * 0.4),
+            rot: new THREE.Vector3(Math.random() * 0.4, Math.random() * 0.4, Math.random() * 0.4),
+            life: 0.9,
+        };
+        scene.add(m);
+        confetti.push(m);
+    }
+    shakeIntensity = Math.max(shakeIntensity, 0.65);
+    triggerScreenFlash(160);
+    enforceParticleLimits(confetti, lowPerfMode ? 24 : PARTICLE_LIMITS.MAX_CONFETTI, disposeMesh);
+}
+
+function activateFury() {
+    if (dailyModifiers.noFury) return;
+    isFury = true;
+    furyBlocksLeft = GAME_CONFIG.FURY_BLOCKS;
+    document.body.classList.add('fury-active');
+    showPopup(comboText, '🔥 РЕЖИМ ЯРОСТИ! x2 ОЧКИ', 1400);
+    playSound('fury');
+    triggerHaptic('heavy');
+    stats.totalFury = (stats.totalFury || 0) + 1;
+    saveStats();
+    updateQuest('fury', 1);
+    updateMissionProgress(missions, 'fury', 1);
+    checkAchievements();
+}
+
+function triggerMilestone(points) {
+    const bgColors = getBgColors();
+    const newBiome = Math.floor(points / 10) % bgColors.length;
+    if (newBiome !== currentBiomeIndex) {
+        currentBiomeIndex = newBiome;
+        targetBgColor.set(bgColors[newBiome]);
+        document.body.style.background = bgColors[newBiome];
+        syncTelegramTheme(bgColors[newBiome]);
+    }
+    showPopup(milestoneText, `🎉 ${points} ЭТАЖЕЙ!`, 1200);
+    playSound('milestone');
+    spawnConfetti(22);
+    triggerHaptic('success');
 }
 
 // ============ ВТОРОЙ ШАНС ============
 function canOfferSecondChance() {
     if (secondChanceUsed || secondChanceActive) return false;
-    if (gameMode === GAME_MODES.PRECISION || dailyModifiers.noCut) return false;
+    if (dailyChallengeActive || gameMode === GAME_MODES.PRECISION) return false;
     if (coins < GAME_CONFIG.SECOND_CHANCE_COST) return false;
     const nearRecord = highScore > 0 && score >= Math.max(5, highScore - GAME_CONFIG.SECOND_CHANCE_NEAR_RECORD);
     return score >= GAME_CONFIG.SECOND_CHANCE_MIN_SCORE || nearRecord;
-}
-
-function stopSecondChanceLoop() {
-    if (secondChanceRaf) {
-        cancelAnimationFrame(secondChanceRaf);
-        secondChanceRaf = null;
-    }
-    secondChanceActive = false;
 }
 
 function offerSecondChance(reason = 'miss') {
@@ -2594,877 +2870,156 @@ function acceptSecondChance() {
         declineSecondChance();
         return;
     }
-    stopSecondChanceLoop();
+    secondChanceActive = false;
     secondChanceUsed = true;
+    if (secondChanceRaf) { cancelAnimationFrame(secondChanceRaf); secondChanceRaf = null; }
 
     coins -= GAME_CONFIG.SECOND_CHANCE_COST;
     safeSetItem(STORAGE_KEYS.COINS, coins);
     scheduleCloudSave();
     updateCoinUI();
 
+    if (currentBlock) { disposeMesh(currentBlock); currentBlock = null; }
     hideModal(secondChanceOverlay, { restoreMenu: false });
-
-    if (currentBlock) {
-        scene.remove(currentBlock);
-        disposeMesh(currentBlock);
-        currentBlock = null;
-    }
 
     gameState = GAME_STATES.PLAYING;
     document.body.classList.add('in-game');
+    combo = 0;
+    updateComboIndicator();
+
     // Новый блок на 50–60% меньше начального (40–50% от currentBaseSize)
     const rescueScale = 0.4 + Math.random() * 0.1;
     const rescueSize = currentBaseSize * rescueScale;
     spawnNewBlock({ w: rescueSize, d: rescueSize });
-    if (currentBlock) currentBlock.userData.moving = false;
+
+    if (gameMode === GAME_MODES.TIME && timeLeft > 0) {
+        timeAttackTimer = setInterval(() => {
+            if (gameState !== GAME_STATES.PLAYING) return;
+            timeLeft--;
+            if (timerEl) timerEl.innerText = `⏱ ${timeLeft}`;
+            if (timeLeft <= 0) {
+                clearInterval(timeAttackTimer);
+                timeAttackTimer = null;
+                triggerGameOver();
+            }
+        }, 1000);
+    }
 
     playSound('quest');
     triggerHaptic('success');
     showPopup(bonusText, '💖 ВТОРОЙ ШАНС!', 1200);
-
-    if (resumeDelayTimer) clearTimeout(resumeDelayTimer);
-    resumeDelayTimer = setTimeout(() => {
-        resumeDelayTimer = null;
-        if (gameState === GAME_STATES.PLAYING && currentBlock) {
-            currentBlock.userData.moving = true;
-        }
-    }, 500);
-
-    const timeLimit = dailyModifiers.timeLimit || (gameMode === GAME_MODES.TIME ? GAME_CONFIG.DEFAULT_TIME_LIMIT : 0);
-    if (timeLimit > 0 && timeLeft > 0) {
-        timeAttackTimer = setInterval(() => {
-            if (gameState !== GAME_STATES.PLAYING) return;
-            timeLeft--; updateTimerDisplay();
-            if (timeLeft <= 0) { clearInterval(timeAttackTimer); timeAttackTimer = null; triggerGameOver(); }
-        }, 1000);
-    }
     updateTelegramBackButton();
 }
 
 function declineSecondChance() {
     if (!secondChanceActive) return;
-    stopSecondChanceLoop();
+    secondChanceActive = false;
+    secondChanceUsed = true;
+    if (secondChanceRaf) { cancelAnimationFrame(secondChanceRaf); secondChanceRaf = null; }
     hideModal(secondChanceOverlay, { restoreMenu: false });
-    if (currentBlock) currentBlock.userData.falling = true;
     triggerGameOver();
 }
 
-// ============ GAME LOGIC ============
-function showPopup(el, text, duration = 800) {
-    if (!el) return;
-    if (text) { el.innerText = text; announceToScreenReader(text); }
-    el.classList.add('show-popup');
-    setTimeout(() => el.classList.remove('show-popup'), duration);
+// ============ ОБЗОР БАШНИ И GAME OVER ============
+const HEIGHT_LANDMARKS = [
+    { m: 3, text: 'Выше жирафа 🦒' },
+    { m: 10, text: 'Как 3-этажный дом 🏠' },
+    { m: 20, text: 'Как Статуя Свободы (постамент) 🗽' },
+    { m: 35, text: 'Выше 10-этажки 🏢' },
+    { m: 55, text: 'Как Пизанская башня 🗼' },
+    { m: 90, text: 'Как Биг-Бен 🕰️' },
+    { m: 140, text: 'Как Пирамида Хеопса 🔺' },
+    { m: 220, text: 'Почти Эйфелева башня 🗼' },
+    { m: 320, text: 'Выше Эйфелевой башни ✨' },
+];
+
+function getHeightComparison(meters) {
+    let label = 'Хорошее начало! 🌱';
+    for (const lm of HEIGHT_LANDMARKS) {
+        if (meters >= lm.m) label = lm.text;
+    }
+    return label;
 }
 
-function flashScreen() {
-    if (screenFlash) { screenFlash.style.opacity = '0.6'; setTimeout(() => screenFlash.style.opacity = '0', 100); }
+function showTowerHeightBanner(meters) {
+    if (!towerHeightBanner) return;
+    if (towerHeightMetersEl) towerHeightMetersEl.textContent = `🏗️ Высота: ${meters} м`;
+    if (towerHeightCompareEl) towerHeightCompareEl.textContent = getHeightComparison(meters);
+    towerHeightBanner.classList.add('show');
 }
 
-function dropBlock() {
-    if (gameState !== GAME_STATES.PLAYING || !currentBlock?.userData.moving) return;
-    if (showTutorialHint) {
-        if (tutorialEl) tutorialEl.style.display = 'none';
-        safeSetItem(STORAGE_KEYS.TUTORIAL_SHOWN, true);
-        showTutorialHint = false;
-    }
-    currentBlock.userData.moving = false;
-    const top = blocks[blocks.length - 1];
-    const bType = currentBlock.userData.blockType;
-    let diffX = 0, diffZ = 0;
-    const sizeX = currentBlock.geometry.parameters.width;
-    const sizeZ = currentBlock.geometry.parameters.depth;
-    if (movingAxis === 'x') diffX = currentBlock.position.x - top.position.x;
-    else diffZ = currentBlock.position.z - top.position.z;
-    let absDiffX = Math.abs(diffX), absDiffZ = Math.abs(diffZ);
-    let maxDiff = Math.max(absDiffX, absDiffZ);
-
-    if (bType === BLOCK_TYPES.DIAMOND) {
-        currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
-        diffX = 0; diffZ = 0; absDiffX = 0; absDiffZ = 0; maxDiff = 0;
-    }
-
-    const minOverlap = 0.08;
-    const missX = movingAxis === 'x' && absDiffX >= sizeX - minOverlap;
-    const missZ = movingAxis === 'z' && absDiffZ >= sizeZ - minOverlap;
-    const precisionMode = (gameMode === GAME_MODES.PRECISION);
-    const noCutActive = dailyModifiers.noCut || precisionMode;
-    let perfectThreshold = dailyModifiers.tightThreshold || GAME_CONFIG.PERFECT_THRESHOLD;
-    if (activePowerups.focus) {
-        const activeSize = movingAxis === 'x' ? sizeX : sizeZ;
-        perfectThreshold = Math.min(Math.max(perfectThreshold * 3.5, 0.55), activeSize * 0.45);
-    }
-
-    if (missX || missZ) {
-        currentBlock.userData.falling = true;
-        if (canOfferSecondChance()) { offerSecondChance('miss'); return; }
-        triggerGameOver(); return;
-    }
-    if (noCutActive && maxDiff >= perfectThreshold) {
-        currentBlock.userData.falling = true; triggerGameOver(); return;
-    }
-    if (bType === BLOCK_TYPES.CRUMBLE && maxDiff < perfectThreshold) {
-        currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
-        playSound('bomb');
-        spawnBombParticles();
-        if (canOfferSecondChance()) { offerSecondChance('crumble'); return; }
-        triggerGameOver(); return;
-    }
-
-    if (maxDiff < perfectThreshold) {
-        currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
-        if (!dailyModifiers.noCombo) combo++;
-        stats.totalPerfect++;
-        if (combo > stats.maxCombo) stats.maxCombo = combo;
-
-        let widthRecovered = false;
-        if (combo > 0 && combo % GAME_CONFIG.WIDTH_RECOVERY_COMBO === 0) {
-            const newW = Math.min(currentBaseSize, sizeX + GAME_CONFIG.WIDTH_RECOVERY_AMOUNT);
-            const newD = Math.min(currentBaseSize, sizeZ + GAME_CONFIG.WIDTH_RECOVERY_AMOUNT);
-            if (newW > sizeX + 0.001 || newD > sizeZ + 0.001) {
-                widthRecovered = true;
-                const prevColor = currentBlock.userData.color;
-                const prevY = currentBlock.position.y;
-                scene.remove(currentBlock);
-                disposeMesh(currentBlock);
-                const grown = createBlockMesh(newW, BLOCK_HEIGHT, newD, prevColor, bType);
-                grown.position.set(top.position.x, prevY, top.position.z);
-                grown.userData = { w: newW, d: newD, color: prevColor, blockType: bType, squash: 1 };
-                currentBlock = grown;
-                showPopup(bonusText, '✨ +ШИРИНА!', 1100);
-            }
-        }
-
-        const waveColor = widthRecovered
-            ? 0x06D6A0
-            : (isFury || combo >= 3 ? 0xFFD700 : 0xFFFFFF);
-        spawnPerfectWave(
-            currentBlock.position,
-            currentBlock.geometry.parameters.width,
-            currentBlock.geometry.parameters.depth,
-            waveColor
-        );
-
-        let points = 1;
-        let isSecret = false;
-        if (bType === BLOCK_TYPES.GOLDEN) { points = GAME_CONFIG.POINTS_GOLDEN; updateQuest('golden', 1); stats.totalGolden++; }
-        else if (bType === BLOCK_TYPES.BOMB) { points = GAME_CONFIG.POINTS_BOMB; updateQuest('bomb', 1); stats.totalBomb++; }
-        else if (bType === BLOCK_TYPES.ICE) { points = GAME_CONFIG.POINTS_ICE; updateQuest('ice', 1); stats.totalIce++; }
-        else if (bType === BLOCK_TYPES.RAINBOW) {
-            points = GAME_CONFIG.POINTS_RAINBOW; isSecret = true; stats.totalSecret++;
-            updateQuest('secret', 1); playSound('secret');
-            showPopup(bonusText, `🌈 РАДУГА +${GAME_CONFIG.POINTS_RAINBOW}!`, 1500);
-        } else if (bType === BLOCK_TYPES.DRAGON) {
-            points = GAME_CONFIG.POINTS_DRAGON; isSecret = true; stats.totalSecret++;
-            updateQuest('secret', 1); playSound('secret');
-            showPopup(bonusText, `🐉 ДРАКОН +${GAME_CONFIG.POINTS_DRAGON}!`, 1500);
-            spawnDragonFire(); shakeIntensity = GAME_CONFIG.SHAKE_DRAGON;
-        } else if (bType === BLOCK_TYPES.DIAMOND) {
-            points = GAME_CONFIG.POINTS_DIAMOND; isSecret = true; stats.totalSecret++;
-            updateQuest('secret', 1); playSound('secret');
-            showPopup(bonusText, `💎 АЛМАЗ +${GAME_CONFIG.POINTS_DIAMOND}!`, 1500);
-        }
-
-        if (bType === BLOCK_TYPES.BOMB) { playSound('bomb'); showPopup(bonusText, '💥 БУМ! +2', 1000); shakeIntensity = GAME_CONFIG.SHAKE_BOMB; }
-        else if (bType === BLOCK_TYPES.GOLDEN) { playSound('perfect', combo); showPopup(bonusText, '👑 ЗОЛОТО +3', 900); }
-        else if (bType === BLOCK_TYPES.ICE) { playSound('perfect', combo); showPopup(bonusText, '❄️ ЛЕД +2', 900); }
-        else if (!isSecret) { playSound('perfect', combo); showPopup(perfectText, null, 600); }
-        flashScreen();
-
-        if (gameMode === GAME_MODES.TIME) { timeLeft += GAME_CONFIG.TIME_BONUS_PERFECT; updateTimerDisplay(); }
-        if (gameMode === GAME_MODES.STORM) { windGustBoost = 0; windStrength *= 0.75; updateWindUI(); }
-
-        if (combo >= GAME_CONFIG.FURY_COMBO_REQUIRED && !isFury && !dailyModifiers.noFury) {
-            isFury = true; furyBlocksLeft = GAME_CONFIG.FURY_BLOCKS_COUNT;
-            document.body.classList.add('fury-active');
-            playSound('fury'); showPopup(milestoneText, '🔥 ЯРОСТЬ! x2', 2000);
-            updateQuest('fury', 1); stats.totalFury++;
-            updateMissionProgress(missions, 'fury', 1);
-        }
-
-        if (combo > 1 && !isFury) showPopup(comboText, `СЕРИЯ x${combo}`, 800);
-
-        const comboResult = applyComboMultiplier(points, combo);
-        points = comboResult.points;
-        const tierUpgrade = checkTierUpgrade(combo - 1, combo);
-        if (tierUpgrade) {
-            showPopup(milestoneText, `${tierUpgrade.icon} ${tierUpgrade.name}!`, 1500);
-            playSound(tierUpgrade.sound);
-            triggerHaptic('success');
-            shakeIntensity = 0.3 + tierUpgrade.tierIndex * 0.1;
-        }
-
-        if (isFury) points *= GAME_CONFIG.FURY_MULTIPLIER;
-        if (dailyModifiers.scoreMult) points = Math.round(points * dailyModifiers.scoreMult);
-        const skinMods = getSkinModifiers();
-        if (skinMods.scoreMult) points = Math.round(points * skinMods.scoreMult);
-        const prestigeBonus = getPrestigeBonus();
-        if (prestigeBonus.scoreMult > 0) points = Math.round(points * (1 + prestigeBonus.scoreMult));
-        if (prestigeBonus.allMult > 0) points = Math.round(points * (1 + prestigeBonus.allMult));
-
-        updateQuest('perfect', 1); updateQuest('combo', combo, true);
-        updateMissionProgress(missions, 'perfect', 1);
-        updateMissionProgress(missions, 'combo', combo, true);
-        if (bType === BLOCK_TYPES.GOLDEN) updateMissionProgress(missions, 'golden', 1);
-        if (bType === BLOCK_TYPES.BOMB) updateMissionProgress(missions, 'bomb', 1);
-        if (bType === BLOCK_TYPES.ICE) updateMissionProgress(missions, 'ice', 1);
-        if (isSecret) updateMissionProgress(missions, 'secret', 1);
-
-        triggerHaptic('light');
-        const oldScore = score; score += points;
-        updateMissionProgress(missions, 'score', score, true);
-        checkMilestone(oldScore, score); triggerPerfectParticles();
-
-        if (skinMods.fireChance && Math.random() < skinMods.fireChance) {
-            spawnDragonFire(); shakeIntensity = GAME_CONFIG.SHAKE_FIRE;
-            addCoins(GAME_CONFIG.COINS_FIRE_BONUS);
-            showPopup(bonusText, '🔥 ОГОНЬ!', 1200);
-        }
-        if (unlockedFeatures.goldenTrail) spawnGoldenTrail(currentBlock.position);
-
-        let coinReward = GAME_CONFIG.COINS_PERFECT;
-        if (bType === BLOCK_TYPES.GOLDEN) coinReward += GAME_CONFIG.COINS_GOLDEN_BONUS;
-        else if (bType === BLOCK_TYPES.BOMB) coinReward += GAME_CONFIG.COINS_BOMB_BONUS;
-        else if (bType === BLOCK_TYPES.ICE) coinReward += GAME_CONFIG.COINS_ICE_BONUS;
-        else if (isSecret) coinReward += GAME_CONFIG.COINS_SECRET_BONUS;
-        addCoins(coinReward);
-
-        updateComboIndicator();
-    } else {
-        combo = 0; updateQuest('cut', 1);
-        updateMissionProgress(missions, 'cuts', 1);
-        updateComboIndicator();
-        if (bType === BLOCK_TYPES.BOMB) {
-            score = Math.max(0, score - 1); playSound('bomb');
-            shakeIntensity = GAME_CONFIG.SHAKE_BOMB;
-            showPopup(bonusText, '💣 -1 ОЧКО', 900);
-            spawnBombParticles(); triggerHaptic('error');
-        } else { playSound('drop'); triggerHaptic('light'); }
-        let cutAxis = movingAxis;
-        let cutDiff = cutAxis === 'x' ? diffX : diffZ;
-        let origSize = cutAxis === 'x' ? sizeX : sizeZ;
-        let newSize = origSize - Math.abs(cutDiff);
-        if (gameMode === GAME_MODES.ENDLESS) newSize = Math.min(origSize, newSize + 0.4);
-        createDebris(cutDiff, origSize, newSize, cutAxis, top);
-        const w = cutAxis === 'x' ? newSize : currentBlock.userData.w;
-        const d = cutAxis === 'z' ? newSize : currentBlock.userData.d;
-        const prevColor = currentBlock.userData.color;
-        scene.remove(currentBlock); disposeMesh(currentBlock);
-        const nm = createBlockMesh(w, BLOCK_HEIGHT, d, prevColor, BLOCK_TYPES.NORMAL);
-        let targetX = top.position.x, targetZ = top.position.z;
-        if (cutAxis === 'x') targetX = top.position.x + (diffX > 0 ? (origSize - newSize) / 2 : -(origSize - newSize) / 2);
-        if (cutAxis === 'z') targetZ = top.position.z + (diffZ > 0 ? (origSize - newSize) / 2 : -(origSize - newSize) / 2);
-        nm.position.set(targetX, currentBlock.position.y, targetZ);
-        nm.userData = { w, d, color: prevColor, blockType: BLOCK_TYPES.NORMAL, squash: 1 };
-        currentBlock = nm;
-        if (bType !== BLOCK_TYPES.BOMB) score++;
-        addCoins(GAME_CONFIG.COINS_NORMAL);
-    }
-
-    currentBlock.userData.squash = 0;
-    if (isFury) {
-        furyBlocksLeft--;
-        if (furyBlocksLeft <= 0) { isFury = false; document.body.classList.remove('fury-active'); }
-    }
-    updateScoreUI();
-    let accelMult = dailyModifiers.accelMult || 1;
-    if (gameMode === GAME_MODES.ENDLESS) accelMult *= 2;
-    currentSpeed = Math.min(dynamicMaxSpeed, BASE_SPEED + score * GAME_CONFIG.SPEED_ACCELERATION * accelMult);
-    musicTempo = Math.min(GAME_CONFIG.MUSIC_MAX_TEMPO, GAME_CONFIG.MUSIC_BASE_TEMPO + Math.floor(score / 10) * GAME_CONFIG.MUSIC_TEMPO_INCREMENT);
-    blocks.push(currentBlock); scene.add(currentBlock); spawnNewBlock();
+function hideTowerHeightBanner() {
+    if (towerHeightBanner) towerHeightBanner.classList.remove('show');
 }
 
-function updateScoreUI() {
-    updateDOMText(scoreEl, score);
-    if (scoreEl) {
-        scoreEl.classList.add('score-pop');
-        setTimeout(() => scoreEl.classList.remove('score-pop'), 150);
-    }
-    updateQuest('stack', score, true);
-    if (score % 10 === 0 && score > 0) announceToScreenReader(`${score} этажей!`);
-}
-
-function checkMilestone(oldScore, newScore) {
-    const oldM = Math.floor(oldScore / 10);
-    const newM = Math.floor(newScore / 10);
-    if (newM > oldM) triggerMilestone(newM * 10);
-}
-
-function spawnGoldenTrail(pos) {
-    const max = lowPerfMode ? 3 : 6;
-    const count = Math.min(max, PARTICLE_LIMITS.MAX_DEBRIS - debris.length);
-    const mat = getParticleMaterial(0xFFD700);
-    for (let i = 0; i < count; i++) {
-        const p = new THREE.Mesh(PARTICLE_GEOS.trail, mat);
-        p.position.set(pos.x + (Math.random() - 0.5) * 2, pos.y + 0.5, pos.z + (Math.random() - 0.5) * 2);
-        p.userData = {
-            sharedGeometry: true, sharedMaterial: true,
-            vel: new THREE.Vector3((Math.random() - 0.5) * 0.4, Math.random() * 0.5 + 0.2, (Math.random() - 0.5) * 0.4),
-            life: 1.0
-        };
-        scene.add(p); debris.push(p);
-    }
-}
-
-function triggerPerfectParticles() {
-    const max = lowPerfMode ? 6 : 12;
-    const count = Math.min(max, PARTICLE_LIMITS.MAX_DEBRIS - debris.length);
-    const mat = getParticleMaterial(0x06D6A0);
-    for (let i = 0; i < count; i++) {
-        const p = new THREE.Mesh(PARTICLE_GEOS.perfect, mat);
-        p.position.set(currentBlock.position.x, currentBlock.position.y + 0.5, currentBlock.position.z);
-        p.userData = {
-            sharedGeometry: true, sharedMaterial: true,
-            vel: new THREE.Vector3((Math.random() - 0.5) * 0.6, Math.random() * 0.6 + 0.2, (Math.random() - 0.5) * 0.6),
-            life: 1.0
-        };
-        scene.add(p); debris.push(p);
-    }
-}
-
-function spawnBombParticles() {
-    const max = lowPerfMode ? 10 : 20;
-    const count = Math.min(max, PARTICLE_LIMITS.MAX_DEBRIS - debris.length);
-    for (let i = 0; i < count; i++) {
-        const p = new THREE.Mesh(PARTICLE_GEOS.bomb, getParticleMaterial(i % 2 ? 0xFF1744 : 0xFFC107));
-        p.position.copy(currentBlock.position);
-        p.userData = {
-            sharedGeometry: true, sharedMaterial: true,
-            vel: new THREE.Vector3((Math.random() - 0.5) * 1.2, Math.random() * 0.8 + 0.3, (Math.random() - 0.5) * 1.2),
-            life: 1.0
-        };
-        scene.add(p); debris.push(p);
-    }
-}
-
-function spawnDragonFire() {
-    const max = lowPerfMode ? 12 : 24;
-    const count = Math.min(max, PARTICLE_LIMITS.MAX_DEBRIS - debris.length);
-    const colorChoices = [0xFFEB3B, 0xFF9800, 0xE65100, 0xFF5722];
-    for (let i = 0; i < count; i++) {
-        const p = new THREE.Mesh(PARTICLE_GEOS.fire, getParticleMaterial(colorChoices[i % 4]));
-        p.position.set(
-            currentBlock.position.x + (Math.random() - 0.5) * 3,
-            currentBlock.position.y + Math.random() * 2,
-            currentBlock.position.z + (Math.random() - 0.5) * 3
-        );
-        p.userData = {
-            sharedGeometry: true, sharedMaterial: true,
-            vel: new THREE.Vector3((Math.random() - 0.5) * 0.5, Math.random() * 1.5 + 0.5, (Math.random() - 0.5) * 0.5),
-            life: 1.0
-        };
-        scene.add(p); debris.push(p);
-    }
-}
-
-function triggerMilestone(points) {
-    playSound('milestone'); triggerHaptic('success');
-    const bgColors = getBgColors();
-    const newBiome = Math.floor(points / 10) % bgColors.length;
-    currentBiomeIndex = newBiome;
-    targetBgColor.set(bgColors[newBiome]);
-    document.body.style.background = bgColors[newBiome];
-    showPopup(milestoneText, `${points} ЭТАЖЕЙ!`, 1500);
-    addCoins(GAME_CONFIG.COINS_MILESTONE);
-    const topPos = blocks[blocks.length - 1].position;
-    const maxPieces = lowPerfMode ? 18 : 35;
-    const count = Math.min(maxPieces, PARTICLE_LIMITS.MAX_CONFETTI - confetti.length);
-    for (let i = 0; i < count; i++) {
-        const piece = new THREE.Mesh(
-            PARTICLE_GEOS.milestoneConfetti,
-            getParticleMaterial(MILESTONE_COLORS[Math.floor(Math.random() * MILESTONE_COLORS.length)])
-        );
-        piece.position.set(topPos.x + (Math.random() - 0.5) * 2, topPos.y + 2, topPos.z + (Math.random() - 0.5) * 2);
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 0.3 + 0.1;
-        piece.userData = {
-            sharedGeometry: true, sharedMaterial: true,
-            vel: new THREE.Vector3(Math.cos(angle) * speed, Math.random() * 0.6 + 0.3, Math.sin(angle) * speed),
-            rotSpeed: new THREE.Vector3(Math.random() * 0.3, Math.random() * 0.3, Math.random() * 0.3)
-        };
-        scene.add(piece); confetti.push(piece);
-    }
-}
-
-function createDebris(diff, origSize, newSize, axis, top) {
-    const dSize = origSize - newSize;
-    if (dSize <= 0.01) return;
-    const geo = new THREE.BoxGeometry(axis === 'x' ? dSize : currentBlock.userData.w, BLOCK_HEIGHT, axis === 'z' ? dSize : currentBlock.userData.d);
-    const mat = new THREE.MeshLambertMaterial({ color: currentBlock.userData.color });
-    const mesh = new THREE.Mesh(geo, mat);
-    let px = currentBlock.position.x, pz = currentBlock.position.z;
-    if (axis === 'x') px = diff > 0 ? top.position.x + (origSize / 2) + (dSize / 2) : top.position.x - (origSize / 2) - (dSize / 2);
-    else pz = diff > 0 ? top.position.z + (origSize / 2) + (dSize / 2) : top.position.z - (origSize / 2) - (dSize / 2);
-    mesh.position.set(axis === 'x' ? px : currentBlock.position.x, currentBlock.position.y, axis === 'z' ? pz : currentBlock.position.z);
-    mesh.userData = {
-        vel: new THREE.Vector3(axis === 'x' ? (diff > 0 ? 0.15 : -0.15) : 0, 0.1, axis === 'z' ? (diff > 0 ? 0.15 : -0.15) : 0),
-        rotSpeed: new THREE.Vector3((Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3)
-    };
-    scene.add(mesh); debris.push(mesh);
-}
-
-// ============ АНИМАЦИИ ============
-function playLoseAnimation() {
-    const blocksCopy = [...blocks];
-    if (currentBlock && currentBlock.parent && !blocksCopy.includes(currentBlock)) {
-        blocksCopy.push(currentBlock); currentBlock = null;
-    }
-    blocks = [];
-    blocksCopy.forEach((b, i) => {
-        const id = setTimeout(() => {
-            if (gameState !== GAME_STATES.GAMEOVER || !b.parent) return;
-            b.visible = true;
-            b.userData.vel = new THREE.Vector3((Math.random() - 0.5) * 0.4, -Math.random() * 0.4 - 0.2, (Math.random() - 0.5) * 0.4);
-            b.userData.rotSpeed = new THREE.Vector3((Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3);
-            debris.push(b);
-        }, i * 25);
-        gameOverTimers.push(id);
-    });
-}
-
-function playWinAnimation() {
-    playSound('victory'); triggerHaptic('success');
-    if (victoryCrownEl) {
-        victoryCrownEl.classList.remove('show');
-        void victoryCrownEl.offsetWidth;
-        victoryCrownEl.classList.add('show');
-        setTimeout(() => victoryCrownEl.classList.remove('show'), 2500);
-    }
-    const maxPieces = lowPerfMode ? 60 : 120;
-    const count = Math.min(maxPieces, PARTICLE_LIMITS.MAX_CONFETTI - confetti.length);
-    for (let i = 0; i < count; i++) {
-        const piece = new THREE.Mesh(
-            PARTICLE_GEOS.winConfetti,
-            getParticleMaterial(CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)])
-        );
-        piece.position.set((Math.random() - 0.5) * 20, camera.position.y - 5 + Math.random() * 5, (Math.random() - 0.5) * 20);
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 0.5 + 0.15;
-        piece.userData = {
-            sharedGeometry: true, sharedMaterial: true,
-            vel: new THREE.Vector3(Math.cos(angle) * speed, Math.random() * 1.2 + 0.4, Math.sin(angle) * speed),
-            rotSpeed: new THREE.Vector3(Math.random() * 0.5, Math.random() * 0.5, Math.random() * 0.5)
-        };
-        scene.add(piece); confetti.push(piece);
-    }
-}
-
-// ============ ШТОРМ ============
-let windFrame = 0, windGustBoost = 0;
-function getStormBaseWind() { return 0.35 + Math.min(0.45, score * 0.012); }
-
-const _updateWindUIInternal = function() {
-    if (!windIndicatorEl) return;
-    const show = gameMode === GAME_MODES.STORM && (gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSED);
-    updateDOMStyle(windIndicatorEl, 'display', show ? 'flex' : 'none');
-    if (!show) return;
-    const level = Math.min(1, windStrength / 0.9);
-    updateDOMStyle(windFillEl, 'width', `${Math.round(level * 100)}%`);
-    updateDOMStyle(windFillEl, 'background', level > 0.6 ? 'linear-gradient(90deg,#FF9100,#FF1744)' : 'linear-gradient(90deg,#00E5FF,#2979FF)');
-    updateDOMClass(windIndicatorEl, 'wind-strong', level > 0.6);
-    const leftEl = $('wind-left'), rightEl = $('wind-right');
-    if (leftEl && rightEl) {
-        const active = level > 0.05;
-        updateDOMClass(leftEl, 'active', active && windDirection < 0);
-        updateDOMClass(rightEl, 'active', active && windDirection > 0);
-    }
-};
-const updateWindUI = throttle(_updateWindUIInternal, 100);
-
-function updateCamera(dt = 1) {
-    if (!blocks.length && !debris.length) return;
-    const lerpFactor = 1 - Math.pow(1 - GAME_CONFIG.CAMERA_LERP_FACTOR, dt);
-
-    if (overviewActive) {
-        const zoomLerp = 1 - Math.pow(1 - 0.07, dt);
-        camera.zoom += (overviewTargetZoom - camera.zoom) * zoomLerp;
-        camera.updateProjectionMatrix();
-
-        camera.position.x += (GAME_CONFIG.CAMERA_OFFSET_X - camera.position.x) * zoomLerp;
-        camera.position.y += ((overviewTargetY + GAME_CONFIG.CAMERA_OFFSET_Y) - camera.position.y) * zoomLerp;
-        camera.position.z += (GAME_CONFIG.CAMERA_OFFSET_Z - camera.position.z) * zoomLerp;
-        camera.lookAt(0, overviewTargetY, 0);
-        return;
-    }
-
-    const top = blocks.length > 0 ? blocks[blocks.length - 1] : { position: { x: 0, y: 0, z: 0 } };
-    const ty = top.position.y, tx = top.position.x * 0.5, tz = top.position.z * 0.5;
-    camera.position.x += (tx + GAME_CONFIG.CAMERA_OFFSET_X - camera.position.x) * lerpFactor;
-    camera.position.y += (ty + GAME_CONFIG.CAMERA_OFFSET_Y - camera.position.y) * lerpFactor;
-    camera.position.z += (tz + GAME_CONFIG.CAMERA_OFFSET_Z - camera.position.z) * lerpFactor;
-    camera.lookAt(tx, ty + GAME_CONFIG.CAMERA_LOOK_OFFSET_Y, tz);
-    if (shakeIntensity > 0.01) {
-        camera.position.x += (Math.random() - 0.5) * shakeIntensity;
-        camera.position.y += (Math.random() - 0.5) * shakeIntensity;
-        camera.position.z += (Math.random() - 0.5) * shakeIntensity;
-        shakeIntensity *= Math.pow(GAME_CONFIG.CAMERA_SHAKE_DECAY, dt);
-    }
-}
-
-function animate() {
-    requestAnimationFrame(animate);
-    const rawDelta = clock.getDelta();
-    if (document.hidden || (gameState === GAME_STATES.MENU && startScreen && startScreen.style.display !== 'none')) {
-        return;
-    }
-
-    const dt = Math.min(rawDelta, 0.05) * 60;
-    const time = clock.elapsedTime;
-    updateFpsCounter();
-    checkAdaptivePerformance();
-    enforceParticleLimits(scene, debris, confetti, disposeMesh);
-
-    if (audioCtx && windGain && gameState === GAME_STATES.PLAYING) {
-        const windVol = Math.min(0.15, score * 0.005);
-        try { windGain.gain.setTargetAtTime(windVol, audioCtx.currentTime, 0.5); } catch (e) {}
-    } else if (windGain && audioCtx) {
-        try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); } catch (e) {}
-    }
-
-    if (bgStarsGroup) bgStarsGroup.rotation.y += 0.0003 * dt;
-    updateEnvironmentParticles(rawDelta, camera.position);
-    updatePerfectWaves(rawDelta);
-
-    const hideBelowY = camera.position.y - 42;
-    for (let i = 0; i < blocks.length; i++) {
-        const b = blocks[i];
-        const visible = overviewActive || b.position.y >= hideBelowY;
-        if (b.visible !== visible) b.visible = visible;
-        if (!visible) continue;
-
-        const bt = b.userData.blockType;
-        if (bt !== BLOCK_TYPES.NORMAL && bt !== BLOCK_TYPES.CRUMBLE) {
-            const isSecret = bt === BLOCK_TYPES.RAINBOW || bt === BLOCK_TYPES.DRAGON || bt === BLOCK_TYPES.DIAMOND;
-            const pulse = bt === BLOCK_TYPES.BOMB
-                ? (0.5 + Math.sin(time * 6) * 0.3)
-                : (0.4 + Math.sin(time * (isSecret ? 8 : 4)) * 0.2);
-            b.material.forEach(m => { if (m.emissive) m.emissiveIntensity = pulse + (isSecret ? 0.3 : 0); });
-            if (b.userData.glowSprite) b.userData.glowSprite.material.opacity = 0.4 + Math.sin(time * (isSecret ? 6 : 4)) * 0.3;
-        }
-
-        if (b.userData.squash !== undefined && b.userData.squash < 1) {
-            b.userData.squash += 0.1 * dt;
-            if (b.userData.squash > 1) b.userData.squash = 1;
-            const scaleY = 1 - Math.sin(b.userData.squash * Math.PI) * 0.3;
-            const scaleXZ = 1 + Math.sin(b.userData.squash * Math.PI) * 0.15;
-            b.scale.set(scaleXZ, scaleY, scaleXZ);
-        }
-    }
-
-    if (gameState === GAME_STATES.PLAYING && currentBlock?.userData.moving) {
-        let speed = currentSpeed;
-        if (isFury) speed *= GAME_CONFIG.FURY_SPEED_MULTIPLIER;
-        if (currentBlock.userData.blockType === BLOCK_TYPES.ICE || dailyModifiers.allIce) {
-            speed = Math.min(speed * 1.45, 0.64);
-        }
-
-        let delta = speed * direction;
-        if (score > 20 && !isFury) delta += Math.sin(time * 3) * 0.02;
-        if (gameMode === GAME_MODES.STORM) {
-            const gust = 0.6 + Math.sin(time * 2.3) * 0.6 + Math.sin(time * 5.7) * 0.3;
-            delta += windStrength * (windGustBoost > 0 ? 1.4 : 1) * gust * windDirection * 0.1;
-        }
-        delta *= dt;
-
-        if (movingAxis === 'x') {
-            currentBlock.position.x += delta;
-            if (currentBlock.position.x > GAME_CONFIG.MOVE_RANGE) direction = -1;
-            if (currentBlock.position.x < -GAME_CONFIG.MOVE_RANGE) direction = 1;
-        } else {
-            currentBlock.position.z += delta;
-            if (currentBlock.position.z > GAME_CONFIG.MOVE_RANGE) direction = -1;
-            if (currentBlock.position.z < -GAME_CONFIG.MOVE_RANGE) direction = 1;
-        }
-    }
-
-    if (gameMode === GAME_MODES.STORM && gameState === GAME_STATES.PLAYING) {
-        windGustBoost *= Math.pow(0.992, dt);
-        if (windGustBoost < 0.005) windGustBoost = 0;
-        if (windGustBoost === 0) {
-            const target = getStormBaseWind();
-            windStrength += (target - windStrength) * Math.min(1, 0.02 * dt);
-        } else {
-            windStrength += 0.012 * dt;
-        }
-        if (windStrength > 0.9) windStrength = 0.9;
-        if (windFrame++ % 3 === 0) updateWindUI();
-    }
-
-    if (currentBlock?.userData.falling) {
-        currentBlock.position.y -= 0.3 * dt;
-        currentBlock.rotation.x += 0.05 * dt;
-        currentBlock.rotation.z += 0.05 * dt;
-    }
-
-    for (let i = debris.length - 1; i >= 0; i--) {
-        const d = debris[i];
-        d.position.addScaledVector(d.userData.vel, dt);
-        d.userData.vel.y -= 0.02 * dt;
-        if (d.userData.rotSpeed) {
-            d.rotation.x += d.userData.rotSpeed.x * dt;
-            d.rotation.y += d.userData.rotSpeed.y * dt;
-            d.rotation.z += d.userData.rotSpeed.z * dt;
-        }
-        if (d.userData.life !== undefined) {
-            d.userData.life -= 0.02 * dt;
-            if (d.userData.life <= 0) {
-                scene.remove(d); disposeMesh(d); debris.splice(i, 1); continue;
-            }
-            d.scale.setScalar(d.userData.life);
-        }
-        if (d.position.y < camera.position.y - 40) {
-            scene.remove(d); disposeMesh(d); debris.splice(i, 1);
-        }
-    }
-
-    const confettiDrag = Math.pow(0.98, dt);
-    for (let i = confetti.length - 1; i >= 0; i--) {
-        const c = confetti[i];
-        c.position.addScaledVector(c.userData.vel, dt);
-        c.userData.vel.y -= 0.015 * dt;
-        c.userData.vel.x *= confettiDrag;
-        c.userData.vel.z *= confettiDrag;
-        c.rotation.x += c.userData.rotSpeed.x * dt;
-        c.rotation.y += c.userData.rotSpeed.y * dt;
-        c.rotation.z += c.userData.rotSpeed.z * dt;
-        if (c.position.y < camera.position.y - 40) {
-            scene.remove(c); disposeMesh(c); confetti.splice(i, 1);
-        }
-    }
-
-    if (gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.GAMEOVER) updateCamera(dt);
-    scene.background.lerp(targetBgColor, Math.min(1, 0.05 * dt));
-    renderer.render(scene, camera);
-}
-
-function clearScene() {
-    blocks.forEach(b => { scene.remove(b); disposeMesh(b); });
-    debris.forEach(d => { scene.remove(d); disposeMesh(d); });
-    confetti.forEach(c => { scene.remove(c); disposeMesh(c); });
-    blocks = []; debris = []; confetti = []; currentBlock = null;
-    perfectWaves.forEach(w => { w.userData.active = false; w.visible = false; });
-}
-
-// ============ STATE MANAGEMENT ============
-function startGame(mode) {
-    try {
-        if (document.activeElement && typeof document.activeElement.blur === 'function') {
-            document.activeElement.blur();
-        }
-        clearGameOverTimers();
-        stopSecondChanceLoop();
-        if (resumeDelayTimer) { clearTimeout(resumeDelayTimer); resumeDelayTimer = null; }
-        secondChanceUsed = false;
-        overviewActive = false;
-        hideTowerHeightBanner();
-        hideModal(secondChanceOverlay, { restoreMenu: false });
-        camera.zoom = 1;
-        camera.updateProjectionMatrix();
-
-        initAudio(); stopMusic(); clearScene();
-        if (mode) gameMode = mode;
-        score = 0; combo = 0; sessionCoins = 0; sessionXP = 0;
-        isFury = false; furyBlocksLeft = 0;
-        document.body.classList.remove('fury-active');
-        if (showTutorialHint && tutorialEl) tutorialEl.style.display = 'block';
-        updateActivePowerupsUI();
-        updateComboIndicator();
-
-        if (dailyChallengeActive) {
-            if (dailyModifiers.forceBg && !savedBgBeforeDaily) {
-                savedBgBeforeDaily = currentBackground;
-                currentBackground = dailyModifiers.forceBg;
-                applyBackground();
-            }
-            if (dailyModifiers.forcePalette && !savedPaletteBeforeDaily) {
-                savedPaletteBeforeDaily = currentPalette;
-                currentPalette = dailyModifiers.forcePalette;
-            }
-        }
-        dynamicMaxSpeed = gameMode === GAME_MODES.ENDLESS ? GAME_CONFIG.ENDLESS_MAX_SPEED : GAME_CONFIG.DEFAULT_MAX_SPEED;
-        windDirection = Math.random() < 0.5 ? -1 : 1;
-        windGustBoost = 0;
-        windStrength = gameMode === GAME_MODES.STORM ? getStormBaseWind() : 0;
-        if (windGustTimer) { clearInterval(windGustTimer); windGustTimer = null; }
-        if (gameMode === GAME_MODES.STORM) {
-            windGustTimer = setInterval(() => {
-                if (gameState !== GAME_STATES.PLAYING) return;
-                windGustBoost = 0.45;
-                windDirection = Math.random() < 0.35 ? -windDirection : windDirection;
-                shakeIntensity = Math.max(shakeIntensity, GAME_CONFIG.SHAKE_GUST);
-                playSound('gust');
-                showPopup(bonusText, '🌪 ПОРЫВ ВЕТРА!', 1200);
-            }, GAME_CONFIG.WIND_GUST_MIN_INTERVAL + Math.random() * GAME_CONFIG.WIND_GUST_MAX_INTERVAL);
-        }
-        updateWindUI();
-        let baseSpeed = BASE_SPEED;
-        if (!dailyChallengeActive) baseSpeed *= getSmartDifficultyMultiplier();
-        if (dailyModifiers.speedMult) baseSpeed *= dailyModifiers.speedMult;
-        if (gameMode === GAME_MODES.STORM) baseSpeed *= 1.1;
-        if (gameMode === GAME_MODES.MIRROR) baseSpeed *= 1.15;
-        const skinMods = getSkinModifiers();
-        if (skinMods.speedMult) baseSpeed *= skinMods.speedMult;
-        direction = gameMode === GAME_MODES.MIRROR ? -1 : 1;
-        updateDOMText(scoreEl, score);
-        currentSpeed = dailyModifiers.startSpeed !== undefined ? dailyModifiers.startSpeed : baseSpeed;
-        musicTempo = GAME_CONFIG.MUSIC_BASE_TEMPO;
-        gameState = GAME_STATES.PLAYING; currentBiomeIndex = 0;
-        const bgColors = getBgColors();
-        targetBgColor.set(bgColors[0]); scene.background.set(bgColors[0]);
-        document.body.style.background = bgColors[0];
-        document.body.classList.add('in-game');
-        if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
-        const timeLimit = dailyModifiers.timeLimit || (gameMode === GAME_MODES.TIME ? GAME_CONFIG.DEFAULT_TIME_LIMIT : 0);
-        if (timeLimit > 0) {
-            timeLeft = timeLimit; if (timerEl) timerEl.style.display = 'block'; updateTimerDisplay();
-            timeAttackTimer = setInterval(() => {
-                if (gameState !== GAME_STATES.PLAYING) return;
-                timeLeft--; updateTimerDisplay();
-                if (timeLeft <= 0) { clearInterval(timeAttackTimer); timeAttackTimer = null; triggerGameOver(); }
-            }, 1000);
-        } else if (timerEl) timerEl.style.display = 'none';
-        if (modeLabel) {
-            if (dailyChallengeActive) {
-                const ch = getDailyChallenge();
-                modeLabel.innerText = `🎯 ${ch.name}`;
-            } else modeLabel.innerText = GAME_MODE_NAMES[gameMode] || 'ИГРА';
-        }
-        if (startScreen) startScreen.style.display = 'none';
-        hideModal(gameOverEl, { restoreMenu: false });
-        hideModal(pauseScreen, { restoreMenu: false });
-        camera.position.set(GAME_CONFIG.CAMERA_OFFSET_X, GAME_CONFIG.CAMERA_OFFSET_Y, GAME_CONFIG.CAMERA_OFFSET_Z);
-        camera.lookAt(0, 0, 0);
-        const todayStr = new Date().toDateString();
-        if (safeGetItem(STORAGE_KEYS.DAILY_GAME_CHEST, null) !== todayStr) {
-            safeSetItem(STORAGE_KEYS.DAILY_GAME_CHEST, todayStr);
-            setTimeout(() => addChest('daily_game'), 1000);
-        }
-        createBaseBlock(); startMusic();
-        updateQuest('games', 1);
-        updateMissionProgress(missions, 'games', 1);
-        if (gameMode === GAME_MODES.TIME) updateMissionProgress(missions, 'time_game', 1);
-        if (gameMode === GAME_MODES.STORM) updateMissionProgress(missions, 'storm_game', 1);
-        updateTelegramBackButton();
-        cacheCoinPopupAnchor();
-    } catch (err) {
-        console.error('startGame error:', err);
-        gameState = GAME_STATES.MENU; if (startScreen) startScreen.style.display = 'flex';
-        updateTelegramBackButton();
-    }
-}
-
-function resetActivePowerups() {
-    activePowerups = { ...DEFAULTS.ACTIVE_POWERUPS };
-    updateActivePowerupsUI();
-}
-
-function goToMenu() {
+function skipTowerOverview() {
+    if (gameState !== GAME_STATES.GAMEOVER || !overviewActive || overviewSkipped) return;
+    if (performance.now() < overviewSkipReadyAt) return;
+    overviewSkipped = true;
     clearGameOverTimers();
-    stopSecondChanceLoop();
-    if (resumeDelayTimer) { clearTimeout(resumeDelayTimer); resumeDelayTimer = null; }
-    secondChanceUsed = false;
-    overviewActive = false;
     hideTowerHeightBanner();
-    hideModal(secondChanceOverlay, { restoreMenu: false });
-    camera.zoom = 1;
-    camera.updateProjectionMatrix();
-
-    stopActiveMinigame();
-    stopMinigamesCooldownTimer();
-    if (gameState === GAME_STATES.PLAYING) saveCurrentScoreIfNeeded();
-    stopMusic(); clearScene();
-    clearTextureCache();
-    gameState = GAME_STATES.MENU;
-    document.body.classList.remove('in-game', 'fury-active');
-    if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
-    if (windGustTimer) { clearInterval(windGustTimer); windGustTimer = null; }
-    windStrength = 0; updateWindUI();
-    resetActivePowerups();
-    dailyChallengeActive = false; dailyModifiers = {};
-    restoreDailyVisuals();
-    hideModal(gameOverEl, { restoreMenu: false });
-    hideModal(pauseScreen, { restoreMenu: false });
-    hideModal(rulesScreen, { restoreMenu: false });
-    hideModal(achScreen, { restoreMenu: false });
-    hideModal(lbScreen, { restoreMenu: false });
-    hideModal(settingsScreen, { restoreMenu: false });
-    hideModal(powerupsScreen, { restoreMenu: false });
-    hideModal(chestScreen, { restoreMenu: false });
-    hideModal(prestigeConfirmScreen, { restoreMenu: false });
-    hideModal(prestigeChestScreen, { restoreMenu: false });
-    hideModal(eventScreen, { restoreMenu: false });
-    hideModal(minigamesScreen, { restoreMenu: false });
-    if (startScreen) startScreen.style.display = 'flex';
-    const bgColors = getBgColors();
-    scene.background.set(bgColors[0]); document.body.style.background = bgColors[0];
-    camera.position.set(GAME_CONFIG.CAMERA_OFFSET_X, GAME_CONFIG.CAMERA_OFFSET_Y, GAME_CONFIG.CAMERA_OFFSET_Z);
-    camera.lookAt(0, 0, 0);
-    if (windGain && audioCtx) try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); } catch (e) {}
-    updateCoinUI(); updateLevelUI(); updateStreakUI(); updateChestUI();
-    renderDailyChallenge(); updateComboIndicator();
-    renderMissions(); updateMissionsBadge();
-    stopMissionsTimer(); startMissionsTimer();
-    renderEventBanner();
-    switchMenuTab(currentMenuTab);
-    updateTelegramBackButton();
+    playLoseAnimation();
+    gameOverTimers.push(setTimeout(() => showModal(gameOverEl), 120));
 }
 
-function saveCurrentScoreIfNeeded() {
-    if (score > 0 && score > highScore) {
-        highScore = score;
-        safeSetItem(STORAGE_KEYS.HIGH_SCORE, highScore);
-        if (highScoreEl) highScoreEl.innerText = `РЕКОРД: ${highScore}`;
+function playLoseAnimation() {
+    if (currentBlock && !currentBlock.userData.falling) {
+        currentBlock.userData.falling = true;
     }
+    shakeIntensity = Math.max(shakeIntensity, 0.55);
 }
 
 function triggerGameOver() {
     if (gameState === GAME_STATES.GAMEOVER) return;
-    clearGameOverTimers();
     gameState = GAME_STATES.GAMEOVER;
-    playSound('gameover'); stopMusic();
-    shakeIntensity = GAME_CONFIG.SHAKE_GAMEOVER;
     document.body.classList.remove('in-game', 'fury-active');
+    stopMusic();
+    stopWindSystem();
     if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
-    if (windGustTimer) { clearInterval(windGustTimer); windGustTimer = null; }
-    windStrength = 0; updateWindUI();
-    stats.totalGames++;
-    if (score > stats.maxScore) stats.maxScore = score;
-    if (gameMode === GAME_MODES.TIME && score > stats.maxTimeScore) stats.maxTimeScore = score;
-    saveStats();
-    totalScoreAllTime += score; saveTotalScore();
-    trackGameScore(score);
-    let earnedXP = score * 5;
-    if (dailyModifiers.xpMult) earnedXP = Math.round(earnedXP * dailyModifiers.xpMult);
-    addXP(earnedXP);
-    if (gameMode === GAME_MODES.TIME && score > 0) updateQuest('time_game', 1);
-    addToLeaderboard(score, gameMode);
-    if (finalScoreVal) finalScoreVal.innerText = score;
-    const isNew = score > highScore;
-    if (isNew) {
+
+    playSound('gameover');
+    triggerHaptic('error');
+
+    const isNewRecord = score > highScore;
+    if (isNewRecord) {
         highScore = score;
         safeSetItem(STORAGE_KEYS.HIGH_SCORE, highScore);
         if (highScoreEl) highScoreEl.innerText = `РЕКОРД: ${highScore}`;
-        gameOverTimers.push(setTimeout(() => playWinAnimation(), 300));
+        if (victoryCrownEl) {
+            victoryCrownEl.classList.remove('show');
+            requestAnimationFrame(() => victoryCrownEl.classList.add('show'));
+            playSound('victory');
+        }
     }
-    const newRecEl = $('new-record');
-    if (newRecEl) newRecEl.style.display = isNew ? 'block' : 'none';
-    if (gameCoinsEarnedEl) {
-        gameCoinsEarnedEl.innerText = `+${sessionCoins} 🪙 за игру`;
-        gameCoinsEarnedEl.style.display = 'block';
-    }
-    if (gameXPEarnedEl) {
-        if (earnedXP > 0) { gameXPEarnedEl.innerText = `+${earnedXP} опыта`; gameXPEarnedEl.style.display = 'block'; }
-        else gameXPEarnedEl.style.display = 'none';
-    }
+
+    if (score > (stats.maxScore || 0)) stats.maxScore = score;
+    if (gameMode === GAME_MODES.TIME && score > (stats.maxTimeScore || 0)) stats.maxTimeScore = score;
+    saveStats();
+
+    totalScoreAllTime += score;
+    saveTotalScore();
+    trackGameScore(score);
+    addToLeaderboard(score, gameMode);
+
+    const xpEarned = Math.max(5, Math.round(score * 3 + combo * 2));
+    addXP(xpEarned);
+    updateMissionProgress(missions, 'score', score, true);
+    checkAchievements();
+    flushCloudSave();
 
     const builtMeters = Math.max(0, blocks.length - 1);
-    const compareText = getHeightComparison(builtMeters);
-    if (gameOverHeightEl) {
-        gameOverHeightEl.textContent = builtMeters > 0
-            ? `🏗️ Высота: ${builtMeters} м — ${compareText}`
-            : '';
-    }
+    if (finalScoreVal) finalScoreVal.innerText = score;
+    if (gameCoinsEarnedEl) gameCoinsEarnedEl.innerText = `+${sessionCoins} 🪙 за игру`;
+    if (gameXPEarnedEl) gameXPEarnedEl.innerText = `+${sessionXP} опыта`;
+    if (gameOverHeightEl) gameOverHeightEl.innerText = builtMeters > 0 ? `🏗️ Высота: ${builtMeters} м · ${getHeightComparison(builtMeters)}` : '';
+    const nrEl = $('new-record');
+    if (nrEl) nrEl.style.display = isNewRecord ? 'block' : 'none';
 
+    restoreDailyVisuals();
+    dailyChallengeActive = false;
+    dailyModifiers = {};
+
+    clearGameOverTimers();
     if (builtMeters >= 3) {
         const aspect = window.innerWidth / window.innerHeight;
         const d = getAdaptiveD(aspect);
@@ -3472,48 +3027,509 @@ function triggerGameOver() {
         overviewTargetY = topY * 0.5;
         overviewTargetZoom = Math.max(0.24, Math.min(1, (d * 1.45) / Math.max(1, topY + 5)));
         overviewActive = true;
+        overviewSkipped = false;
+        overviewSkipReadyAt = performance.now() + 250;
         blocks.forEach(b => { b.visible = true; });
         showTowerHeightBanner(builtMeters);
-    }
 
-    const overviewDelay = builtMeters >= 3 ? GAME_CONFIG.OVERVIEW_DURATION : 400;
-    gameOverTimers.push(setTimeout(() => {
-        hideTowerHeightBanner();
+        gameOverTimers.push(setTimeout(() => {
+            hideTowerHeightBanner();
+            playLoseAnimation();
+        }, 1650));
+        gameOverTimers.push(setTimeout(() => showModal(gameOverEl), 2050));
+    } else {
         playLoseAnimation();
-    }, overviewDelay));
-
-    checkAchievements();
-    resetActivePowerups();
-    dailyChallengeActive = false; dailyModifiers = {};
-    restoreDailyVisuals();
-    flushCloudSave();
-    gameOverTimers.push(setTimeout(() => showModal(gameOverEl), overviewDelay + 550));
-    triggerHaptic('error');
-}
-
-function togglePause() {
-    if (gameState === GAME_STATES.PLAYING) {
-        gameState = GAME_STATES.PAUSED;
-        showModal(pauseScreen);
-        document.body.classList.remove('in-game');
-        if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
-    } else if (gameState === GAME_STATES.PAUSED) {
-        gameState = GAME_STATES.PLAYING;
-        hideModal(pauseScreen, { restoreMenu: false });
-        document.body.classList.add('in-game');
-        const timeLimit = dailyModifiers.timeLimit || (gameMode === GAME_MODES.TIME ? GAME_CONFIG.DEFAULT_TIME_LIMIT : 0);
-        if (timeLimit > 0) {
-            timeAttackTimer = setInterval(() => {
-                if (gameState !== GAME_STATES.PLAYING) return;
-                timeLeft--; updateTimerDisplay();
-                if (timeLeft <= 0) { clearInterval(timeAttackTimer); timeAttackTimer = null; triggerGameOver(); }
-            }, 1000);
-        }
+        gameOverTimers.push(setTimeout(() => showModal(gameOverEl), 450));
     }
     updateTelegramBackButton();
 }
 
-// ============ INPUT ============
+// ============ ОСНОВНОЙ ХОД (DROP BLOCK) ============
+function dropBlock() {
+    if (gameState !== GAME_STATES.PLAYING || !currentBlock || !currentBlock.userData.moving) return;
+
+    if (showTutorialHint) {
+        showTutorialHint = false;
+        safeSetItem(STORAGE_KEYS.TUTORIAL_SHOWN, true);
+        if (tutorialEl) tutorialEl.style.display = 'none';
+    }
+
+    currentBlock.userData.moving = false;
+    const top = blocks[blocks.length - 1];
+    const bType = currentBlock.userData.blockType;
+    const prevColor = currentBlock.userData.color;
+
+    const diffX = currentBlock.position.x - top.position.x;
+    const diffZ = currentBlock.position.z - top.position.z;
+    const absDiffX = Math.abs(diffX);
+    const absDiffZ = Math.abs(diffZ);
+    const maxDiff = movingAxis === 'x' ? absDiffX : absDiffZ;
+    const sizeX = currentBlock.userData.w;
+    const sizeZ = currentBlock.userData.d;
+
+    const minOverlap = 0.08;
+    const missX = movingAxis === 'x' && absDiffX >= sizeX - minOverlap;
+    const missZ = movingAxis === 'z' && absDiffZ >= sizeZ - minOverlap;
+    const precisionMode = (gameMode === GAME_MODES.PRECISION);
+    const noCutActive = dailyModifiers.noCut || precisionMode;
+
+    let perfectThreshold = dailyModifiers.tightThreshold || GAME_CONFIG.PERFECT_THRESHOLD;
+    if (activePowerups.focus) {
+        const activeSize = movingAxis === 'x' ? sizeX : sizeZ;
+        perfectThreshold = Math.min(Math.max(perfectThreshold * 3.5, 0.55), activeSize * 0.45);
+    }
+
+    // Алмазный блок сам выравнивается идеально
+    const isDiamondAuto = (bType === BLOCK_TYPES.DIAMOND && !missX && !missZ);
+
+    if (missX || missZ) {
+        currentBlock.userData.falling = true;
+        if (canOfferSecondChance()) { offerSecondChance('miss'); return; }
+        triggerGameOver();
+        return;
+    }
+
+    if (noCutActive && !isDiamondAuto && maxDiff >= perfectThreshold) {
+        currentBlock.userData.falling = true;
+        triggerGameOver();
+        return;
+    }
+
+    if (bType === BLOCK_TYPES.CRUMBLE && maxDiff < perfectThreshold) {
+        currentBlock.position.x = top.position.x;
+        currentBlock.position.z = top.position.z;
+        playSound('bomb');
+        spawnBombParticles();
+        if (canOfferSecondChance()) { offerSecondChance('crumble'); return; }
+        triggerGameOver();
+        return;
+    }
+
+    const isPerfect = isDiamondAuto || maxDiff < perfectThreshold;
+    const skinMods = getSkinModifiers();
+    const prestigeBonus = getPrestigeBonus();
+    let basePoints = 1;
+
+    if (isPerfect) {
+        currentBlock.position.x = top.position.x;
+        currentBlock.position.z = top.position.z;
+        currentBlock.userData.squash = 0;
+
+        if (!dailyModifiers.noCombo) {
+            const oldCombo = combo;
+            combo++;
+            if (combo > (stats.maxCombo || 0)) stats.maxCombo = combo;
+            const upgrade = checkTierUpgrade(oldCombo, combo);
+            if (upgrade) {
+                playSound(upgrade.sound);
+                showPopup(comboText, `${upgrade.name}! x${upgrade.multiplier}`, 1100);
+            }
+            if (combo >= 5) {
+                cameraZoomPulse = Math.min(0.055, 0.025 + (combo - 5) * 0.004);
+            }
+        }
+
+        // Восстановление ширины каждые 5 идеалов подряд
+        if (combo > 0 && combo % 5 === 0 && (sizeX < currentBaseSize - 0.05 || sizeZ < currentBaseSize - 0.05)) {
+            const newW = Math.min(currentBaseSize, sizeX + 0.35);
+            const newD = Math.min(currentBaseSize, sizeZ + 0.35);
+            const pos = currentBlock.position.clone();
+            disposeMesh(currentBlock);
+            const grown = createBlockMesh(newW, BLOCK_HEIGHT, newD, prevColor, bType);
+            grown.position.copy(pos);
+            Object.assign(grown.userData, { w: newW, d: newD, color: prevColor, blockType: bType, squash: 0 });
+            scene.add(grown);
+            currentBlock = grown;
+            showPopup(bonusText, '✨ ШИРИНА +', 900);
+        }
+
+        if (combo === GAME_CONFIG.FURY_THRESHOLD && !isFury) activateFury();
+
+        if (bType === BLOCK_TYPES.GOLDEN) { basePoints = 3; addCoins(5); stats.totalGolden = (stats.totalGolden || 0) + 1; updateQuest('golden', 1); }
+        else if (bType === BLOCK_TYPES.BOMB) { basePoints = 2; stats.totalBomb = (stats.totalBomb || 0) + 1; updateQuest('bomb', 1); }
+        else if (bType === BLOCK_TYPES.ICE) { basePoints = 2; stats.totalIce = (stats.totalIce || 0) + 1; updateQuest('ice', 1); }
+        else if (bType === BLOCK_TYPES.RAINBOW) { basePoints = 10; addCoins(15); playSound('secret'); stats.totalSecret = (stats.totalSecret || 0) + 1; updateQuest('secret', 1); }
+        else if (bType === BLOCK_TYPES.DRAGON) { basePoints = 10; spawnConfetti(20); playSound('secret'); stats.totalSecret = (stats.totalSecret || 0) + 1; updateQuest('secret', 1); }
+        else if (bType === BLOCK_TYPES.DIAMOND) { basePoints = 5; addCoins(8); playSound('secret'); stats.totalSecret = (stats.totalSecret || 0) + 1; updateQuest('secret', 1); }
+        else { addCoins(2); }
+
+        if (gameMode === GAME_MODES.TIME && timerEl) {
+            timeLeft += 2;
+            timerEl.innerText = `⏱ ${timeLeft}`;
+        }
+        if (gameMode === GAME_MODES.STORM) {
+            windStrength = Math.max(0.01, windStrength * 0.72);
+            updateWindUI();
+        }
+
+        blocks.push(currentBlock);
+        spawnPerfectWave(currentBlock.position.x, currentBlock.position.y, currentBlock.position.z, currentBlock.userData.w, currentBlock.userData.d, prevColor);
+        playSound('perfect', combo);
+        triggerHaptic('medium');
+        showPopup(perfectText, combo > 1 ? `ИДЕАЛЬНО x${combo}` : 'ИДЕАЛЬНО!', 750);
+
+        stats.totalPerfect = (stats.totalPerfect || 0) + 1;
+        updateQuest('perfect', 1);
+        updateQuest('combo', combo, true);
+        updateMissionProgress(missions, 'perfect', 1);
+        updateMissionProgress(missions, 'combo', combo, true);
+    } else {
+        combo = 0;
+        if (isFury) {
+            isFury = false;
+            furyBlocksLeft = 0;
+            document.body.classList.remove('fury-active');
+        }
+
+        const newW = movingAxis === 'x' ? sizeX - absDiffX : sizeX;
+        const newD = movingAxis === 'z' ? sizeZ - absDiffZ : sizeZ;
+
+        if (newW < 0.08 || newD < 0.08) {
+            currentBlock.userData.falling = true;
+            if (canOfferSecondChance()) { offerSecondChance('miss'); return; }
+            triggerGameOver();
+            return;
+        }
+
+        const origSize = movingAxis === 'x' ? sizeX : sizeZ;
+        const newSize = movingAxis === 'x' ? newW : newD;
+        const diff = movingAxis === 'x' ? diffX : diffZ;
+        createDebris(diff, origSize, newSize, movingAxis, top);
+
+        // В режиме «Бесконечный» блок слегка восстанавливает ширину
+        const finalW = gameMode === GAME_MODES.ENDLESS ? Math.min(currentBaseSize, newW + (sizeX - newW) * 0.35) : newW;
+        const finalD = gameMode === GAME_MODES.ENDLESS ? Math.min(currentBaseSize, newD + (sizeZ - newD) * 0.35) : newD;
+
+        const newX = movingAxis === 'x' ? top.position.x + diffX / 2 : currentBlock.position.x;
+        const newZ = movingAxis === 'z' ? top.position.z + diffZ / 2 : currentBlock.position.z;
+        const posY = currentBlock.position.y;
+
+        disposeMesh(currentBlock);
+        const nm = createBlockMesh(finalW, BLOCK_HEIGHT, finalD, prevColor, BLOCK_TYPES.NORMAL);
+        nm.position.set(newX, posY, newZ);
+        Object.assign(nm.userData, { w: finalW, d: finalD, color: prevColor, blockType: BLOCK_TYPES.NORMAL, squash: 0 });
+        scene.add(nm);
+        blocks.push(nm);
+        currentBlock = nm;
+
+        if (bType === BLOCK_TYPES.BOMB) {
+            basePoints = -1;
+            playSound('bomb');
+            spawnBombParticles();
+            triggerHaptic('error');
+            showPopup(bonusText, '💥 ВЗРЫВ! -1', 900);
+        } else {
+            playSound('drop');
+            triggerHaptic('light');
+            shakeIntensity = Math.max(shakeIntensity, 0.14);
+            addCoins(1);
+        }
+
+        updateQuest('cut', 1);
+    }
+
+    // Расчёт очков
+    let pointsGain = basePoints;
+    if (pointsGain > 0) {
+        pointsGain = applyComboMultiplier(pointsGain, combo);
+        if (isFury) pointsGain *= 2;
+        if (dailyModifiers.scoreMult) pointsGain *= dailyModifiers.scoreMult;
+        if (skinMods.scoreMult) pointsGain *= skinMods.scoreMult;
+        if (prestigeBonus.scoreMult > 0) pointsGain *= (1 + prestigeBonus.scoreMult);
+        if (prestigeBonus.allMult > 0) pointsGain *= (1 + prestigeBonus.allMult);
+        pointsGain = Math.max(1, Math.round(pointsGain));
+    }
+
+    const prevScore = score;
+    score = Math.max(0, score + pointsGain);
+    if (scoreEl) {
+        scoreEl.innerText = score;
+        scoreEl.classList.remove('score-pop');
+        requestAnimationFrame(() => scoreEl.classList.add('score-pop'));
+    }
+
+    if (isFury) {
+        furyBlocksLeft--;
+        if (furyBlocksLeft <= 0) {
+            isFury = false;
+            document.body.classList.remove('fury-active');
+        }
+    }
+
+    if (Math.floor(score / 10) > Math.floor(prevScore / 10) && score >= 10) {
+        triggerMilestone(Math.floor(score / 10) * 10);
+    }
+
+    updateComboIndicator();
+    updateQuest('stack', blocks.length - 1, true);
+    updateMissionProgress(missions, 'blocks', 1);
+
+    // Оптимизация: скрываем глубоко нижние блоки
+    if (blocks.length > 32) {
+        blocks[blocks.length - 33].visible = false;
+    }
+
+    // Ускорение
+    let accel = GAME_CONFIG.SPEED_INCREMENT * (dailyModifiers.accelMult || 1);
+    if (gameMode === GAME_MODES.ENDLESS) accel *= 2;
+    currentSpeed = Math.min(dynamicMaxSpeed, currentSpeed + accel);
+    musicTempo = Math.min(155, GAME_CONFIG.MUSIC_BASE_TEMPO + score * 0.45);
+
+    direction *= -1;
+    spawnNewBlock();
+}
+
+// ============ НАВИГАЦИЯ И ПАУЗА ============
+function togglePause() {
+    if (gameState === GAME_STATES.PLAYING) {
+        gameState = GAME_STATES.PAUSED;
+        document.body.classList.remove('in-game');
+        stopMusic();
+        showModal(pauseScreen);
+    } else if (gameState === GAME_STATES.PAUSED && pauseScreen.classList.contains('open')) {
+        hideModal(pauseScreen, { restoreMenu: false });
+        gameState = GAME_STATES.PLAYING;
+        document.body.classList.add('in-game');
+        clock.getDelta();
+        startMusic();
+        updateTelegramBackButton();
+    }
+}
+
+function goToMenu() {
+    clearGameOverTimers();
+    if (secondChanceRaf) { cancelAnimationFrame(secondChanceRaf); secondChanceRaf = null; }
+    if (resumeDelayTimer) { clearTimeout(resumeDelayTimer); resumeDelayTimer = null; }
+    if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
+
+    gameState = GAME_STATES.MENU;
+    secondChanceActive = false;
+    overviewActive = false;
+    overviewSkipped = false;
+    cameraZoomPulse = 0;
+    document.body.classList.remove('in-game', 'fury-active');
+
+    stopMusic();
+    stopWindSystem();
+    hideTowerHeightBanner();
+    restoreDailyVisuals();
+    dailyChallengeActive = false;
+    dailyModifiers = {};
+
+    document.querySelectorAll('.screen.modal.open').forEach(m => {
+        m.classList.remove('open');
+        updateAriaAttributes(m, false);
+    });
+
+    clearScene();
+    clearBlockMaterialCache();
+    clearTextureCache();
+    stopRenderLoop();
+
+    const bgColors = getBgColors();
+    document.body.style.background = bgColors[0];
+    syncTelegramTheme('#FFE5EC');
+
+    startScreen.style.display = 'flex';
+    updateCoinUI();
+    updateLevelUI();
+    updateChestUI();
+    updateMissionsBadge();
+    renderDailyChallenge();
+    if (currentMenuTab === 'shop') renderShop();
+    if (currentMenuTab === 'tasks') renderMissions();
+    updateTelegramBackButton();
+}
+
+// ============ КАМЕРА И ЦИКЛ РЕНДЕРА ============
+function updateCamera(dt = 1) {
+    if (!camera) return;
+
+    if (overviewActive) {
+        camera.position.y += ((overviewTargetY + 12) - camera.position.y) * Math.min(1, 0.08 * dt);
+        camera.zoom += (overviewTargetZoom - camera.zoom) * Math.min(1, 0.08 * dt);
+        camera.lookAt(0, overviewTargetY, 0);
+        camera.updateProjectionMatrix();
+        return;
+    }
+
+    const targetY = blocks.length > 0 ? blocks[blocks.length - 1].position.y : 0;
+    camera.position.y += ((targetY + 12) - camera.position.y) * Math.min(1, 0.1 * dt);
+    camera.lookAt(0, targetY, 0);
+
+    if (cameraZoomPulse > 0.0005 || Math.abs(camera.zoom - 1) > 0.0005) {
+        cameraZoomPulse *= Math.pow(0.84, dt);
+        if (cameraZoomPulse < 0.0005) cameraZoomPulse = 0;
+        const targetZoom = 1 + cameraZoomPulse;
+        camera.zoom += (targetZoom - camera.zoom) * Math.min(1, 0.28 * dt);
+        camera.updateProjectionMatrix();
+    }
+
+    if (shakeIntensity > 0.01) {
+        camera.position.x = 12 + (Math.random() - 0.5) * shakeIntensity;
+        camera.position.z = 12 + (Math.random() - 0.5) * shakeIntensity;
+        shakeIntensity *= Math.pow(0.85, dt);
+    } else {
+        camera.position.x = 12;
+        camera.position.z = 12;
+        shakeIntensity = 0;
+    }
+}
+
+function startRenderLoop() {
+    if (rafId !== null) return;
+    clock.getDelta();
+    rafId = requestAnimationFrame(animate);
+}
+
+function stopRenderLoop() {
+    if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+    }
+}
+
+function animate() {
+    if (document.hidden || (gameState === GAME_STATES.MENU && startScreen && startScreen.style.display !== 'none')) {
+        rafId = null;
+        return;
+    }
+    rafId = requestAnimationFrame(animate);
+
+    const rawDelta = clock.getDelta();
+    const dt = Math.min(rawDelta * 60, 2.5);
+
+    updateFpsCounter();
+    const now = performance.now();
+    if (now - lastPerfCheck > 2000) {
+        lastPerfCheck = now;
+        const fps = getCurrentFps();
+        if (fps > 0 && fps < 34) {
+            lowFpsStrikes++;
+            if (lowFpsStrikes >= 2 && !lowPerfMode) {
+                lowPerfMode = true;
+                removeEnvironmentParticles(scene);
+                renderer.setPixelRatio(1);
+            }
+        } else {
+            lowFpsStrikes = 0;
+        }
+    }
+
+    if (scene && scene.background) {
+        scene.background.lerp(targetBgColor, Math.min(1, 0.03 * dt));
+    }
+
+    if (gameState === GAME_STATES.PLAYING && currentBlock && currentBlock.userData.moving) {
+        let speed = currentSpeed;
+        if (currentBlock.userData.blockType === BLOCK_TYPES.ICE) speed *= 1.45;
+        if (isFury) speed *= 0.6;
+
+        const step = speed * direction * dt;
+        const windPush = (gameMode === GAME_MODES.STORM ? windStrength * windDirection * dt : 0);
+
+        if (movingAxis === 'x') {
+            currentBlock.position.x += step + windPush;
+            if (currentBlock.position.x > GAME_CONFIG.MOVE_RANGE) {
+                currentBlock.position.x = GAME_CONFIG.MOVE_RANGE;
+                direction = -1;
+            } else if (currentBlock.position.x < -GAME_CONFIG.MOVE_RANGE) {
+                currentBlock.position.x = -GAME_CONFIG.MOVE_RANGE;
+                direction = 1;
+            }
+        } else {
+            currentBlock.position.z += step + windPush;
+            if (currentBlock.position.z > GAME_CONFIG.MOVE_RANGE) {
+                currentBlock.position.z = GAME_CONFIG.MOVE_RANGE;
+                direction = -1;
+            } else if (currentBlock.position.z < -GAME_CONFIG.MOVE_RANGE) {
+                currentBlock.position.z = -GAME_CONFIG.MOVE_RANGE;
+                direction = 1;
+            }
+        }
+    }
+
+    if (currentBlock && currentBlock.userData.falling) {
+        currentBlock.position.y -= 0.32 * dt;
+        currentBlock.rotation.x += 0.06 * dt;
+        currentBlock.rotation.z += 0.04 * dt;
+    }
+
+    for (let i = Math.max(0, blocks.length - 5); i < blocks.length; i++) {
+        const b = blocks[i];
+        if (b.userData.squash !== undefined && b.userData.squash < 1) {
+            b.userData.squash += 0.1 * dt;
+            if (b.userData.squash > 1) b.userData.squash = 1;
+            const scaleY = 1 - Math.sin(b.userData.squash * Math.PI) * 0.3;
+            const scaleXZ = 1 + Math.sin(b.userData.squash * Math.PI) * 0.15;
+            b.scale.set(b.userData.w * scaleXZ, BLOCK_HEIGHT * scaleY, b.userData.d * scaleXZ);
+        }
+    }
+
+    for (let i = debris.length - 1; i >= 0; i--) {
+        const dMesh = debris[i];
+        dMesh.userData.vel.y -= 0.018 * dt;
+        dMesh.position.addScaledVector(dMesh.userData.vel, dt);
+        dMesh.rotation.x += dMesh.userData.rotSpeed.x * dt;
+        dMesh.rotation.y += dMesh.userData.rotSpeed.y * dt;
+        dMesh.rotation.z += dMesh.userData.rotSpeed.z * dt;
+        if (dMesh.position.y < camera.position.y - 28) {
+            disposeMesh(dMesh);
+            debris.splice(i, 1);
+        }
+    }
+
+    for (let i = confetti.length - 1; i >= 0; i--) {
+        const c = confetti[i];
+        c.userData.vel.y -= 0.012 * dt;
+        c.position.addScaledVector(c.userData.vel, dt);
+        c.rotation.x += c.userData.rot.x * dt;
+        c.rotation.y += c.userData.rot.y * dt;
+        c.userData.life -= 0.016 * dt;
+        if (c.userData.life <= 0) {
+            disposeMesh(c);
+            confetti.splice(i, 1);
+        }
+    }
+
+    for (let i = perfectWaves.length - 1; i >= 0; i--) {
+        const w = perfectWaves[i];
+        w.userData.age += 0.055 * dt;
+        const t = w.userData.age;
+        w.scale.set(w.userData.baseW * (1.05 + t * 0.75), w.userData.baseD * (1.05 + t * 0.75), 1);
+        w.material.opacity = Math.max(0, 0.9 * (1 - t));
+        if (t >= 1) {
+            w.material.dispose();
+            scene.remove(w);
+            perfectWaves.splice(i, 1);
+        }
+    }
+
+    if (!lowPerfMode) {
+        updateEnvironmentParticles(rawDelta);
+    }
+
+    updateCamera(dt);
+    renderer.render(scene, camera);
+}
+
+// ============ RESIZE & INPUT ============
+const onResize = throttle(() => {
+    if (!camera || !renderer) return;
+    const aspect = window.innerWidth / window.innerHeight;
+    const d = getAdaptiveD(aspect);
+    camera.left = -d * aspect;
+    camera.right = d * aspect;
+    camera.top = d;
+    camera.bottom = -d;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    cacheCoinPopupAnchor();
+    if (gameState === GAME_STATES.MENU) renderer.render(scene, camera);
+}, 120);
+
+window.addEventListener('resize', onResize);
+
 function handleInput(e) {
     const target = e.target;
     if (target && target.closest && target.closest('button, .mode-btn, .mini-mode-btn, #top-right-controls, .modal, .powerup-item, .daily-challenge-banner, .lb-mode-tab, .event-banner')) return;
@@ -3522,295 +3538,235 @@ function handleInput(e) {
     if (gameState === GAME_STATES.PLAYING) {
         if (e.type === 'touchstart') e.preventDefault();
         dropBlock();
+    } else if (gameState === GAME_STATES.GAMEOVER && overviewActive) {
+        if (e.type === 'touchstart') e.preventDefault();
+        skipTowerOverview();
     }
 }
 
-window.addEventListener('mousedown', handleInput);
 window.addEventListener('touchstart', handleInput, { passive: false });
+window.addEventListener('mousedown', handleInput);
 
 window.addEventListener('keydown', (e) => {
-    if (e.repeat) return;
-
-    if (e.code === 'KeyP') {
-        if (gameState === GAME_STATES.PLAYING && !isAnyModalOpen()) {
-            e.preventDefault();
-            togglePause();
-        } else if (gameState === GAME_STATES.PAUSED && pauseScreen && pauseScreen.classList.contains('open')) {
-            e.preventDefault();
-            togglePause();
-        }
-        return;
-    }
-
-    if (e.code === 'Escape') {
-        if (gameState === GAME_STATES.PLAYING && !isAnyModalOpen()) {
-            e.preventDefault();
-            togglePause();
-        }
-        return;
-    }
-
     if (e.code === 'Space' || e.code === 'Enter') {
         if (gameState === GAME_STATES.PLAYING && !isAnyModalOpen()) {
             e.preventDefault();
             dropBlock();
+        } else if (gameState === GAME_STATES.GAMEOVER && !isAnyModalOpen() && overviewActive) {
+            e.preventDefault();
+            skipTowerOverview();
+        } else if (gameState === GAME_STATES.GAMEOVER && gameOverEl && gameOverEl.classList.contains('open')) {
+            e.preventDefault();
+            activePowerups = { ...DEFAULTS.ACTIVE_POWERUPS };
+            hideModal(gameOverEl, { restoreMenu: false });
+            startGame();
+        }
+    } else if (e.code === 'KeyP' || e.code === 'Escape') {
+        if (gameState === GAME_STATES.PLAYING || (gameState === GAME_STATES.PAUSED && pauseScreen.classList.contains('open'))) {
+            e.preventDefault();
+            togglePause();
         }
     }
 });
 
-function bindModeButton(id, mode) {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    const handle = (e) => {
-        if (e) { if (e.cancelable !== false) e.stopPropagation(); e.preventDefault(); }
-        if (gameState === GAME_STATES.PLAYING) return;
-        dailyChallengeActive = false; dailyModifiers = {};
-        showPowerupSelection(mode);
-    };
-    btn.addEventListener('click', handle);
-    btn.addEventListener('touchend', handle, { passive: false });
-}
-
-bindModeButton('btn-classic', GAME_MODES.CLASSIC);
-bindModeButton('btn-time', GAME_MODES.TIME);
-
-document.querySelectorAll('.mini-mode-btn').forEach(btn => {
-    const handle = (e) => {
-        if (e) { if (e.cancelable !== false) e.stopPropagation(); e.preventDefault(); }
-        if (gameState === GAME_STATES.PLAYING) return;
-        dailyChallengeActive = false; dailyModifiers = {};
-        activePowerups = { ...DEFAULTS.ACTIVE_POWERUPS };
-        startGame(btn.dataset.mode);
-    };
-    btn.addEventListener('click', handle);
-    btn.addEventListener('touchend', handle, { passive: false });
-});
-
-// ============ BUTTONS ============
-safeClick($('restart-btn'), () => { activePowerups = { ...DEFAULTS.ACTIVE_POWERUPS }; hideModal(gameOverEl, { restoreMenu: false }); startGame(); });
-safeClick($('menu-btn'), () => goToMenu());
-safeClick(secondChanceBuyBtn, () => acceptSecondChance());
-safeClick(secondChanceSkipBtn, () => declineSecondChance());
-safeClick(pauseBtn, () => togglePause());
-safeClick($('pause-resume'), () => togglePause());
-safeClick($('pause-menu'), () => goToMenu());
-safeClick(menuToggleBtn, () => { if (gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSED) goToMenu(); });
-safeClick($('rules-btn'), () => { showModal(rulesScreen); if (startScreen) startScreen.style.display = 'none'; });
-safeClick($('close-rules'), () => { hideModal(rulesScreen); });
-safeClick($('ach-btn'), () => { renderAchievements(); showModal(achScreen); if (startScreen) startScreen.style.display = 'none'; });
-safeClick($('close-achievements'), () => { hideModal(achScreen); });
-safeClick($('lb-btn'), () => { currentLbMode = GAME_MODES.CLASSIC; renderLeaderboard(); showModal(lbScreen); if (startScreen) startScreen.style.display = 'none'; });
-safeClick($('close-leaderboard'), () => { hideModal(lbScreen); });
-safeClick($('settings-btn'), () => { updateSettingsUI(); showModal(settingsScreen); if (startScreen) startScreen.style.display = 'none'; });
-safeClick($('close-settings'), () => { hideModal(settingsScreen); });
-safeClick($('chest-btn'), () => showChestOpening());
-safeClick($('open-chest-btn'), () => openChest());
-safeClick($('close-chest'), () => { hideModal(chestScreen); });
-safeClick($('close-powerups'), () => { pendingGameMode = null; hideModal(powerupsScreen); });
-safeClick($('start-with-powerups'), () => startGameWithPowerups());
-safeClick(dailyPlayBtn, () => { if (!getDailyChallengeStatus()) startDailyChallenge(); });
-
-// Нижняя навигация (4 вкладки)
-document.querySelectorAll('.nav-tab-btn').forEach(btn => {
-    safeClick(btn, () => switchMenuTab(btn.dataset.menuTab));
-});
-
-// Престиж
-safeClick(prestigeActivateBtnEl, () => { if (canPrestige(level)) showPrestigeConfirm(); });
-safeClick(prestigeConfirmBtn, () => activatePrestige());
-safeClick(prestigeCancelBtn, () => hideModal(prestigeConfirmScreen));
-safeClick(openPrestigeChestBtn, () => openPrestigeChest());
-safeClick(closePrestigeChestBtn, () => { hideModal(prestigeChestScreen); updatePrestigeUI(); });
-
-// События
-safeClick(eventBannerEl, () => showEventDetails());
-safeClick($('close-event'), () => hideModal(eventScreen));
-
-// Мини-игры
-safeClick($('minigames-btn'), () => {
-    renderMinigamesList();
-    startMinigamesCooldownTimer();
-    showModal(minigamesScreen);
-    if (startScreen) startScreen.style.display = 'none';
-});
-safeClick($('close-minigames'), () => {
-    stopActiveMinigame();
-    stopMinigamesCooldownTimer();
-    hideModal(minigamesScreen);
-});
-
-// Ручная синхронизация облака
-safeClick($('cloud-sync-btn'), async () => {
-    const statusEl = $('cloud-sync-status');
-    if (!isCloudStorageAvailable()) {
-        if (statusEl) statusEl.textContent = 'Доступно только в Telegram';
-        return;
-    }
-    if (statusEl) statusEl.textContent = 'Синхронизация...';
-    await flushCloudSave();
-    updateCloudStatusUI();
-    triggerHaptic('success');
-});
-
-document.querySelectorAll('.shop-tab').forEach(tab => { safeClick(tab, () => switchShopTab(tab.dataset.tab)); });
-document.querySelectorAll('.lb-mode-tab').forEach(tab => { safeClick(tab, () => { currentLbMode = tab.dataset.mode; renderLeaderboard(); }); });
-safeClick($('toggle-music'), () => {
-    settings.musicEnabled = !settings.musicEnabled; saveSettings(); updateSettingsUI();
-    if (!settings.musicEnabled) stopMusic();
-    else if (gameState === GAME_STATES.PLAYING) startMusic();
-});
-safeClick($('toggle-sfx'), () => { settings.sfxEnabled = !settings.sfxEnabled; saveSettings(); updateSettingsUI(); });
-safeClick($('toggle-haptics'), () => { settings.hapticsEnabled = !settings.hapticsEnabled; saveSettings(); updateSettingsUI(); });
-safeClick($('claim-daily'), () => {
-    if (dailyRewardPending) {
-        addCoins(dailyRewardAmount);
-        dailyRewardPending = false;
-        playSound('quest'); triggerHaptic('success');
-    }
-    hideModal(dailyScreen);
-});
-safeClick(muteBtn, () => {
-    const allOn = settings.musicEnabled || settings.sfxEnabled;
-    if (allOn) {
-        settings.musicEnabled = false; settings.sfxEnabled = false; stopMusic();
-        if (windGain && audioCtx) try { windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); } catch (e) {}
-    } else {
-        settings.musicEnabled = true; settings.sfxEnabled = true;
-        if (gameState === GAME_STATES.PLAYING) startMusic();
-    }
-    saveSettings(); updateSettingsUI();
-});
-safeClick($('challenge-btn'), () => {
-    const text = `Я построил башню на ${score} этажей в игре «Башня хайпа»! Слабо побить мой рекорд? 🏗️`;
-    const url = TELEGRAM_APP_URL.includes('YOUR_BOT_USERNAME') ? window.location.href : TELEGRAM_APP_URL;
-    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
-    if (tg) tg.openTelegramLink(shareUrl);
-    else window.open(shareUrl, '_blank');
-});
-
-function onResize() {
-    syncTelegramSafeAreas();
-    if (!camera || !renderer) return;
-    const aspect = window.innerWidth / window.innerHeight;
-    const d = getAdaptiveD(aspect);
-    camera.left = -d * aspect; camera.right = d * aspect;
-    camera.top = d; camera.bottom = -d;
-    camera.updateProjectionMatrix();
-    renderer.setPixelRatio(getTargetPixelRatio());
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    cacheCoinPopupAnchor();
-}
-
-function updateTimerDisplay() {
-    updateDOMText(timerEl, `⏱ ${timeLeft}`);
-    updateDOMStyle(timerEl, 'color', timeLeft <= 10 ? '#EF476F' : '#06D6A0');
-}
-
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
+        stopRenderLoop();
         if (gameState === GAME_STATES.PLAYING) togglePause();
-        stopMusic();
         flushCloudSave();
-        if (audioCtx && audioCtx.state === 'running') audioCtx.suspend().catch(() => {});
     } else {
-        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
-        if (gameState === GAME_STATES.PLAYING && settings.musicEnabled) startMusic();
+        if (gameState !== GAME_STATES.MENU) startRenderLoop();
     }
 });
 
-// ============ ОБЛАЧНАЯ СИНХРОНИЗАЦИЯ (UI) ============
-function reloadStateFromStorage() {
-    coins = safeParseInt(safeGetItem(STORAGE_KEYS.COINS, '0'), 0);
-    highScore = safeParseInt(safeGetItem(STORAGE_KEYS.HIGH_SCORE, '0'), 0);
-    level = safeParseInt(safeGetItem(STORAGE_KEYS.LEVEL, '1'), 1);
-    xpTotal = safeParseInt(safeGetItem(STORAGE_KEYS.XP, '0'), 0);
-    streak = safeParseInt(safeGetItem(STORAGE_KEYS.STREAK, '0'), 0);
-    lastVisitDate = safeGetItem(STORAGE_KEYS.LAST_VISIT, '') || '';
+window.addEventListener('pagehide', () => { flushCloudSave(); });
 
-    currentSkin = safeGetItem(STORAGE_KEYS.SKIN, 'default') || 'default';
-    unlockedSkins = validateArray(safeGetItem(STORAGE_KEYS.SKINS, ['default']), ['default']);
-    currentPalette = safeGetItem(STORAGE_KEYS.PALETTE, 'standard') || 'standard';
-    unlockedPalettes = validateArray(safeGetItem(STORAGE_KEYS.PALETTES, ['standard']), ['standard']);
-    currentBackground = safeGetItem(STORAGE_KEYS.BACKGROUND, 'default') || 'default';
-    unlockedBackgrounds = validateArray(safeGetItem(STORAGE_KEYS.BACKGROUNDS, ['default']), ['default']);
-    unlockedFeatures = validateObject(safeGetItem(STORAGE_KEYS.FEATURES, {}), {});
+// ============ ПРИВЯЗКА КНОПОК ============
+function shareChallenge() {
+    const text = `Я построил башню высотой ${score} в «Башне хайпа»! 🏗️ Сможешь побить мой рекорд?`;
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(TELEGRAM_APP_URL)}&text=${encodeURIComponent(text)}`;
+    try {
+        if (tg && typeof tg.openTelegramLink === 'function') {
+            tg.openTelegramLink(shareUrl);
+        } else if (navigator.share) {
+            navigator.share({ title: 'Башня хайпа', text, url: TELEGRAM_APP_URL }).catch(() => {});
+        } else {
+            window.open(shareUrl, '_blank');
+        }
+    } catch (e) {}
+}
 
-    settings = { ...DEFAULT_SETTINGS, ...validateObject(safeGetItem(STORAGE_KEYS.SETTINGS, null), DEFAULT_SETTINGS) };
-    stats = { ...DEFAULT_STATS, ...validateObject(safeGetItem(STORAGE_KEYS.STATS, null), DEFAULT_STATS) };
-    totalScoreAllTime = safeParseInt(safeGetItem(STORAGE_KEYS.TOTAL_SCORE, '0'), 0);
-    recentScores = validateArray(safeGetItem(STORAGE_KEYS.RECENT_SCORES, []), []);
-    unlockedAchievements = validateArray(safeGetItem(STORAGE_KEYS.ACHIEVEMENTS, []), []);
-    leaderboard = validateArray(safeGetItem(STORAGE_KEYS.LEADERBOARD, []), []);
-    ownedPowerups = { ...DEFAULTS.POWERUPS, ...validateObject(safeGetItem(STORAGE_KEYS.POWERUPS, null), {}) };
-    chests = validateArray(safeGetItem(STORAGE_KEYS.CHESTS, []), []);
+function bindEvents() {
+    // Навигация по 4 вкладкам
+    document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        safeClick(btn, () => switchMenuTab(btn.dataset.menuTab));
+    });
 
-    if (highScoreEl) highScoreEl.innerText = `РЕКОРД: ${highScore}`;
+    // Вкладки магазина
+    document.querySelectorAll('.shop-tab').forEach(tab => {
+        safeClick(tab, () => switchShopTab(tab.dataset.tab));
+    });
+
+    // Вкладки таблицы рекордов
+    document.querySelectorAll('.lb-mode-tab').forEach(tab => {
+        safeClick(tab, () => {
+            currentLbMode = tab.dataset.mode;
+            renderLeaderboard();
+        });
+    });
+
+    // Режимы игры
+    safeClick($('btn-classic'), () => showPowerupSelection(GAME_MODES.CLASSIC));
+    safeClick($('btn-time'), () => showPowerupSelection(GAME_MODES.TIME));
+    document.querySelectorAll('.mini-mode-btn').forEach(btn => {
+        safeClick(btn, () => {
+            activePowerups = { ...DEFAULTS.ACTIVE_POWERUPS };
+            startGame(btn.dataset.mode);
+        });
+    });
+    safeClick(dailyPlayBtn, startDailyChallenge);
+
+    // Игровые контролы
+    safeClick(pauseBtn, togglePause);
+    safeClick(menuToggleBtn, goToMenu);
+    safeClick(muteBtn, () => {
+        const turnOn = !(settings.musicEnabled || settings.sfxEnabled);
+        settings.musicEnabled = turnOn;
+        settings.sfxEnabled = turnOn;
+        saveSettings();
+        updateSettingsUI();
+        if (turnOn && gameState === GAME_STATES.PLAYING) startMusic();
+        else stopMusic();
+    });
+
+    // Game Over & Второй шанс & Пауза
+    safeClick($('restart-btn'), () => {
+        activePowerups = { ...DEFAULTS.ACTIVE_POWERUPS };
+        hideModal(gameOverEl, { restoreMenu: false });
+        startGame();
+    });
+    safeClick($('menu-btn'), goToMenu);
+    safeClick($('challenge-btn'), shareChallenge);
+    safeClick(secondChanceBuyBtn, acceptSecondChance);
+    safeClick(secondChanceSkipBtn, declineSecondChance);
+    safeClick($('pause-resume'), togglePause);
+    safeClick($('pause-menu'), goToMenu);
+
+    // Способности
+    safeClick($('start-with-powerups'), startGameWithPowerups);
+    safeClick($('close-powerups'), () => {
+        pendingGameMode = null;
+        hideModal(powerupsScreen);
+    });
+
+    // Профиль и модалки
+    safeClick($('ach-btn'), () => { renderAchievements(); showModal(achScreen); });
+    safeClick($('close-achievements'), () => hideModal(achScreen));
+
+    safeClick($('lb-btn'), () => { renderLeaderboard(); showModal(lbScreen); });
+    safeClick($('close-leaderboard'), () => hideModal(lbScreen));
+
+    safeClick($('rules-btn'), () => showModal(rulesScreen));
+    safeClick($('close-rules'), () => hideModal(rulesScreen));
+
+    safeClick($('settings-btn'), () => { updateSettingsUI(); showModal(settingsScreen); });
+    safeClick($('close-settings'), () => hideModal(settingsScreen));
+
+    safeClick($('toggle-music'), () => {
+        settings.musicEnabled = !settings.musicEnabled;
+        saveSettings();
+        updateSettingsUI();
+        if (!settings.musicEnabled) stopMusic();
+    });
+    safeClick($('toggle-sfx'), () => {
+        settings.sfxEnabled = !settings.sfxEnabled;
+        saveSettings();
+        updateSettingsUI();
+    });
+    safeClick($('toggle-haptics'), () => {
+        settings.hapticsEnabled = !settings.hapticsEnabled;
+        saveSettings();
+        updateSettingsUI();
+        if (settings.hapticsEnabled) triggerHaptic('light');
+    });
+    safeClick($('cloud-sync-btn'), async () => {
+        const statusEl = $('cloud-sync-status');
+        if (statusEl) statusEl.textContent = 'Синхронизация...';
+        await flushCloudSave();
+        updateCloudStatusUI();
+        triggerHaptic('success');
+    });
+
+    // Ежедневная награда
+    safeClick($('claim-daily'), () => {
+        if (dailyRewardPending) {
+            dailyRewardPending = false;
+            addCoins(dailyRewardAmount);
+            playSound('quest');
+            triggerHaptic('success');
+        }
+        hideModal(dailyScreen);
+    });
+
+    // Сундуки
+    safeClick($('chest-btn'), showChestOpening);
+    safeClick($('open-chest-btn'), openChest);
+    safeClick($('close-chest'), () => hideModal(chestScreen));
+
+    // Престиж
+    safeClick(prestigeActivateBtnEl, showPrestigeConfirm);
+    safeClick(prestigeConfirmBtn, activatePrestige);
+    safeClick(prestigeCancelBtn, () => hideModal(prestigeConfirmScreen));
+    safeClick(openPrestigeChestBtn, openPrestigeChest);
+    safeClick(closePrestigeChestBtn, () => hideModal(prestigeChestScreen));
+
+    // События
+    safeClick(eventBannerEl, showEventDetails);
+    safeClick($('close-event'), () => hideModal(eventScreen));
+
+    // Мини-игры
+    safeClick($('minigames-btn'), () => {
+        renderMinigamesList();
+        showModal(minigamesScreen);
+        startMinigamesCooldownTimer();
+    });
+    safeClick($('close-minigames'), () => {
+        stopActiveMinigame();
+        stopMinigamesCooldownTimer();
+        hideModal(minigamesScreen);
+    });
+}
+
+// ============ INIT ============
+function init() {
+    initThree();
+    bindEvents();
+    initSeason();
+    loadQuests();
+    initMissions();
+    initEvents();
+    checkDailyStreak();
+    renderDailyChallenge();
     updateCoinUI();
     updateLevelUI();
     updateStreakUI();
     updateChestUI();
     updateSettingsUI();
-    renderEventBanner();
+    normalizeFontSizes();
+    syncTelegramTheme('#FFE5EC');
 
-    if (gameState === GAME_STATES.MENU) {
-        applySkinEffect();
-        applyBackground();
-        if (currentMenuTab === 'shop') renderShop();
+    if (renderer && scene && camera) {
+        renderer.render(scene, camera);
     }
-    updateCloudStatusUI();
+
+    if (dailyRewardPending) {
+        setTimeout(showDailyReward, 450);
+    }
+
+    initCloudSync(() => {
+        reloadFromLocalAfterCloudMerge();
+        updateCloudStatusUI();
+    }).then(() => updateCloudStatusUI());
 }
 
-function updateCloudStatusUI() {
-    const statusEl = $('cloud-sync-status');
-    if (statusEl) statusEl.textContent = getCloudStatus();
-}
-
-// ============ INIT ============
-initThree();
-initSeason();
-loadQuests();
-updateCoinUI();
-updateLevelUI();
-updateSettingsUI();
-updateChestUI();
-updateActivePowerupsUI();
-renderDailyChallenge();
-initMissions();
-initEvents();
-
-// Миграция старых лидербордов
-(function migrateLeaderboard() {
-    let changed = false;
-    leaderboard.forEach((e, i) => {
-        if (typeof e.ts !== 'number') { e.ts = i; changed = true; }
-    });
-    if (changed) saveLeaderboard();
-})();
-
-checkDailyStreak();
-if (dailyRewardPending) setTimeout(() => showDailyReward(), 400);
-
-// Применяем эффект текущего скина
-applySkinEffect();
-
-// Нормализуем размеры шрифтов
-normalizeFontSizes();
-
-// Декоративные звёзды на главном экране (только вкладка «Игра»)
-const startContent = document.querySelector('#tab-play');
-if (startContent) addDecorativeStars(startContent, 20);
-
-// Анимация появления кнопок режимов
-const modeButtons = document.querySelectorAll('.mode-btn, .mini-mode-btn');
-animateElementsSequentially(modeButtons, 'fadeInUp', 80);
-
-switchMenuTab('play');
-
-initCloudSync(() => {
-    reloadStateFromStorage();
-}).then(() => {
-    updateCloudStatusUI();
-});
-
-updateTelegramBackButton();
-animate();
+init();
