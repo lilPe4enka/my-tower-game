@@ -2033,6 +2033,7 @@ function startMinigamesCooldownTimer() {
         }
     }, 1000);
 }
+
 // ============ THREE.JS & ОПТИМИЗАЦИЯ ============
 const PARTICLE_GEOS = {
     trail: new THREE.SphereGeometry(0.1, 5, 5),
