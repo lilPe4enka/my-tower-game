@@ -2480,13 +2480,21 @@ function createBaseBlock() {
     spawnNewBlock();
 }
 
-function spawnNewBlock() {
+function spawnNewBlock(overrideSize = null) {
     const top = blocks[blocks.length - 1];
     movingAxis = blocks.length % 2 === 1 ? 'x' : 'z';
-    const { type, color } = nextBlockData;
+    let { type, color } = nextBlockData;
     nextBlockData = generateNextBlockData();
     updateNextBlockPreview(nextBlockData.type, nextBlockData.color);
-    const w = top.geometry.parameters.width, d = top.geometry.parameters.depth;
+
+    // После «Второго шанса» гарантированно даём обычный блок (без бомбы/хрупкого)
+    if (overrideSize && (type === BLOCK_TYPES.BOMB || type === BLOCK_TYPES.CRUMBLE)) {
+        type = BLOCK_TYPES.NORMAL;
+        color = getBlockVisuals(BLOCK_TYPES.NORMAL).color;
+    }
+
+    const w = overrideSize ? overrideSize.w : top.geometry.parameters.width;
+    const d = overrideSize ? overrideSize.d : top.geometry.parameters.depth;
     let sx = top.position.x, sz = top.position.z;
     if (movingAxis === 'x') sx = direction === 1 ? -GAME_CONFIG.MOVE_RANGE : GAME_CONFIG.MOVE_RANGE;
     else sz = direction === 1 ? -GAME_CONFIG.MOVE_RANGE : GAME_CONFIG.MOVE_RANGE;
@@ -2544,17 +2552,21 @@ function stopSecondChanceLoop() {
     secondChanceActive = false;
 }
 
-function offerSecondChance() {
+function offerSecondChance(reason = 'miss') {
     secondChanceActive = true;
     gameState = GAME_STATES.PAUSED;
     document.body.classList.remove('in-game');
     if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
 
     if (secondChanceSubEl) {
-        const diff = highScore - score;
-        secondChanceSubEl.textContent = (highScore > 0 && diff > 0 && diff <= GAME_CONFIG.SECOND_CHANCE_NEAR_RECORD)
-            ? `До рекорда всего ${diff}! Продолжи с этого же места!`
-            : `Отличная башня (${score} очк.)! Продолжи с этого же места?`;
+        if (reason === 'crumble') {
+            secondChanceSubEl.textContent = '🧱 Хрупкий блок разрушился от идеала! Продолжить с этого места?';
+        } else {
+            const diff = highScore - score;
+            secondChanceSubEl.textContent = (highScore > 0 && diff > 0 && diff <= GAME_CONFIG.SECOND_CHANCE_NEAR_RECORD)
+                ? `Промах! До рекорда всего ${diff} — продолжи с этого места!`
+                : `Промах! Отличная башня (${score} очк.) — продолжить?`;
+        }
     }
     if (secondChanceBuyBtn) {
         secondChanceBuyBtn.textContent = `💖 ПРОДОЛЖИТЬ (${GAME_CONFIG.SECOND_CHANCE_COST} 🪙)`;
@@ -2600,7 +2612,10 @@ function acceptSecondChance() {
 
     gameState = GAME_STATES.PLAYING;
     document.body.classList.add('in-game');
-    spawnNewBlock();
+    // Новый блок на 50–60% меньше начального (40–50% от currentBaseSize)
+    const rescueScale = 0.4 + Math.random() * 0.1;
+    const rescueSize = currentBaseSize * rescueScale;
+    spawnNewBlock({ w: rescueSize, d: rescueSize });
     if (currentBlock) currentBlock.userData.moving = false;
 
     playSound('quest');
@@ -2669,8 +2684,9 @@ function dropBlock() {
         diffX = 0; diffZ = 0; absDiffX = 0; absDiffZ = 0; maxDiff = 0;
     }
 
-    const missX = movingAxis === 'x' && absDiffX >= sizeX / 2;
-    const missZ = movingAxis === 'z' && absDiffZ >= sizeZ / 2;
+    const minOverlap = 0.08;
+    const missX = movingAxis === 'x' && absDiffX >= sizeX - minOverlap;
+    const missZ = movingAxis === 'z' && absDiffZ >= sizeZ - minOverlap;
     const precisionMode = (gameMode === GAME_MODES.PRECISION);
     const noCutActive = dailyModifiers.noCut || precisionMode;
     let perfectThreshold = dailyModifiers.tightThreshold || GAME_CONFIG.PERFECT_THRESHOLD;
@@ -2680,16 +2696,19 @@ function dropBlock() {
     }
 
     if (missX || missZ) {
-        if (canOfferSecondChance()) { offerSecondChance(); return; }
-        currentBlock.userData.falling = true; triggerGameOver(); return;
+        currentBlock.userData.falling = true;
+        if (canOfferSecondChance()) { offerSecondChance('miss'); return; }
+        triggerGameOver(); return;
     }
     if (noCutActive && maxDiff >= perfectThreshold) {
         currentBlock.userData.falling = true; triggerGameOver(); return;
     }
     if (bType === BLOCK_TYPES.CRUMBLE && maxDiff < perfectThreshold) {
-        if (canOfferSecondChance()) { offerSecondChance(); return; }
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
-        spawnBombParticles(); triggerGameOver(); return;
+        playSound('bomb');
+        spawnBombParticles();
+        if (canOfferSecondChance()) { offerSecondChance('crumble'); return; }
+        triggerGameOver(); return;
     }
 
     if (maxDiff < perfectThreshold) {
