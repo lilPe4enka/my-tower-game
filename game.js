@@ -17,7 +17,7 @@ import { initCloudSync, scheduleCloudSave, flushCloudSave, getCloudStatus, isClo
 setupGlobalErrorHandler();
 
 // ============ TELEGRAM & HAPTICS ============
-const TELEGRAM_APP_URL = 'https://t.me/YOUR_BOT_USERNAME/app'; // замени на реальную ссылку на Mini App
+const TELEGRAM_APP_URL = 'https://t.me/TowerGameeee_bot/app'; // замени на реальную ссылку на Mini App
 const tg = window.Telegram?.WebApp;
 
 if (tg) {
