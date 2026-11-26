@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=19">
+    <link rel="stylesheet" href="style.css?v=22">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         // Снимаем старый Service Worker и кэш, если они остались в WebView
@@ -47,6 +47,7 @@
             <div id="timer" aria-live="polite">⏱ 60</div>
             <div id="mode-label">КЛАССИКА</div>
             <div id="wind-indicator" aria-label="Индикатор ветра">
+            <div id="contract-hud" class="contract-hud" style="display:none;"></div>
                 <span class="wind-side" id="wind-left">◀</span>
                 <div class="wind-bar"><div id="wind-fill"></div></div>
                 <span class="wind-side" id="wind-right">▶</span>
@@ -232,6 +233,7 @@
                 <button class="ach-tab" data-ach-cat="storm">🌪 Шторм</button>
                 <button class="ach-tab" data-ach-cat="endless">♾️ Беск.</button>
                 <button class="ach-tab" data-ach-cat="mirror">🪞 Зеркало</button>
+                <button class="ach-tab" data-ach-cat="antigravity">🪐 Антиграв.</button>
                 <button class="ach-tab" data-ach-cat="progress">🎲 Прогресс</button>
             </div>
             <div id="ach-list" class="ach-list"></div>
@@ -250,6 +252,7 @@
                 <button class="lb-mode-tab" data-mode="storm">🌪 Шторм</button>
                 <button class="lb-mode-tab" data-mode="endless">♾️ Бесконечный</button>
                 <button class="lb-mode-tab" data-mode="mirror">🪞 Зеркальный</button>
+                <button class="lb-mode-tab" data-mode="antigravity">🪐 Антиграв.</button>
             </div>
             <div class="lb-best">
                 <div class="lb-best-label">🏆 Лучший результат</div>
@@ -308,6 +311,8 @@
             <h2 id="powerups-title">⚡ Способности</h2>
             <p>Выбери способности для этой игры</p>
             <div id="powerup-list" class="powerup-list"></div>
+            <div class="contracts-divider">📜 Контракт (ставка на забег)</div>
+            <div id="contract-list" class="contract-list"></div>
             <div class="btn-group">
                 <button id="start-with-powerups" class="btn-primary">🚀 НАЧАТЬ ИГРУ</button>
                 <button id="close-powerups" class="btn-ghost">ОТМЕНА</button>
@@ -497,6 +502,10 @@
                     <button class="mini-mode-btn" data-mode="mirror">
                         <span class="mm-icon">🪞</span>
                         <span class="mm-name">Зеркальный</span>
+                    </button>
+                    <button class="mini-mode-btn antigrav-btn" data-mode="antigravity">
+                        <span class="mm-icon">🪐</span>
+                        <span class="mm-name">Антигравитация</span>
                     </button>
                 </div>
             </section>
