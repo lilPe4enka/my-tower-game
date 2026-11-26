@@ -1,26 +1,22 @@
-// wheel.js — ежедневное Колесо удачи на HiDPI Canvas
+// wheel.js — Колесо удачи с взвешенными шансами (2% на легендарный облик)
 
-import { safeGetItem, safeSetItem } from './utils.js?v=17';
+import { safeGetItem, safeSetItem } from './utils.js?v=18';
 
-const WHEEL_LAST_SPIN_KEY = 'towerWheelLastSpinDate';
+const WHEEL_STORAGE_KEY = 'towerLastWheelSpinDate';
 
 export const WHEEL_SEGMENTS = [
-    { label: '+50 🪙',   color: '#FF6B9D', textColor: '#FFFFFF', type: 'coins',   value: 50,  weight: 22 },
-    { label: '+100 🪙',  color: '#4ECDC4', textColor: '#FFFFFF', type: 'coins',   value: 100, weight: 18 },
-    { label: '⚡ Буст',   color: '#A855F7', textColor: '#FFFFFF', type: 'powerup', value: 1,   weight: 16 },
-    { label: '+150 ⭐',  color: '#4FACFE', textColor: '#FFFFFF', type: 'xp',      value: 150, weight: 16 },
-    { label: '+200 🪙',  color: '#FFA94D', textColor: '#FFFFFF', type: 'coins',   value: 200, weight: 12 },
-    { label: '📦 Сундук', color: '#06D6A0', textColor: '#FFFFFF', type: 'chest',   rare: false, weight: 9 },
-    { label: '✨ Редкий', color: '#FF477E', textColor: '#FFFFFF', type: 'chest',   rare: true,  weight: 5 },
-    { label: '💎 500 🪙', color: '#FFD93D', textColor: '#4A3200', type: 'coins',   value: 500, jackpot: true, weight: 2 },
+    { label: '+40 🪙',      type: 'coins',          value: 40,  color: '#FF8A65', weight: 24 },
+    { label: '+100 ⭐',     type: 'xp',             value: 100, color: '#4FC3F7', weight: 18 },
+    { label: '+80 🪙',      type: 'coins',          value: 80,  color: '#FFD54F', weight: 18 },
+    { label: '⚡ Буст',     type: 'powerup',        value: 1,   color: '#BA68C8', weight: 14 },
+    { label: '+150 🪙',     type: 'coins',          value: 150, color: '#81C784', weight: 10 },
+    { label: '📦 Сундук',   type: 'chest',          rare: false,color: '#64B5F6', weight: 10 },
+    { label: '✨ Редкий',   type: 'chest',          rare: true, color: '#FF6B9D', weight: 4  },
+    { label: '👑 Легенда',  type: 'legendary_skin', jackpot: true, color: '#FFB300', weight: 2 },
 ];
 
 export function canSpinWheel() {
-    return safeGetItem(WHEEL_LAST_SPIN_KEY, '') !== new Date().toDateString();
-}
-
-export function markWheelSpun() {
-    safeSetItem(WHEEL_LAST_SPIN_KEY, new Date().toDateString());
+    return safeGetItem(WHEEL_STORAGE_KEY, '') !== new Date().toDateString();
 }
 
 export function getTimeUntilNextSpin() {
@@ -35,8 +31,8 @@ export function getTimeUntilNextSpin() {
     return `${h}:${m}:${s}`;
 }
 
-function rollWeightedSegmentIndex() {
-    const total = WHEEL_SEGMENTS.reduce((sum, seg) => sum + seg.weight, 0);
+function pickWeightedIndex() {
+    const total = WHEEL_SEGMENTS.reduce((sum, s) => sum + s.weight, 0);
     let r = Math.random() * total;
     for (let i = 0; i < WHEEL_SEGMENTS.length; i++) {
         r -= WHEEL_SEGMENTS[i].weight;
@@ -46,154 +42,92 @@ function rollWeightedSegmentIndex() {
 }
 
 export function createWheelController(canvas, { onTick, onFinish } = {}) {
-    const SIZE = 270;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(SIZE * dpr);
-    canvas.height = Math.round(SIZE * dpr);
     const ctx = canvas.getContext('2d');
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
     const count = WHEEL_SEGMENTS.length;
     const arc = (Math.PI * 2) / count;
-    let currentAngle = 0;
+    let angle = 0;
     let spinning = false;
-    let rafId = null;
 
     function draw() {
-        const cx = SIZE / 2;
-        const cy = SIZE / 2;
-        const r = SIZE / 2 - 12;
+        const w = canvas.width, h = canvas.height;
+        const cx = w / 2, cy = h / 2, radius = Math.min(cx, cy) - 8;
+        ctx.clearRect(0, 0, w, h);
 
-        ctx.clearRect(0, 0, SIZE, SIZE);
-
-        // Внешняя рамка
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(cx, cy, r + 6, 0, Math.PI * 2);
-        ctx.fillStyle = '#FFFFFF';
-        ctx.shadowColor = 'rgba(74, 68, 88, 0.2)';
-        ctx.shadowBlur = 12;
-        ctx.fill();
-        ctx.restore();
-
-        // Секторы
         for (let i = 0; i < count; i++) {
-            const start = currentAngle + i * arc;
-            const end = start + arc;
             const seg = WHEEL_SEGMENTS[i];
+            const start = angle + i * arc;
+            const end = start + arc;
 
             ctx.beginPath();
             ctx.moveTo(cx, cy);
-            ctx.arc(cx, cy, r, start, end);
+            ctx.arc(cx, cy, radius, start, end);
             ctx.closePath();
             ctx.fillStyle = seg.color;
             ctx.fill();
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 3;
             ctx.stroke();
 
-            // Подпись сектора
             ctx.save();
             ctx.translate(cx, cy);
             ctx.rotate(start + arc / 2);
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
-            ctx.fillStyle = seg.textColor;
-            ctx.font = '900 13px Rubik, sans-serif';
-            ctx.fillText(seg.label, r - 14, 0);
+            ctx.fillStyle = seg.jackpot ? '#4A2800' : '#FFFFFF';
+            ctx.font = seg.jackpot ? '900 13px Rubik, sans-serif' : '800 13px Rubik, sans-serif';
+            ctx.fillText(seg.label, radius - 14, 0);
             ctx.restore();
         }
 
-        // Декоративные точки по ободу
-        for (let i = 0; i < count; i++) {
-            const a = currentAngle + i * arc;
-            ctx.beginPath();
-            ctx.arc(cx + Math.cos(a) * (r + 2), cy + Math.sin(a) * (r + 2), 3, 0, Math.PI * 2);
-            ctx.fillStyle = '#FFD93D';
-            ctx.fill();
-        }
-
-        // Центральный диск
+        // Центральный круг
         ctx.beginPath();
-        ctx.arc(cx, cy, 24, 0, Math.PI * 2);
+        ctx.arc(cx, cy, 20, 0, Math.PI * 2);
         ctx.fillStyle = '#FFFFFF';
         ctx.fill();
-        ctx.lineWidth = 3;
         ctx.strokeStyle = '#FF6B9D';
+        ctx.lineWidth = 4;
         ctx.stroke();
-
-        ctx.fillStyle = '#FF6B9D';
-        ctx.font = '900 18px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🎰', cx, cy + 1);
     }
 
     function spin() {
-        if (spinning || !canSpinWheel()) return false;
+        if (spinning || !canSpinWheel()) return;
         spinning = true;
-        markWheelSpun();
+        safeSetItem(WHEEL_STORAGE_KEY, new Date().toDateString());
 
-        const targetIndex = rollWeightedSegmentIndex();
-        const pointerAngle = -Math.PI / 2; // стрелка сверху (12 часов)
-        const desiredMod = pointerAngle - (targetIndex + 0.5) * arc;
-        const currentMod = currentAngle % (Math.PI * 2);
-        let delta = desiredMod - currentMod;
-        while (delta < 0) delta += Math.PI * 2;
-
-        const extraSpins = (5 + Math.floor(Math.random() * 2)) * Math.PI * 2;
-        const jitter = (Math.random() - 0.5) * arc * 0.55;
-        const startAngle = currentAngle;
-        const totalDelta = extraSpins + delta + jitter;
+        const winIdx = pickWeightedIndex();
+        // Указатель сверху (-Math.PI / 2)
+        const targetCenter = -Math.PI / 2 - (winIdx * arc + arc / 2);
+        const jitter = (Math.random() - 0.5) * arc * 0.65;
+        const fullSpins = (5 + Math.floor(Math.random() * 2)) * Math.PI * 2;
+        const startAngle = angle;
+        const finalAngle = startAngle + fullSpins + ((targetCenter + jitter - startAngle) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
 
         const duration = 4200;
         const startTime = performance.now();
-        let lastSegTick = Math.floor(startAngle / arc);
+        let lastSector = -1;
 
-        function easeOutQuart(t) {
-            return 1 - Math.pow(1 - t, 4);
-        }
-
-        function animateSpin(now) {
-            const elapsed = now - startTime;
-            const t = Math.min(1, elapsed / duration);
-            currentAngle = startAngle + totalDelta * easeOutQuart(t);
-
-            const currentSegTick = Math.floor(currentAngle / arc);
-            if (currentSegTick !== lastSegTick) {
-                lastSegTick = currentSegTick;
-                if (onTick) onTick();
-            }
-
+        function frame(now) {
+            const t = Math.min(1, (now - startTime) / duration);
+            const ease = 1 - Math.pow(1 - t, 3.5);
+            angle = startAngle + (finalAngle - startAngle) * ease;
             draw();
 
+            const curSector = Math.floor(((-angle - Math.PI / 2) % (Math.PI * 2) + Math.PI * 2) / arc) % count;
+            if (curSector !== lastSector) {
+                lastSector = curSector;
+                if (typeof onTick === 'function') onTick();
+            }
+
             if (t < 1) {
-                rafId = requestAnimationFrame(animateSpin);
+                requestAnimationFrame(frame);
             } else {
                 spinning = false;
-                rafId = null;
-                if (onFinish) onFinish(WHEEL_SEGMENTS[targetIndex]);
+                if (typeof onFinish === 'function') onFinish(WHEEL_SEGMENTS[winIdx]);
             }
         }
-
-        rafId = requestAnimationFrame(animateSpin);
-        return true;
-    }
-
-    function destroy() {
-        if (rafId) {
-            cancelAnimationFrame(rafId);
-            rafId = null;
-        }
-        spinning = false;
+        requestAnimationFrame(frame);
     }
 
     draw();
-
-    return {
-        draw,
-        spin,
-        destroy,
-        isSpinning: () => spinning,
-    };
+    return { draw, spin, isSpinning: () => spinning };
 }
