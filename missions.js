@@ -1,4 +1,4 @@
-// missions.js — система ежедневных миссий с платным обновлением списка
+// missions.js — расширенная система ежедневных миссий (42 миссии, баланс сложности и реролл)
 
 import { safeGetItem, safeSetItem } from './utils.js?v=18';
 
@@ -7,65 +7,90 @@ const MISSIONS_REROLL_KEY = 'towerMissionsReroll';
 const DAILY_MISSIONS_COUNT = 5;
 
 const MISSIONS_POOL = [
-    // Лёгкие
-    { id: 'blocks_25',   type: 'blocks',  target: 25,  icon: '🧱', text: 'Поставь 25 блоков',         reward: { coins: 35, xp: 40 } },
-    { id: 'blocks_50',   type: 'blocks',  target: 50,  icon: '🏗️', text: 'Поставь 50 блоков',         reward: { coins: 60, xp: 65 } },
-    { id: 'perfect_5',   type: 'perfect', target: 5,   icon: '🎯', text: 'Сделай 5 идеалов',          reward: { coins: 40, xp: 45 } },
-    { id: 'perfect_12',  type: 'perfect', target: 12,  icon: '🎯', text: 'Сделай 12 идеалов',         reward: { coins: 75, xp: 80 } },
-    { id: 'games_3',     type: 'games',   target: 3,   icon: '🎮', text: 'Сыграй 3 игры',             reward: { coins: 40, xp: 50 } },
-    { id: 'games_6',     type: 'games',   target: 6,   icon: '🎲', text: 'Сыграй 6 игр',              reward: { coins: 75, xp: 85 } },
-    { id: 'combo_3',     type: 'combo',   target: 3,   icon: '🔥', text: 'Собери серию x3',           reward: { coins: 45, xp: 50 } },
-    { id: 'score_20',    type: 'score',   target: 20,  icon: '🏠', text: 'Набери 20 очков за игру',   reward: { coins: 45, xp: 55 } },
-    { id: 'coins_80',    type: 'coins',   target: 80,  icon: '🪙', text: 'Заработай 80 монет',        reward: { coins: 50, xp: 50 } },
-    { id: 'xp_120',      type: 'xp',      target: 120, icon: '⭐', text: 'Получи 120 опыта',          reward: { coins: 45, xp: 60 } },
+    // === ЛЁГКИЕ (tier: 'easy') ===
+    { id: 'blocks_25',     tier: 'easy',   type: 'blocks',        target: 25,  icon: '🧱', text: 'Поставь 25 блоков',              reward: { coins: 35, xp: 40 } },
+    { id: 'perfect_5',     tier: 'easy',   type: 'perfect',       target: 5,   icon: '🎯', text: 'Сделай 5 идеалов',               reward: { coins: 40, xp: 45 } },
+    { id: 'games_3',       tier: 'easy',   type: 'games',         target: 3,   icon: '🎮', text: 'Сыграй 3 игры',                  reward: { coins: 40, xp: 50 } },
+    { id: 'combo_3',       tier: 'easy',   type: 'combo',         target: 3,   icon: '🔥', text: 'Собери серию x3',                reward: { coins: 45, xp: 50 } },
+    { id: 'score_20',      tier: 'easy',   type: 'score',         target: 20,  icon: '🏠', text: 'Набери 20 очков за игру',        reward: { coins: 45, xp: 55 } },
+    { id: 'coins_80',      tier: 'easy',   type: 'coins',         target: 80,  icon: '🪙', text: 'Заработай 80 монет',             reward: { coins: 50, xp: 50 } },
+    { id: 'xp_120',        tier: 'easy',   type: 'xp',            target: 120, icon: '⭐', text: 'Получи 120 опыта',               reward: { coins: 45, xp: 60 } },
+    { id: 'cut_10',        tier: 'easy',   type: 'cut',           target: 10,  icon: '✂️', text: 'Сделай 10 срезов блоков',        reward: { coins: 40, xp: 45 } },
+    { id: 'golden_2',      tier: 'easy',   type: 'golden',        target: 2,   icon: '👑', text: 'Поймай 2 золотых идеально',      reward: { coins: 50, xp: 55 } },
+    { id: 'ice_2',         tier: 'easy',   type: 'ice',           target: 2,   icon: '❄️', text: 'Поймай 2 льда идеально',         reward: { coins: 50, xp: 55 } },
+    { id: 'pstart_3',      tier: 'easy',   type: 'perfect_start', target: 3,   icon: '🚀', text: 'Первые 3 блока игры идеально',   reward: { coins: 55, xp: 55 } },
+    { id: 'minigame_1',    tier: 'easy',   type: 'minigame_play', target: 1,   icon: '🎲', text: 'Сыграй 1 мини-игру',             reward: { coins: 45, xp: 50 } },
+    { id: 'powerup_1',     tier: 'easy',   type: 'powerup_use',   target: 1,   icon: '⚡', text: 'Используй способность в игре',   reward: { coins: 55, xp: 50 } },
+    { id: 'clean_20',      tier: 'easy',   type: 'clean_score',   target: 20,  icon: '🧘', text: '20 очков без способностей',      reward: { coins: 55, xp: 60 } },
 
-    // Средние и сложные
-    { id: 'blocks_100',  type: 'blocks',  target: 100, icon: '🏙️', text: 'Поставь 100 блоков',        reward: { coins: 110, xp: 110 } },
-    { id: 'perfect_25',  type: 'perfect', target: 25,  icon: '🏹', text: 'Сделай 25 идеалов',         reward: { coins: 120, xp: 120 } },
-    { id: 'combo_6',     type: 'combo',   target: 6,   icon: '💥', text: 'Собери серию x6',           reward: { coins: 95, xp: 100 } },
-    { id: 'combo_10',    type: 'combo',   target: 10,  icon: '⚡', text: 'Собери серию x10',          reward: { coins: 150, xp: 140 } },
-    { id: 'score_40',    type: 'score',   target: 40,  icon: '🏰', text: 'Набери 40 очков за игру',   reward: { coins: 100, xp: 100 } },
-    { id: 'score_70',    type: 'score',   target: 70,  icon: '🗼', text: 'Набери 70 очков за игру',   reward: { coins: 140, chest: true, rare: false } },
-    { id: 'fury_1',      type: 'fury',    target: 1,   icon: '😡', text: 'Активируй Ярость 1 раз',    reward: { coins: 70, xp: 75 } },
-    { id: 'fury_3',      type: 'fury',    target: 3,   icon: '👹', text: 'Активируй Ярость 3 раза',   reward: { coins: 130, chest: true, rare: false } },
-    { id: 'coins_200',   type: 'coins',   target: 200, icon: '💰', text: 'Заработай 200 монет',       reward: { coins: 100, xp: 90 } },
-    { id: 'xp_300',      type: 'xp',      target: 300, icon: '🌟', text: 'Получи 300 опыта',          reward: { coins: 90, chest: true, rare: false } },
+    // === СРЕДНИЕ (tier: 'medium') ===
+    { id: 'blocks_60',     tier: 'medium', type: 'blocks',          target: 60,  icon: '🏗️', text: 'Поставь 60 блоков',              reward: { coins: 75, xp: 75 } },
+    { id: 'perfect_15',    tier: 'medium', type: 'perfect',         target: 15,  icon: '🎯', text: 'Сделай 15 идеалов',              reward: { coins: 85, xp: 85 } },
+    { id: 'perfect_run_8', tier: 'medium', type: 'perfect_run',     target: 8,   icon: '🏹', text: '8 идеалов за одну игру',         reward: { coins: 90, xp: 85 } },
+    { id: 'games_6',       tier: 'medium', type: 'games',           target: 6,   icon: '🕹️', text: 'Сыграй 6 игр',                   reward: { coins: 75, xp: 85 } },
+    { id: 'combo_6',       tier: 'medium', type: 'combo',           target: 6,   icon: '💥', text: 'Собери серию x6',                reward: { coins: 95, xp: 100 } },
+    { id: 'score_40',      tier: 'medium', type: 'score',           target: 40,  icon: '🏰', text: 'Набери 40 очков за игру',        reward: { coins: 100, xp: 100 } },
+    { id: 'fury_1',        tier: 'medium', type: 'fury',            target: 1,   icon: '😡', text: 'Активируй Ярость 1 раз',         reward: { coins: 75, xp: 80 } },
+    { id: 'bomb_2',        tier: 'medium', type: 'bomb',            target: 2,   icon: '💣', text: 'Обезвредь 2 бомбы идеально',     reward: { coins: 85, xp: 80 } },
+    { id: 'crumble_2',     tier: 'medium', type: 'crumble_cut',     target: 2,   icon: '🧱', text: 'Аккуратно срежь 2 хрупких блока',reward: { coins: 90, xp: 85 } },
+    { id: 'width_grow_2',  tier: 'medium', type: 'width_grow',      target: 2,   icon: '✨', text: 'Расширь блок серией 2 раза',     reward: { coins: 95, xp: 90 } },
+    { id: 'storm_20',      tier: 'medium', type: 'storm_score',     target: 20,  icon: '🌪️', text: '20 очков в режиме «Шторм»',      reward: { coins: 95, xp: 90 } },
+    { id: 'time_25',       tier: 'medium', type: 'time_score',      target: 25,  icon: '⏱️', text: '25 очков в режиме «На время»',   reward: { coins: 90, xp: 90 } },
+    { id: 'mirror_20',     tier: 'medium', type: 'mirror_score',    target: 20,  icon: '🪞', text: '20 очков в «Зеркальном»',        reward: { coins: 95, xp: 90 } },
+    { id: 'antigrav_rot1', tier: 'medium', type: 'antigrav_rot',    target: 1,   icon: '🪐', text: 'Переживи поворот в Антиграв.',   reward: { coins: 100, xp: 95 } },
+    { id: 'coins_200',     tier: 'medium', type: 'coins',           target: 200, icon: '💰', text: 'Заработай 200 монет',            reward: { coins: 95, xp: 90 } },
+    { id: 'minigame_3',    tier: 'medium', type: 'minigame_play',   target: 3,   icon: '🎪', text: 'Сыграй 3 мини-игры',             reward: { coins: 90, xp: 95 } },
+
+    // === СЛОЖНЫЕ / ОСОБЫЕ (tier: 'hard') ===
+    { id: 'blocks_120',    tier: 'hard',   type: 'blocks',          target: 120, icon: '🏙️', text: 'Поставь 120 блоков',             reward: { coins: 130, xp: 120 } },
+    { id: 'perfect_30',    tier: 'hard',   type: 'perfect',         target: 30,  icon: '💎', text: 'Сделай 30 идеалов',              reward: { coins: 140, xp: 130 } },
+    { id: 'combo_10',      tier: 'hard',   type: 'combo',           target: 10,  icon: '⚡', text: 'Собери серию x10',               reward: { coins: 160, chest: true, rare: false } },
+    { id: 'score_75',      tier: 'hard',   type: 'score',           target: 75,  icon: '🗼', text: 'Набери 75 очков за игру',        reward: { coins: 150, chest: true, rare: false } },
+    { id: 'fury_3',        tier: 'hard',   type: 'fury',            target: 3,   icon: '👹', text: 'Активируй Ярость 3 раза',        reward: { coins: 140, chest: true, rare: false } },
+    { id: 'precision_12',  tier: 'hard',   type: 'precision_score', target: 12,  icon: '🩺', text: '12 очков в режиме «Точность»',   reward: { coins: 160, chest: true, rare: false } },
+    { id: 'antigrav_35',   tier: 'hard',   type: 'antigrav_score',  target: 35,  icon: '🌌', text: '35 очков в «Антигравитации»',    reward: { coins: 160, chest: true, rare: false } },
+    { id: 'clean_45',      tier: 'hard',   type: 'clean_score',     target: 45,  icon: '🥋', text: '45 очков без способностей',      reward: { coins: 150, xp: 130 } },
+    { id: 'pstart_6',      tier: 'hard',   type: 'perfect_start',   target: 6,   icon: '☄️', text: 'Первые 6 блоков игры идеально',  reward: { coins: 150, chest: true, rare: false } },
+    { id: 'contract_1',    tier: 'hard',   type: 'contract_win',    target: 1,   icon: '📜', text: 'Выполни 1 контракт',             reward: { coins: 140, chest: true, rare: false } },
+    { id: 'secret_1',      tier: 'hard',   type: 'secret',          target: 1,   icon: '🌟', text: 'Поймай 1 секретный блок',        reward: { coins: 130, chest: true, rare: true } },
+    { id: 'xp_350',        tier: 'hard',   type: 'xp',              target: 350, icon: '🏅', text: 'Получи 350 опыта',               reward: { coins: 110, chest: true, rare: false } },
 ];
+
+function pickFromTier(tier, count, excludeIds, usedTypes, selected) {
+    let pool = MISSIONS_POOL.filter(m => m.tier === tier && !excludeIds.has(m.id));
+    if (pool.length < count) {
+        pool = MISSIONS_POOL.filter(m => m.tier === tier);
+    }
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    let picked = 0;
+
+    for (const m of shuffled) {
+        if (picked >= count) break;
+        if (usedTypes.has(m.type) || selected.some(s => s.id === m.id)) continue;
+        usedTypes.add(m.type);
+        selected.push({ ...m, current: 0, completed: false, claimed: false });
+        picked++;
+    }
+    return picked;
+}
 
 function generateDailyMissions(excludeIds = []) {
     const excludeSet = new Set(excludeIds);
-    let pool = MISSIONS_POOL.filter(m => !excludeSet.has(m.id));
-    if (pool.length < DAILY_MISSIONS_COUNT) {
-        pool = [...MISSIONS_POOL];
-    }
-
-    // Перемешиваем и стараемся не брать два задания одного типа подряд
-    const shuffled = [...pool].sort(() => Math.random() - 0.5);
     const selected = [];
     const usedTypes = new Set();
 
-    for (const m of shuffled) {
-        if (selected.length >= DAILY_MISSIONS_COUNT) break;
-        if (usedTypes.has(m.type)) continue;
-        usedTypes.add(m.type);
-        selected.push({
-            ...m,
-            current: 0,
-            completed: false,
-            claimed: false,
-        });
-    }
+    // Баланс дня: 2 лёгкие + 2 средние + 1 сложная/особая
+    pickFromTier('easy', 2, excludeSet, usedTypes, selected);
+    pickFromTier('medium', 2, excludeSet, usedTypes, selected);
+    pickFromTier('hard', 1, excludeSet, usedTypes, selected);
 
-    // Добираем до DAILY_MISSIONS_COUNT, если уникальных типов не хватило
-    for (const m of shuffled) {
+    // Страховка на добор до 5 миссий
+    const rest = [...MISSIONS_POOL].sort(() => Math.random() - 0.5);
+    for (const m of rest) {
         if (selected.length >= DAILY_MISSIONS_COUNT) break;
-        if (selected.some(s => s.id === m.id)) continue;
-        selected.push({
-            ...m,
-            current: 0,
-            completed: false,
-            claimed: false,
-        });
+        if (selected.some(s => s.id === m.id) || usedTypes.has(m.type)) continue;
+        usedTypes.add(m.type);
+        selected.push({ ...m, current: 0, completed: false, claimed: false });
     }
 
     saveMissions(selected);
@@ -157,7 +182,6 @@ export function formatMissionReward(reward) {
     return parts.join(' · ');
 }
 
-// ============ ПЛАТНОЕ ОБНОВЛЕНИЕ МИССИЙ ДНЯ ============
 export function getMissionRerollCount() {
     const today = new Date().toDateString();
     const data = safeGetItem(MISSIONS_REROLL_KEY, { date: today, count: 0 });
