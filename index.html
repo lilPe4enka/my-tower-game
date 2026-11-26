@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=16">
+    <link rel="stylesheet" href="style.css?v=18">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         // Снимаем старый Service Worker и кэш, если они остались в WebView
@@ -151,7 +151,7 @@
                 <p><strong>Цель:</strong> Построй как можно более высокую башню из движущихся блоков.</p>
                 <p><strong>Управление:</strong> Нажми на экран (или <strong>Пробел / Enter</strong> на ПК), когда блок окажется ровно над башней. Пауза — <strong>P / Esc</strong>.</p>
                 <p><strong>Обрезка и идеал:</strong> Неточное попадание срезает лишнюю часть блока. Полный промах — конец игры. Точное попадание сохраняет ширину, увеличивает серию и даёт бонусные очки и монеты.</p>
-                <p><strong>💖 Второй шанс:</strong> При промахе (от 15 очков или рядом с рекордом) можно 1 раз за игру продолжить за 50 🪙.</p>
+                <p><strong>💖 Второй шанс:</strong> При промахе (от 15 очков или рядом с рекордом) можно 1 раз за игру продолжить за монеты.</p>
 
                 <div class="rules-section-title">🎮 Режимы игры</div>
                 <div class="rule-block">
@@ -204,14 +204,13 @@
                 <p><strong>🔥 Ярость</strong> включается на 5-м идеале подряд на 3 блока: скорость падает на 40%, а все очки удваиваются.</p>
                 <p><strong>✨ Восстановление ширины:</strong> Каждые 5 идеальных попаданий подряд слегка расширяют блок (вплоть до стартового размера).</p>
 
-                <div class="rules-section-title">⚡ Способности (действуют всю игру)</div>
-                <p>🧱 <strong>Фундамент</strong> — стартовый блок шире на 35%.<br>🎯 <strong>Точный глаз</strong> — зона идеального попадания шире в 3.5 раза.<br>🍀 <strong>Удача</strong> — x2 шанс золотых и секретных блоков, бомбы и хрупкие блоки отключены.<br>💰 <strong>Множитель</strong> — x2 монет за всю игру.</p>
+                <div class="rules-section-title">⚡ Способности и апгрейды</div>
+                <p>🧱 <strong>Фундамент</strong> — стартовый блок шире на 35%.<br>🎯 <strong>Точный глаз</strong> — зона идеального попадания шире в 3.5 раза.<br>🍀 <strong>Удача</strong> — x2 шанс золотых и секретных блоков, бомбы и хрупкие блоки отключены.<br>💰 <strong>Множитель</strong> — x2 монет за всю игру.<br>🔧 <strong>Апгрейды</strong> (в Магазине) — постоянные улучшения монет, опыта, базы, зоны идеала и других параметров.</p>
 
                 <div class="rules-section-title">🏆 Прогресс и награды</div>
                 <p><strong>🏅 Уровни и сундуки:</strong> За игры начисляется опыт. Каждый уровень даёт +50 🪙, а каждые 5 уровней — редкий сундук.</p>
                 <p><strong>⭐ Престиж:</strong> На 100 уровне можно переродиться — уровень и рекорды сбросятся, но ты получишь постоянные множители к монетам, опыту и очкам, а также престиж-сундуки.</p>
-                <p><strong>🎯 Миссии и события:</strong> Выполняй ежедневные миссии во вкладке «Задания» и забирай награды сезонных и праздничных событий в верхнем баннере.</p>
-                <p><strong>🛍️ Магазин:</strong> Облики (многие дают бонусы к монетам, очкам или опыту), цветовые палитры и фоны с атмосферными эффектами.</p>
+                <p><strong>🎡 Колесо удачи, миссии и события:</strong> Крути бесплатное Колесо удачи каждый день, выполняй миссии во вкладке «Задания» и забирай сезонные награды каждые 5 дней.</p>
             </div>
             <button id="close-rules" class="close-modal-btn">ПОНЯТНО</button>
         </div>
@@ -222,7 +221,18 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="ach-title">🏆 Достижения</h2>
-                <div id="ach-progress">0/27</div>
+                <div id="ach-progress">0/54</div>
+            </div>
+            <div class="ach-tabs" id="ach-tabs">
+                <button class="ach-tab active" data-ach-cat="all">🌟 Все</button>
+                <button class="ach-tab" data-ach-cat="general">🏗️ Общие</button>
+                <button class="ach-tab" data-ach-cat="classic">🎮 Классика</button>
+                <button class="ach-tab" data-ach-cat="time">⏱ На время</button>
+                <button class="ach-tab" data-ach-cat="precision">🎯 Точность</button>
+                <button class="ach-tab" data-ach-cat="storm">🌪 Шторм</button>
+                <button class="ach-tab" data-ach-cat="endless">♾️ Беск.</button>
+                <button class="ach-tab" data-ach-cat="mirror">🪞 Зеркало</button>
+                <button class="ach-tab" data-ach-cat="progress">🎲 Прогресс</button>
             </div>
             <div id="ach-list" class="ach-list"></div>
             <button id="close-achievements" class="close-modal-btn">ЗАКРЫТЬ</button>
@@ -382,6 +392,21 @@
         </div>
     </div>
 
+    <!-- Wheel of Fortune -->
+    <div id="wheel-screen" class="screen modal" role="dialog" aria-labelledby="wheel-title">
+        <div class="modal-content wheel-modal-content">
+            <h2 id="wheel-title">🎡 Колесо удачи</h2>
+            <div id="wheel-status" class="wheel-status">1 бесплатный спин каждый день!</div>
+            <div class="wheel-stage">
+                <div class="wheel-pointer">▼</div>
+                <canvas id="wheel-canvas" class="wheel-canvas" width="270" height="270"></canvas>
+            </div>
+            <div id="wheel-result" class="wheel-result"></div>
+            <button id="wheel-spin-btn" class="btn-primary wheel-spin-btn">🎰 КРУТИТЬ БЕСПЛАТНО</button>
+            <button id="close-wheel" class="close-modal-btn">ЗАКРЫТЬ</button>
+        </div>
+    </div>
+
     <!-- Victory Crown -->
     <div id="victory-crown">👑</div>
 
@@ -485,16 +510,18 @@
                     </div>
                     <div class="shop-tabs">
                         <button class="shop-tab active" data-tab="skins">Облики</button>
+                        <button class="shop-tab" data-tab="upgrades">Апгрейды</button>
                         <button class="shop-tab" data-tab="colors">Цвета</button>
                         <button class="shop-tab" data-tab="backgrounds">Фоны</button>
                     </div>
                     <div id="skin-list" class="skin-list"></div>
+                    <div id="upgrades-list" class="upgrades-list" style="display:none;"></div>
                     <div id="colors-list" class="customize-list" style="display:none;"></div>
                     <div id="backgrounds-list" class="customize-list" style="display:none;"></div>
                 </div>
             </section>
 
-            <!-- Вкладка 3: ЗАДАНИЯ (Сундуки, Мини-игры, Миссии) -->
+            <!-- Вкладка 3: ЗАДАНИЯ (Сундуки, Колесо, Мини-игры, Миссии) -->
             <section class="tab-pane" id="tab-tasks" role="tabpanel">
                 <div id="chest-btn-container">
                     <button class="chest-open-btn" id="chest-btn">
@@ -502,6 +529,17 @@
                         <span class="chest-badge" id="chest-count-badge">0</span>
                     </button>
                 </div>
+
+                <!-- Карточка Колеса удачи -->
+                <button class="wheel-banner-btn" id="wheel-btn">
+                    <span class="mg-banner-icon">🎡</span>
+                    <div class="mg-banner-info">
+                        <span class="wheel-banner-title">Колесо удачи</span>
+                        <span class="mg-banner-desc" id="wheel-banner-desc">Бесплатный спин доступен!</span>
+                    </div>
+                    <span class="wheel-banner-dot hidden" id="wheel-banner-dot">1</span>
+                    <span class="mg-banner-arrow">›</span>
+                </button>
 
                 <!-- Карточка мини-игр -->
                 <button class="minigames-banner-btn" id="minigames-btn">
@@ -524,6 +562,7 @@
                         <span class="missions-stats-text" id="missions-available-text">Доступно наград: 0</span>
                     </div>
                     <div id="missions-list" class="missions-list"></div>
+                    <button id="reroll-missions-btn" class="reroll-missions-btn">🔄 Обновить миссии (100 🪙)</button>
                 </div>
             </section>
 
@@ -601,6 +640,6 @@
     <!-- Mute Button (только в игре) -->
     <button id="mute-btn" class="floating-settings" style="top:auto;bottom:max(calc(var(--safe-bottom) + 16px), 20px);" aria-label="Звук">🔊</button>
 
-    <script type="module" src="game.js?v=16"></script>
+    <script type="module" src="game.js?v=18"></script>
 </body>
 </html>
