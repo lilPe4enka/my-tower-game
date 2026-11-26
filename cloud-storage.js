@@ -1,304 +1,146 @@
-// cloud-storage.js — облачные сохранения через Telegram.WebApp.CloudStorage
+// cloud-storage.js — синхронизация с Telegram.WebApp.CloudStorage и встроенный глобальный вайп
 
-import { safeGetItem, safeSetItem, safeParseInt, validateArray, validateObject } from './utils.js';
-import { STORAGE_KEYS, DEFAULTS } from './constants.js';
-import * as PrestigeMod from './prestige.js';
-import * as EventsMod from './seasonal-events.js';
+import { safeGetItem, safeSetItem } from './utils.js?v=18';
+import { STORAGE_KEYS } from './constants.js?v=18';
 
-const PRESTIGE_COUNT_KEY = PrestigeMod.PRESTIGE_CONFIG?.STORAGE_KEY || 'towerPrestigeCount';
-const PRESTIGE_BONUS_KEY = PrestigeMod.PRESTIGE_CONFIG?.BONUS_KEY || 'towerPrestigeBonus';
-const MILESTONES_KEY = PrestigeMod.LEVEL_MILESTONE_CONFIG?.STORAGE_KEY || 'towerLevelMilestones';
-const EVENTS_CLAIMED_KEY = EventsMod.EVENTS_CONFIG?.CLAIMED_KEY || 'towerEventRewardsClaimed';
+export const WIPE_VERSION = '2026_11_first_wipe_v1';
+const WIPE_LOCAL_KEY = 'towerWipeVersion';
+const CLOUD_WIPE_KEY = 'tower_wipe_ver';
+const CLOUD_SNAPSHOT_KEY = 'tower_save_v2';
 
-const CLOUD_KEYS = {
-    CORE: 'save_core',
-    INVENTORY: 'save_inventory',
-    META: 'save_meta',
-};
+// Дедлайн выдачи эксклюзивного скина: 27.11.2026 23:59:59 МСК (UTC+3)
+const FIRST_WIPE_SKIN_ID = 'first_wipe_leg';
+const FIRST_WIPE_COMPENSATION_COINS = 500;
+const FIRST_WIPE_DEADLINE_MS = new Date('2026-11-27T23:59:59+03:00').getTime();
 
-const LOCAL_UPDATED_KEY = 'towerCloudUpdatedAt';
-const MAX_KEY_BYTES = 3900;
-const SAVE_DEBOUNCE_MS = 3500;
+// Все ключи localStorage, которые входят в облачное сохранение
+const SYNCED_KEYS = [
+    STORAGE_KEYS.COINS,
+    STORAGE_KEYS.HIGH_SCORE,
+    STORAGE_KEYS.SKIN,
+    STORAGE_KEYS.SKINS,
+    STORAGE_KEYS.PALETTE,
+    STORAGE_KEYS.PALETTES,
+    STORAGE_KEYS.BACKGROUND,
+    STORAGE_KEYS.BACKGROUNDS,
+    STORAGE_KEYS.FEATURES,
+    STORAGE_KEYS.SETTINGS,
+    STORAGE_KEYS.STATS,
+    STORAGE_KEYS.ACHIEVEMENTS,
+    STORAGE_KEYS.XP,
+    STORAGE_KEYS.LEVEL,
+    STORAGE_KEYS.STREAK,
+    STORAGE_KEYS.LAST_VISIT,
+    STORAGE_KEYS.POWERUPS,
+    STORAGE_KEYS.CHESTS,
+    STORAGE_KEYS.TOTAL_SCORE,
+    'towerBestHeight',
+    'towerUpgrades',
+    'towerPrestigeCount',
+    'towerPrestigeBonus',
+    'towerLastWheelSpinDate',
+];
 
 let saveTimer = null;
-let isSyncing = false;
-let lastCloudStatus = 'Локально (вне Telegram)';
+let cloudStatusText = 'Не доступно';
+let pendingCloudWipe = false;
+
+function getCloudStorage() {
+    const tg = window.Telegram?.WebApp;
+    if (tg?.CloudStorage && tg.isVersionAtLeast('6.9')) return tg.CloudStorage;
+    return null;
+}
 
 export function isCloudStorageAvailable() {
-    const tg = window.Telegram?.WebApp;
-    return Boolean(tg && tg.CloudStorage && typeof tg.isVersionAtLeast === 'function' && tg.isVersionAtLeast('6.9'));
+    return Boolean(getCloudStorage());
 }
 
 export function getCloudStatus() {
-    return lastCloudStatus;
+    return cloudStatusText;
 }
 
-function getByteLength(str) {
+/**
+ * Запускается синхронно в самом начале game.js ДО чтения прогресса.
+ * Полностью очищает localStorage, выдаёт 500 монет и (до 27.11.2026 23:59 МСК) скин «Первый вайп».
+ */
+export function runGlobalWipeIfNeeded() {
+    if (safeGetItem(WIPE_LOCAL_KEY, '') === WIPE_VERSION) {
+        return { wiped: false, gotSkin: false, coins: 0 };
+    }
+
+    // 1. Полный сброс всех локальных данных (достижения, скины, фоны, цвета, улучшения, настройки и т.д.)
     try {
-        return new TextEncoder().encode(str).length;
-    } catch (e) {
-        return str.length * 2;
+        localStorage.clear();
+    } catch (e) {}
+
+    // 2. Ставим метку пройденного вайпа
+    safeSetItem(WIPE_LOCAL_KEY, WIPE_VERSION);
+
+    // 3. Компенсация: 500 монет
+    safeSetItem(STORAGE_KEYS.COINS, FIRST_WIPE_COMPENSATION_COINS);
+
+    // 4. Эксклюзивный легендарный скин «Первый вайп» (только до 27.11.2026 23:59:59 МСК)
+    const gotSkin = Date.now() <= FIRST_WIPE_DEADLINE_MS;
+    if (gotSkin) {
+        safeSetItem(STORAGE_KEYS.SKINS, ['default', FIRST_WIPE_SKIN_ID]);
+        safeSetItem(STORAGE_KEYS.SKIN, FIRST_WIPE_SKIN_ID);
+    } else {
+        safeSetItem(STORAGE_KEYS.SKINS, ['default']);
+        safeSetItem(STORAGE_KEYS.SKIN, 'default');
     }
+
+    pendingCloudWipe = true;
+    return { wiped: true, gotSkin, coins: FIRST_WIPE_COMPENSATION_COINS };
 }
 
-function cloudGetItems(keys) {
-    return new Promise((resolve) => {
-        const tg = window.Telegram?.WebApp;
-        if (!isCloudStorageAvailable()) return resolve(null);
-        try {
-            tg.CloudStorage.getItems(keys, (err, values) => {
-                if (err) {
-                    console.warn('[CloudStorage] Ошибка чтения:', err);
-                    resolve(null);
-                } else {
-                    resolve(values || {});
-                }
-            });
-        } catch (e) {
-            console.warn('[CloudStorage] Исключение при чтении:', e);
-            resolve(null);
-        }
-    });
+function buildLocalSnapshot() {
+    const data = {};
+    for (const key of SYNCED_KEYS) {
+        if (!key) continue;
+        const raw = localStorage.getItem(key);
+        if (raw !== null) data[key] = raw;
+    }
+    return JSON.stringify(data);
 }
 
-function cloudSetItem(key, value) {
-    return new Promise((resolve) => {
-        const tg = window.Telegram?.WebApp;
-        if (!isCloudStorageAvailable()) return resolve(false);
-        try {
-            tg.CloudStorage.setItem(key, value, (err, stored) => {
-                if (err) {
-                    console.warn(`[CloudStorage] Ошибка записи "${key}":`, err);
-                    resolve(false);
-                } else {
-                    resolve(Boolean(stored));
-                }
-            });
-        } catch (e) {
-            console.warn(`[CloudStorage] Исключение при записи "${key}":`, e);
-            resolve(false);
-        }
-    });
-}
-
-function parseJsonSafe(raw) {
-    if (!raw || typeof raw !== 'string') return null;
+function applyCloudSnapshot(jsonStr) {
+    if (!jsonStr) return false;
     try {
-        const parsed = JSON.parse(raw);
-        return parsed && typeof parsed === 'object' ? parsed : null;
-    } catch (e) {
-        return null;
-    }
-}
-
-function unionArrays(a, b) {
-    return Array.from(new Set([...validateArray(a, []), ...validateArray(b, [])]));
-}
-
-function mergeEventRewards(a, b) {
-    const objA = validateObject(a, {});
-    const objB = validateObject(b, {});
-    const result = { ...objA };
-    for (const [k, list] of Object.entries(objB)) {
-        result[k] = unionArrays(result[k], list);
-    }
-    return result;
-}
-
-function collectLocalPayload() {
-    const updatedAt = safeParseInt(safeGetItem(LOCAL_UPDATED_KEY, '0'), 0);
-
-    const core = {
-        v: 1,
-        t: updatedAt,
-        c: safeParseInt(safeGetItem(STORAGE_KEYS.COINS, '0'), 0),
-        hs: safeParseInt(safeGetItem(STORAGE_KEYS.HIGH_SCORE, '0'), 0),
-        lv: safeParseInt(safeGetItem(STORAGE_KEYS.LEVEL, '1'), 1),
-        xp: safeParseInt(safeGetItem(STORAGE_KEYS.XP, '0'), 0),
-        st: safeParseInt(safeGetItem(STORAGE_KEYS.STREAK, '0'), 0),
-        lvDate: safeGetItem(STORAGE_KEYS.LAST_VISIT, '') || '',
-        sk: safeGetItem(STORAGE_KEYS.SKIN, 'default') || 'default',
-        pl: safeGetItem(STORAGE_KEYS.PALETTE, 'standard') || 'standard',
-        bg: safeGetItem(STORAGE_KEYS.BACKGROUND, 'default') || 'default',
-        pr: safeParseInt(safeGetItem(PRESTIGE_COUNT_KEY, '0'), 0),
-        prB: validateObject(safeGetItem(PRESTIGE_BONUS_KEY, {}), {}),
-        set: { ...DEFAULTS.SETTINGS, ...validateObject(safeGetItem(STORAGE_KEYS.SETTINGS, {}), {}) },
-    };
-
-    const inventory = {
-        v: 1,
-        t: updatedAt,
-        sks: validateArray(safeGetItem(STORAGE_KEYS.SKINS, ['default']), ['default']),
-        pls: validateArray(safeGetItem(STORAGE_KEYS.PALETTES, ['standard']), ['standard']),
-        bgs: validateArray(safeGetItem(STORAGE_KEYS.BACKGROUNDS, ['default']), ['default']),
-        pw: { ...DEFAULTS.POWERUPS, ...validateObject(safeGetItem(STORAGE_KEYS.POWERUPS, {}), {}) },
-        ach: validateArray(safeGetItem(STORAGE_KEYS.ACHIEVEMENTS, []), []),
-        ft: validateObject(safeGetItem(STORAGE_KEYS.FEATURES, {}), {}),
-        ms: validateArray(safeGetItem(MILESTONES_KEY, []), []),
-        ev: validateObject(safeGetItem(EVENTS_CLAIMED_KEY, {}), {}),
-    };
-
-    const fullLb = validateArray(safeGetItem(STORAGE_KEYS.LEADERBOARD, []), []);
-    const compactLb = [...fullLb]
-        .sort((a, b) => (b.ts || 0) - (a.ts || 0))
-        .slice(0, 35);
-
-    const chests = validateArray(safeGetItem(STORAGE_KEYS.CHESTS, []), []).slice(0, 30);
-
-    const meta = {
-        v: 1,
-        t: updatedAt,
-        sts: validateObject(safeGetItem(STORAGE_KEYS.STATS, {}), {}),
-        tot: safeParseInt(safeGetItem(STORAGE_KEYS.TOTAL_SCORE, '0'), 0),
-        rec: validateArray(safeGetItem(STORAGE_KEYS.RECENT_SCORES, []), []).slice(-10),
-        ch: chests,
-        lb: compactLb,
-    };
-
-    return { core, inventory, meta };
-}
-
-function isFreshLocalProfile(local) {
-    const games = local.meta.sts?.totalGames || 0;
-    return games === 0
-        && local.core.c === 0
-        && local.core.lv <= 1
-        && local.core.xp === 0
-        && local.core.pr === 0
-        && local.inventory.sks.length <= 1;
-}
-
-function applyPayloadToLocal({ core, inventory, meta }) {
-    if (core) {
-        safeSetItem(STORAGE_KEYS.COINS, core.c ?? 0);
-        safeSetItem(STORAGE_KEYS.HIGH_SCORE, core.hs ?? 0);
-        safeSetItem(STORAGE_KEYS.LEVEL, String(core.lv ?? 1));
-        safeSetItem(STORAGE_KEYS.XP, String(core.xp ?? 0));
-        safeSetItem(STORAGE_KEYS.STREAK, core.st ?? 0);
-        safeSetItem(STORAGE_KEYS.LAST_VISIT, core.lvDate || '');
-        safeSetItem(STORAGE_KEYS.SKIN, core.sk || 'default');
-        safeSetItem(STORAGE_KEYS.PALETTE, core.pl || 'standard');
-        safeSetItem(STORAGE_KEYS.BACKGROUND, core.bg || 'default');
-        safeSetItem(PRESTIGE_COUNT_KEY, core.pr ?? 0);
-        safeSetItem(PRESTIGE_BONUS_KEY, validateObject(core.prB, {}));
-        safeSetItem(STORAGE_KEYS.SETTINGS, { ...DEFAULTS.SETTINGS, ...validateObject(core.set, {}) });
-    }
-    if (inventory) {
-        safeSetItem(STORAGE_KEYS.SKINS, validateArray(inventory.sks, ['default']));
-        safeSetItem(STORAGE_KEYS.PALETTES, validateArray(inventory.pls, ['standard']));
-        safeSetItem(STORAGE_KEYS.BACKGROUNDS, validateArray(inventory.bgs, ['default']));
-        safeSetItem(STORAGE_KEYS.POWERUPS, { ...DEFAULTS.POWERUPS, ...validateObject(inventory.pw, {}) });
-        safeSetItem(STORAGE_KEYS.ACHIEVEMENTS, validateArray(inventory.ach, []));
-        safeSetItem(STORAGE_KEYS.FEATURES, validateObject(inventory.ft, {}));
-        safeSetItem(MILESTONES_KEY, validateArray(inventory.ms, []));
-        safeSetItem(EVENTS_CLAIMED_KEY, validateObject(inventory.ev, {}));
-    }
-    if (meta) {
-        safeSetItem(STORAGE_KEYS.STATS, validateObject(meta.sts, {}));
-        safeSetItem(STORAGE_KEYS.TOTAL_SCORE, String(meta.tot ?? 0));
-        safeSetItem(STORAGE_KEYS.RECENT_SCORES, validateArray(meta.rec, []));
-        safeSetItem(STORAGE_KEYS.CHESTS, validateArray(meta.ch, []));
-        safeSetItem(STORAGE_KEYS.LEADERBOARD, validateArray(meta.lb, []));
-    }
-    const ts = Math.max(core?.t || 0, inventory?.t || 0, meta?.t || 0, Date.now());
-    safeSetItem(LOCAL_UPDATED_KEY, String(ts));
-}
-
-function mergePayloads(cloud, local) {
-    const now = Date.now();
-
-    if (isFreshLocalProfile(local)) {
-        return {
-            core: { ...local.core, ...cloud.core },
-            inventory: { ...local.inventory, ...cloud.inventory },
-            meta: { ...local.meta, ...cloud.meta },
-        };
-    }
-
-    const cloudNewer = (cloud.core?.t || 0) > (local.core?.t || 0);
-    const newerCore = cloudNewer ? cloud.core : local.core;
-    const newerInv = (cloud.inventory?.t || 0) > (local.inventory?.t || 0) ? cloud.inventory : local.inventory;
-    const newerMeta = (cloud.meta?.t || 0) > (local.meta?.t || 0) ? cloud.meta : local.meta;
-
-    const cPr = cloud.core?.pr || 0;
-    const lPr = local.core?.pr || 0;
-    const cloudAhead = cPr > lPr
-        || (cPr === lPr && (cloud.core?.lv || 1) > (local.core?.lv || 1))
-        || (cPr === lPr && (cloud.core?.lv || 1) === (local.core?.lv || 1) && (cloud.core?.xp || 0) > (local.core?.xp || 0));
-    const progCore = cloudAhead ? cloud.core : local.core;
-
-    const mergedCore = {
-        ...newerCore,
-        t: now,
-        hs: Math.max(cloud.core?.hs || 0, local.core?.hs || 0),
-        pr: progCore.pr || 0,
-        lv: progCore.lv || 1,
-        xp: progCore.xp || 0,
-        prB: {
-            coinMult: Math.max(cloud.core?.prB?.coinMult || 0, local.core?.prB?.coinMult || 0),
-            xpMult: Math.max(cloud.core?.prB?.xpMult || 0, local.core?.prB?.xpMult || 0),
-            scoreMult: Math.max(cloud.core?.prB?.scoreMult || 0, local.core?.prB?.scoreMult || 0),
-            allMult: Math.max(cloud.core?.prB?.allMult || 0, local.core?.prB?.allMult || 0),
-        },
-    };
-
-    const mergedFeatures = { ...validateObject(cloud.inventory?.ft, {}), ...validateObject(local.inventory?.ft, {}) };
-    for (const k of Object.keys(mergedFeatures)) {
-        mergedFeatures[k] = Boolean(cloud.inventory?.ft?.[k] || local.inventory?.ft?.[k]);
-    }
-
-    const mergedInventory = {
-        v: 1,
-        t: now,
-        sks: unionArrays(cloud.inventory?.sks, local.inventory?.sks),
-        pls: unionArrays(cloud.inventory?.pls, local.inventory?.pls),
-        bgs: unionArrays(cloud.inventory?.bgs, local.inventory?.bgs),
-        pw: newerInv?.pw || local.inventory.pw,
-        ach: unionArrays(cloud.inventory?.ach, local.inventory?.ach),
-        ft: mergedFeatures,
-        ms: unionArrays(cloud.inventory?.ms, local.inventory?.ms),
-        ev: mergeEventRewards(cloud.inventory?.ev, local.inventory?.ev),
-    };
-
-    const mergedStats = { ...validateObject(cloud.meta?.sts, {}), ...validateObject(local.meta?.sts, {}) };
-    for (const k of Object.keys(mergedStats)) {
-        const a = Number(cloud.meta?.sts?.[k]) || 0;
-        const b = Number(local.meta?.sts?.[k]) || 0;
-        mergedStats[k] = Math.max(a, b);
-    }
-
-    const lbMap = new Map();
-    [...validateArray(cloud.meta?.lb, []), ...validateArray(local.meta?.lb, [])].forEach((entry) => {
-        if (entry && typeof entry.score === 'number') {
-            const key = `${entry.mode}_${entry.ts || entry.date}_${entry.score}`;
-            if (!lbMap.has(key)) lbMap.set(key, entry);
+        const parsed = JSON.parse(jsonStr);
+        if (!parsed || typeof parsed !== 'object') return false;
+        for (const [key, val] of Object.entries(parsed)) {
+            if (typeof val === 'string') localStorage.setItem(key, val);
         }
-    });
-    const mergedLb = Array.from(lbMap.values())
-        .sort((a, b) => (b.ts || 0) - (a.ts || 0))
-        .slice(0, 35);
-
-    const mergedMeta = {
-        v: 1,
-        t: now,
-        sts: mergedStats,
-        tot: Math.max(cloud.meta?.tot || 0, local.meta?.tot || 0),
-        rec: newerMeta?.rec || local.meta.rec,
-        ch: newerMeta?.ch || local.meta.ch,
-        lb: mergedLb,
-    };
-
-    return { core: mergedCore, inventory: mergedInventory, meta: mergedMeta };
+        safeSetItem(WIPE_LOCAL_KEY, WIPE_VERSION);
+        return true;
+    } catch (e) {
+        return false;
+    }
 }
 
-function serializeWithCap(obj, trimFn) {
-    let str = JSON.stringify(obj);
-    if (getByteLength(str) <= MAX_KEY_BYTES) return str;
-    if (typeof trimFn === 'function') {
-        const trimmed = trimFn(obj);
-        str = JSON.stringify(trimmed);
-    }
-    return getByteLength(str) <= MAX_KEY_BYTES ? str : null;
+function cloudGetItems(cs, keys) {
+    return new Promise((resolve) => {
+        cs.getItems(keys, (err, values) => resolve(err ? null : values));
+    });
+}
+
+function cloudGetKeys(cs) {
+    return new Promise((resolve) => {
+        cs.getKeys((err, keys) => resolve(err ? [] : (Array.isArray(keys) ? keys : [])));
+    });
+}
+
+function cloudRemoveItems(cs, keys) {
+    if (!keys || keys.length === 0) return Promise.resolve();
+    return new Promise((resolve) => {
+        cs.removeItems(keys, () => resolve());
+    });
+}
+
+function cloudSetItem(cs, key, value) {
+    return new Promise((resolve) => {
+        cs.setItem(key, String(value), (err) => resolve(!err));
+    });
 }
 
 export async function flushCloudSave() {
@@ -306,83 +148,86 @@ export async function flushCloudSave() {
         clearTimeout(saveTimer);
         saveTimer = null;
     }
-    safeSetItem(LOCAL_UPDATED_KEY, String(Date.now()));
-
-    if (!isCloudStorageAvailable() || isSyncing) return false;
-    isSyncing = true;
-
+    const cs = getCloudStorage();
+    if (!cs) {
+        cloudStatusText = 'Локально (без Telegram)';
+        return false;
+    }
     try {
-        const { core, inventory, meta } = collectLocalPayload();
-
-        const coreStr = serializeWithCap(core);
-        const invStr = serializeWithCap(inventory);
-        const metaStr = serializeWithCap(meta, (m) => ({
-            ...m,
-            lb: (m.lb || []).slice(0, 15),
-            ch: (m.ch || []).slice(0, 15),
-        }));
-
-        const tasks = [];
-        if (coreStr) tasks.push(cloudSetItem(CLOUD_KEYS.CORE, coreStr));
-        if (invStr) tasks.push(cloudSetItem(CLOUD_KEYS.INVENTORY, invStr));
-        if (metaStr) tasks.push(cloudSetItem(CLOUD_KEYS.META, metaStr));
-
-        const results = await Promise.all(tasks);
-        const ok = results.length > 0 && results.every(Boolean);
-        lastCloudStatus = ok
-            ? `Сохранено в ${new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`
-            : 'Ошибка сохранения';
-        return ok;
-    } finally {
-        isSyncing = false;
+        const payload = buildLocalSnapshot();
+        // Ограничение Telegram CloudStorage: 4096 байт на ключ
+        if (payload.length > 4000) {
+            cloudStatusText = 'Слишком большой сейв';
+            return false;
+        }
+        const ok1 = await cloudSetItem(cs, CLOUD_WIPE_KEY, WIPE_VERSION);
+        const ok2 = await cloudSetItem(cs, CLOUD_SNAPSHOT_KEY, payload);
+        if (ok1 && ok2) {
+            const t = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            cloudStatusText = `Сохранено в ${t}`;
+            return true;
+        }
+        cloudStatusText = 'Ошибка сохранения';
+        return false;
+    } catch (e) {
+        cloudStatusText = 'Ошибка облака';
+        return false;
     }
 }
 
 export function scheduleCloudSave() {
-    safeSetItem(LOCAL_UPDATED_KEY, String(Date.now()));
     if (!isCloudStorageAvailable()) return;
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
         saveTimer = null;
         flushCloudSave();
-    }, SAVE_DEBOUNCE_MS);
+    }, 1500);
 }
 
-export async function initCloudSync(onMergedCallback) {
-    if (!isCloudStorageAvailable()) {
-        lastCloudStatus = 'Локально (вне Telegram)';
-        return false;
+export async function initCloudSync(onMerge) {
+    const cs = getCloudStorage();
+    if (!cs) {
+        cloudStatusText = 'Локально (без Telegram)';
+        return;
     }
 
-    lastCloudStatus = 'Синхронизация...';
-    const raw = await cloudGetItems([CLOUD_KEYS.CORE, CLOUD_KEYS.INVENTORY, CLOUD_KEYS.META]);
-    if (!raw) {
-        lastCloudStatus = 'Нет связи с облаком';
-        return false;
-    }
+    cloudStatusText = 'Синхронизация...';
+    const items = await cloudGetItems(cs, [CLOUD_WIPE_KEY, CLOUD_SNAPSHOT_KEY]);
+    const cloudWipeVer = items?.[CLOUD_WIPE_KEY] || '';
+    const cloudSnap = items?.[CLOUD_SNAPSHOT_KEY] || '';
 
-    const cloudCore = parseJsonSafe(raw[CLOUD_KEYS.CORE]);
-    const cloudInv = parseJsonSafe(raw[CLOUD_KEYS.INVENTORY]);
-    const cloudMeta = parseJsonSafe(raw[CLOUD_KEYS.META]);
-    const hasCloudData = Boolean(cloudCore || cloudInv || cloudMeta);
-
-    const local = collectLocalPayload();
-
-    if (!hasCloudData) {
+    // Случай 1: В облаке старые данные (до вайпа) — полностью вычищаем все ключи облака и пишем чистый профиль
+    if (cloudWipeVer !== WIPE_VERSION) {
+        const allKeys = await cloudGetKeys(cs);
+        if (allKeys.length > 0) {
+            await cloudRemoveItems(cs, allKeys);
+        }
+        pendingCloudWipe = false;
         await flushCloudSave();
-        return false;
+        return;
     }
 
-    const merged = mergePayloads(
-        { core: cloudCore || {}, inventory: cloudInv || {}, meta: cloudMeta || {} },
-        local
-    );
-    applyPayloadToLocal(merged);
+    // Случай 2: В облаке уже ЕСТЬ актуальный профиль после вайпа (например, игрок зашёл со второго устройства)
+    if (cloudSnap) {
+        const localScore = parseInt(localStorage.getItem(STORAGE_KEYS.HIGH_SCORE) || '0', 10) || 0;
+        const localLevel = parseInt(localStorage.getItem(STORAGE_KEYS.LEVEL) || '1', 10) || 1;
+        let cloudScore = 0;
+        let cloudLevel = 1;
+        try {
+            const parsed = JSON.parse(cloudSnap);
+            cloudScore = parseInt(parsed[STORAGE_KEYS.HIGH_SCORE] || '0', 10) || 0;
+            cloudLevel = parseInt(parsed[STORAGE_KEYS.LEVEL] || '1', 10) || 1;
+        } catch (e) {}
 
-    if (typeof onMergedCallback === 'function') {
-        onMergedCallback();
+        if (pendingCloudWipe || cloudLevel > localLevel || cloudScore > localScore) {
+            applyCloudSnapshot(cloudSnap);
+            pendingCloudWipe = false;
+            if (typeof onMerge === 'function') onMerge();
+            cloudStatusText = 'Загружено из облака';
+            return;
+        }
     }
 
+    pendingCloudWipe = false;
     await flushCloudSave();
-    return true;
 }
