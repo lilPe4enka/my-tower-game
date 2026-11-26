@@ -3932,18 +3932,37 @@ function dropBlock() {
 
     let pointsGain = basePoints;
     if (pointsGain > 0) {
-        pointsGain = applyComboMultiplier(pointsGain, combo);
-        if (combo >= 2 && upg.comboScoreMult > 0) pointsGain *= (1 + upg.comboScoreMult);
+        try {
+            const comboRes = applyComboMultiplier(pointsGain, combo);
+            if (typeof comboRes === 'number' && Number.isFinite(comboRes)) {
+                pointsGain = comboRes;
+            } else if (comboRes && typeof comboRes === 'object') {
+                const val = comboRes.points ?? comboRes.score ?? comboRes.value ?? comboRes.result;
+                if (Number.isFinite(val)) pointsGain = val;
+                else if (Number.isFinite(comboRes.multiplier)) pointsGain *= comboRes.multiplier;
+            } else {
+                const tier = typeof getComboTier === 'function' ? getComboTier(combo) : null;
+                if (tier && Number.isFinite(tier.multiplier)) pointsGain *= tier.multiplier;
+            }
+        } catch (e) {}
+
+        if (combo >= 2 && Number.isFinite(upg.comboScoreMult) && upg.comboScoreMult > 0) {
+            pointsGain *= (1 + upg.comboScoreMult);
+        }
         if (isFury) pointsGain *= 2;
-        if (dailyModifiers.scoreMult) pointsGain *= dailyModifiers.scoreMult;
-        if (skinMods.scoreMult) pointsGain *= skinMods.scoreMult;
-        if (prestigeBonus.scoreMult > 0) pointsGain *= (1 + prestigeBonus.scoreMult);
-        if (prestigeBonus.allMult > 0) pointsGain *= (1 + prestigeBonus.allMult);
-        pointsGain = Math.max(1, Math.round(pointsGain));
+        if (Number.isFinite(dailyModifiers.scoreMult)) pointsGain *= dailyModifiers.scoreMult;
+        if (Number.isFinite(skinMods.scoreMult)) pointsGain *= skinMods.scoreMult;
+        if (Number.isFinite(prestigeBonus?.scoreMult) && prestigeBonus.scoreMult > 0) {
+            pointsGain *= (1 + prestigeBonus.scoreMult);
+        }
+        if (Number.isFinite(prestigeBonus?.allMult) && prestigeBonus.allMult > 0) {
+            pointsGain *= (1 + prestigeBonus.allMult);
+        }
+        pointsGain = Number.isFinite(pointsGain) ? Math.max(1, Math.round(pointsGain)) : Math.max(1, Math.round(basePoints));
     }
 
-    const prevScore = score;
-    score = Math.max(0, score + pointsGain);
+    const prevScore = Number.isFinite(score) ? score : 0;
+    score = Math.max(0, prevScore + (Number.isFinite(pointsGain) ? pointsGain : 0));
     if (scoreEl) {
         scoreEl.innerText = score;
         scoreEl.classList.remove('score-pop');
