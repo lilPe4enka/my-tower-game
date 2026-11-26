@@ -236,7 +236,53 @@ export function createBlockTexture(colorHex, type = BLOCK_TYPES.NORMAL, skin = '
             ctx.moveTo(64, 16); ctx.lineTo(74, 54); ctx.lineTo(112, 64); ctx.lineTo(74, 74);
             ctx.lineTo(64, 112); ctx.lineTo(54, 74); ctx.lineTo(16, 64); ctx.lineTo(54, 54); ctx.closePath();
             ctx.stroke();
-        }
+        } else if (pattern === 'first_wipe') {
+            // Тёмная обсидианово-золотая призма
+            const bg = ctx.createLinearGradient(0, 0, 128, 128);
+            bg.addColorStop(0, 'rgba(18, 6, 36, 0.72)');
+            bg.addColorStop(0.5, 'rgba(255, 193, 7, 0.25)');
+            bg.addColorStop(1, 'rgba(0, 245, 212, 0.32)');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, 128, 128);
+
+            // Диагональные световые лучи
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.35)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, 96); ctx.lineTo(96, 0);
+            ctx.moveTo(32, 128); ctx.lineTo(128, 32);
+            ctx.stroke();
+
+            // Двойная золотая рамка
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(8, 8, 112, 112);
+            ctx.strokeStyle = 'rgba(0, 245, 212, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(16, 16, 96, 96);
+
+            // Центральная печать «перезагрузки» (кристалл в кольце)
+            ctx.strokeStyle = '#FFF59D';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(64, 64, 28, 0, Math.PI * 2);
+            ctx.stroke();
+
+            const core = ctx.createLinearGradient(44, 44, 84, 84);
+            core.addColorStop(0, '#FFFFFF');
+            core.addColorStop(0.5, '#FFD700');
+            core.addColorStop(1, '#FF2A85');
+            ctx.fillStyle = core;
+            ctx.beginPath();
+            ctx.moveTo(64, 34); ctx.lineTo(84, 64); ctx.lineTo(64, 94); ctx.lineTo(44, 64);
+            ctx.closePath();
+            ctx.fill();
+
+            // Искры по углам
+            ctx.fillStyle = '#FFFFFF';
+            [[24, 24, 3], [104, 24, 3], [24, 104, 3], [104, 104, 3]].forEach(([x, y, r]) => {
+                ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+            });
 
         if (pattern !== 'none') {
             ctx.strokeStyle = 'rgba(255,255,255,0.24)';
@@ -288,6 +334,9 @@ export function createBlockMesh(w, h, d, color, type = BLOCK_TYPES.NORMAL, { ski
             topOpts.emissive = new THREE.Color(0x00BCD4); topOpts.emissiveIntensity = 0.6;
             topOpts.color = new THREE.Color(0x00BCD4);
         } else {
+            const baseGlow = pattern === 'first_wipe' ? 0.24 : pattern === 'none' ? 0.08 : 0.14;
+            sideOpts.emissive = new THREE.Color(color); sideOpts.emissiveIntensity = baseGlow;
+            topOpts.emissive = new THREE.Color(color); topOpts.emissiveIntensity = baseGlow;
             sideOpts.emissive = new THREE.Color(color); sideOpts.emissiveIntensity = pattern === 'none' ? 0.08 : 0.14;
             topOpts.emissive = new THREE.Color(color); topOpts.emissiveIntensity = pattern === 'none' ? 0.08 : 0.14;
             if (redTheme) { sideOpts.emissive = new THREE.Color(0xFF4444); sideOpts.emissiveIntensity = 0.2; }
