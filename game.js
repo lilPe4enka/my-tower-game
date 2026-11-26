@@ -12,18 +12,19 @@ import { saveLastFocus, restoreLastFocus, trapFocus, releaseFocusTrap, setupEsca
 import { getCurrentEvent, getEventProgress, getAvailableRewards, claimEventReward, getEventStats, formatEventDate, isEventsSystemActive } from './seasonal-events.js?v=18';
 import { createEnvironmentParticles, updateEnvironmentParticles, getParticlesForBackground, removeEnvironmentParticles } from './environment-particles.js?v=18';
 import { MINIGAMES, canPlayMinigame, recordMinigamePlay, getCooldownRemaining, getRemainingDailyPlays, formatCooldown, createMinigame, calculateMinigameReward } from './minigames.js?v=18';
-import { initCloudSync, scheduleCloudSave, flushCloudSave, getCloudStatus, isCloudStorageAvailable } from './cloud-storage.js?v=18';
+import { runGlobalWipeIfNeeded, initCloudSync, scheduleCloudSave, flushCloudSave, getCloudStatus, isCloudStorageAvailable } from './cloud-storage.js?v=25';
 import { UPGRADES, MAX_UPGRADE_LEVEL, loadUpgrades, getUpgradeLevel, getUpgradePrice, buyUpgrade, getUpgradeBonuses, getUpgradesProgress } from './upgrades.js?v=18';
 import { canSpinWheel, getTimeUntilNextSpin, createWheelController } from './wheel.js?v=24';
 import { initAtmosphereLayers, updateAtmosphereLayers, disposeAtmosphereLayers } from './atmosphere.js?v=18';
 
 // Вынесенные модули
-import { BASE_COLORS, SKINS, SKIN_RARITIES, PALETTES, BACKGROUNDS, SEASONS, DAILY_CHALLENGES, POWERUP_DEFS, QUESTS_POOL, getHeightComparison } from './game-data.js?v=24';
+import { BASE_COLORS, SKINS, SKIN_RARITIES, PALETTES, BACKGROUNDS, SEASONS, DAILY_CHALLENGES, POWERUP_DEFS, QUESTS_POOL, getHeightComparison } from './game-data.js?v=25';
 import { configureAudio, isAudioRunning, setMusicTempo, setWindVolume, initAudio, playSound, startMusic, stopMusic } from './audio.js?v=22';
-import { SHARED_UNIT_BOX_GEO, PARTICLE_GEOS, getParticleMaterial, getDebrisMaterial, clearVisualCaches, createGlowTexture, createPerfectWaveTexture, createBlockMesh, disposeMesh } from './textures.js?v=24';
+import { SHARED_UNIT_BOX_GEO, PARTICLE_GEOS, getParticleMaterial, getDebrisMaterial, clearVisualCaches, createGlowTexture, createPerfectWaveTexture, createBlockMesh, disposeMesh } from './textures.js?v=25';
 import { getContractById, getContractsForMode, createContractTracker, updateContractTracker, formatContractHUD } from './contracts.js?v=22';
 
 setupGlobalErrorHandler();
+const wipeResult = runGlobalWipeIfNeeded();
 
 const MODE_ANTIGRAVITY = 'antigravity';
 const CAMERA_RADIUS = Math.hypot(12, 12);
@@ -59,7 +60,7 @@ function safeGetAdaptiveD(aspect) {
 }
 
 // ============ TELEGRAM & HAPTICS ============
-const TELEGRAM_APP_URL = 'https://t.me/TowerGameeee_bot/app';
+const TELEGRAM_APP_URL = 'https://t.me/YOUR_BOT_USERNAME/app';
 const tg = window.Telegram?.WebApp;
 
 if (tg) {
@@ -256,7 +257,7 @@ const ACHIEVEMENTS = [
     { id: 'skins_3', category: 'progress', name: 'Коллекционер', desc: 'Открой 3 облика', icon: '🎨', reward: 40, check: () => unlockedSkins.length >= 3 },
     { id: 'skins_10', category: 'progress', name: 'Модник', desc: 'Открой 10 обликов', icon: '🧥', reward: 120, check: () => unlockedSkins.length >= 10 },
     { id: 'skins_all', category: 'progress', name: 'Все облики', desc: 'Собери все основные облики', icon: '🏆', reward: 500, special: 'legend', check: () => {
-        const buyable = Object.keys(SKINS).filter(k => k !== 'legend' && !SKINS[k].notBuyable && !SKINS[k].wheelOnly && !SKINS[k].prestigeOnly && !SKINS[k].eventOnly);
+        const buyable = Object.keys(SKINS).filter(k => k !== 'legend' && !SKINS[k].notBuyable && !SKINS[k].wheelOnly && !SKINS[k].exclusiveOnly && !SKINS[k].prestigeOnly && !SKINS[k].eventOnly);
         return buyable.every(k => unlockedSkins.includes(k));
     }},
     { id: 'rich_500', category: 'progress', name: 'Богач', desc: 'Накопи 500 монет', icon: '💰', reward: 50, check: () => coins >= 500 },
@@ -873,7 +874,7 @@ function renderShop() {
     const entries = Object.entries(SKINS)
         .filter(([key, skin]) => {
             if (key === 'legend' && !unlockedSkins.includes('legend')) return false;
-            if ((skin.prestigeOnly || skin.eventOnly) && !unlockedSkins.includes(key)) return false;
+            if ((skin.prestigeOnly || skin.eventOnly || skin.exclusiveOnly) && !unlockedSkins.includes(key)) return false;
             return true;
         })
         .sort(([, a], [, b]) => {
@@ -983,7 +984,7 @@ function switchShopTab(tab) {
     if (backgroundsListEl) backgroundsListEl.style.display = tab === 'backgrounds' ? 'flex' : 'none';
     if (!shopProgressEl) return;
     if (tab === 'skins') {
-        const totalVisible = Object.keys(SKINS).filter(k => k !== 'legend' && !SKINS[k].prestigeOnly && !SKINS[k].eventOnly).length;
+        const totalVisible = Object.keys(SKINS).filter(k => k !== 'legend' && !SKINS[k].prestigeOnly && !SKINS[k].eventOnly && (!SKINS[k].exclusiveOnly || unlockedSkins.includes(k))).length;
         const unlockedVisible = unlockedSkins.filter(k => SKINS[k] && k !== 'legend' && !SKINS[k].prestigeOnly && !SKINS[k].eventOnly).length;
         shopProgressEl.innerText = `Открыто: ${unlockedVisible}/${totalVisible}`;
     } else if (tab === 'upgrades') {
@@ -1211,7 +1212,7 @@ function updateChestUI() {
 
 function rollChestReward(isRare = false) {
     const mult = isRare ? 3 : 1, r = Math.random();
-    const lockedSkins = Object.keys(SKINS).filter(s => !unlockedSkins.includes(s) && !SKINS[s].notBuyable && !SKINS[s].wheelOnly);
+    const lockedSkins = Object.keys(SKINS).filter(s => !unlockedSkins.includes(s) && !SKINS[s].notBuyable && !SKINS[s].wheelOnly && !SKINS[s].exclusiveOnly);
     if (lockedSkins.length === 0 || r < 0.55) {
         const amount = [50, 80, 100, 150, 200][Math.floor(Math.random() * 5)] * mult;
         return { type: 'coins', amount, text: `+${amount} 🪙${isRare ? ' ✨' : ''}` };
@@ -2586,6 +2587,18 @@ function init() {
     if (renderer && scene && camera) renderer.render(scene, camera);
     if (splashScreen) { requestAnimationFrame(() => { splashScreen.classList.add('splash-hidden'); setTimeout(() => splashScreen.remove(), 450); }); }
     if (dailyRewardPending) setTimeout(showDailyReward, 450);
+
+    if (wipeResult.wiped) {
+        const msg = wipeResult.gotSkin
+            ? '🔥 ОБНОВЛЕНИЕ! +500 🪙 и 👑 «Первый вайп»!'
+            : '🔥 ОБНОВЛЕНИЕ! Компенсация +500 🪙!';
+        setTimeout(() => {
+            showPopup(milestoneText, msg, 3500);
+            playSound('victory');
+            triggerHaptic('success');
+        }, 700);
+    }
+
     initCloudSync(() => { reloadFromLocalAfterCloudMerge(); updateCloudStatusUI(); }).then(updateCloudStatusUI);
 }
 
