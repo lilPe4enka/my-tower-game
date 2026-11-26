@@ -41,6 +41,7 @@ export const SKINS = {
     aurora_epic:  { name: 'Сияние',    rarity: 'epic', price: 15000, pattern: 'holo',    effect: 'holographic', colors: ['#00F5D4', '#00BBF9', '#9B5DE5', '#F15BB5', '#FEE440'], modifiers: { coinMult: 1.22, scoreMult: 1.18, xpMult: 1.15 } },
 
     // === ЛЕГЕНДАРНЫЕ (только Колесо удачи — 2% шанс) ===
+    first_wipe_leg: {name: 'Первый вайп', rarity: 'legendary', price: 0, notBuyable: true, exclusiveOnly: true, pattern: 'first_wipe', effect: 'holographic', colors: ['#1A0B2E', '#2D1457', '#FFB300', '#00F5D4', '#FF2A85', '#FFD700'], modifiers: { coinMult: 1.05, xpMult: 1.05 } },
     midas_leg:    { name: 'Король Мидас', rarity: 'legendary', price: 0, notBuyable: true, wheelOnly: true, pattern: 'royal',   effect: 'holographic', colors: ['#FFF3B0', '#FFE066', '#FFD700', '#FFB703', '#FB8500'], modifiers: { coinMult: 1.45, scoreMult: 1.25 } },
     phoenix_leg:  { name: 'Феникс',       rarity: 'legendary', price: 0, notBuyable: true, wheelOnly: true, pattern: 'phoenix', effect: 'fire',        colors: ['#FFD600', '#FFAB00', '#FF6D00', '#DD2C00', '#B71C1C'], modifiers: { scoreMult: 1.40, xpMult: 1.35 } },
     chrono_leg:   { name: 'Хронос',       rarity: 'legendary', price: 0, notBuyable: true, wheelOnly: true, pattern: 'chrono',  effect: 'ice',         colors: ['#E0F7FA', '#80DEEA', '#00E5FF', '#00B0FF', '#2962FF'], modifiers: { speedMult: 0.85, scoreMult: 1.30, coinMult: 1.30 } },
