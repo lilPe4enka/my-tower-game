@@ -8,38 +8,49 @@ export const BASE_COLORS = [
     '#00E5FF', '#1DE9B6', '#00E676', '#FFEA00', '#FF9100', '#FF3D00'
 ];
 
+export const SKIN_RARITIES = {
+    common:    { label: 'Обычный',     color: '#78909C', bg: '#ECEFF1', order: 0 },
+    rare:      { label: 'Редкий',      color: '#1E88E5', bg: '#E3F2FD', order: 1 },
+    epic:      { label: 'Эпический',   color: '#8E24AA', bg: '#F3E5F5', order: 2 },
+    legendary: { label: 'Легендарный', color: '#E65100', bg: '#FFF8E1', order: 3 },
+};
+
 export const SKINS = {
-    default: { name: 'Классика', price: 0, colors: BASE_COLORS },
-    food: { name: 'Еда', price: 180, colors: ['#FF5722', '#FF9800', '#FFC107', '#E64A19', '#FF6F00', '#D84315', '#F57C00'] },
-    cats: { name: 'Котики', price: 260, colors: ['#FF4081', '#F06292', '#E91E63', '#C2185B', '#AB47BC', '#CE93D8'] },
-    pixel: { name: 'Пиксель', price: 320, colors: ['#FF004D', '#FFA300', '#FFEC27', '#00E436', '#29ADFF', '#83769C'] },
-    animals: { name: 'Звери', price: 380, colors: ['#8D6E63', '#6D4C41', '#795548', '#5D4037', '#8BC34A', '#689F38', '#558B2F'] },
-    ice: { name: 'Лёд', price: 450, colors: ['#81D4FA', '#4FC3F7', '#29B6F6', '#03A9F4', '#039BE5', '#0288D1'], modifiers: { speedMult: 1.3, coinMult: 1.2 } },
-    stone: { name: 'Камень', price: 450, colors: ['#757575', '#616161', '#424242', '#546E7A', '#455A64', '#37474F'], modifiers: { speedMult: 0.85, scoreMult: 1.2 } },
-    space: { name: 'Космос', price: 500, colors: ['#1A237E', '#283593', '#311B92', '#4527A0', '#512DA8', '#01579B', '#0D47A1'] },
-    fire: { name: 'Огонь', price: 550, colors: ['#FF5722', '#FF3D00', '#E64A19', '#F4511E', '#D84315', '#BF360C'], modifiers: { fireChance: 0.05 } },
-    ocean: { name: 'Океан', price: 650, colors: ['#0288D1', '#0277BD', '#01579B', '#006064', '#00838F', '#0097A7', '#26C6DA'] },
-    emerald: { name: 'Изумруд', price: 700, colors: ['#004D40', '#00695C', '#00796B', '#00897B', '#009688', '#26A69A'], modifiers: { coinMult: 1.15 } },
-    retro: { name: 'Ретро 8-бит', price: 800, colors: ['#00C853', '#00B248', '#00897B', '#00BFA5', '#76FF03', '#AA00FF'] },
-    ruby: { name: 'Рубин', price: 900, colors: ['#880E4F', '#AD1457', '#C2185B', '#D81B60', '#E91E63', '#FF4081'], modifiers: { scoreMult: 1.15 } },
-    neon: { name: 'Неон', price: 1000, colors: ['#E91E63', '#9C27B0', '#3F51B5', '#00BCD4', '#8BC34A', '#FFEB3B', '#FF4081', '#00E5FF'] },
-    ice_skin: { name: 'Ледяной', price: 1100, colors: ['#E0FFFF', '#AFEEEE', '#87CEEB', '#4682B4', '#5F9EA0', '#B0E0E6'], effect: 'ice', modifiers: { speedMult: 0.9, coinMult: 1.15 } },
-    amethyst: { name: 'Аметист', price: 1150, colors: ['#4A148C', '#6A1B9A', '#7B1FA2', '#8E24AA', '#AB47BC', '#CE93D8'], modifiers: { xpMult: 1.2 } },
-    fire_skin: { name: 'Пламя', price: 1250, colors: ['#FF4500', '#FF6347', '#FF7F50', '#FFA07A', '#DC143C', '#B22222'], effect: 'fire', modifiers: { fireChance: 0.08 } },
-    holographic: { name: 'Голограмма', price: 1400, colors: ['#00FFFF', '#FF00FF', '#FFFF00', '#00FF00', '#FF0080', '#0080FF'], effect: 'holographic', modifiers: { scoreMult: 1.15 } },
-    cyberpunk: { name: 'Киберпанк', price: 1500, colors: ['#F72585', '#B5179E', '#7209B7', '#3A0CA3', '#4361EE', '#4CC9F0'], effect: 'neon', modifiers: { coinMult: 1.2 } },
-    neon_skin: { name: 'Неон+', price: 1600, colors: ['#FF00FF', '#00FFFF', '#FFFF00', '#FF0080', '#800080', '#00CED1'], effect: 'neon', modifiers: { scoreMult: 1.2 } },
-    magma: { name: 'Магма', price: 1750, colors: ['#210909', '#590D0D', '#A4161A', '#E5383B', '#FF6B00', '#FFD166'], effect: 'fire', modifiers: { fireChance: 0.1, scoreMult: 1.15 } },
-    crystal: { name: 'Кристалл', price: 1900, colors: ['#CAF0F8', '#90E0EF', '#00B4D8', '#0077B6', '#03045E', '#ADE8F4'], effect: 'ice', modifiers: { speedMult: 0.85, xpMult: 1.2 } },
-    galaxy_skin: { name: 'Галактика', price: 2000, colors: ['#191970', '#4B0082', '#8A2BE2', '#9370DB', '#663399', '#483D8B'], effect: 'stars', modifiers: { xpMult: 1.25 } },
-    void: { name: 'Бездна', price: 2400, colors: ['#10002B', '#240046', '#3C096C', '#5A189A', '#7B2CBF', '#C77DFF'], effect: 'stars', modifiers: { scoreMult: 1.25 } },
-    aurora_skin: { name: 'Сияние', price: 2800, colors: ['#00F5D4', '#00BBF9', '#9B5DE5', '#F15BB5', '#FEE440', '#06D6A0'], effect: 'holographic', modifiers: { coinMult: 1.25, xpMult: 1.2 } },
-    midas: { name: 'Мидас', price: 3500, colors: ['#FFF3B0', '#FFE066', '#FFD700', '#FFB703', '#FB8500', '#D4AF37'], effect: 'holographic', modifiers: { coinMult: 1.35, scoreMult: 1.2 } },
-    legend: { name: 'Легенда', price: 999999, notBuyable: true, colors: ['#FFD700', '#FFA000', '#FF6F00', '#F57C00', '#FFEB3B', '#FFC107'] },
+    // === ОБЫЧНЫЕ (без текстур и бафов, только цвета) ===
+    default:      { name: 'Классика',  rarity: 'common', price: 0,    pattern: 'none', colors: BASE_COLORS },
+    pastel_basic: { name: 'Пастель',   rarity: 'common', price: 200,  pattern: 'none', colors: ['#FFB3BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF', '#E0BBE4'] },
+    forest_basic: { name: 'Хвоя',      rarity: 'common', price: 350,  pattern: 'none', colors: ['#2E7D32', '#43A047', '#66BB6A', '#81C784', '#558B2F', '#33691E'] },
+    sunset_basic: { name: 'Закат',     rarity: 'common', price: 500,  pattern: 'none', colors: ['#FF6B6B', '#FF8E53', '#FFB74D', '#FFD54F', '#FF7043', '#D84315'] },
+    berry_basic:  { name: 'Ягода',     rarity: 'common', price: 650,  pattern: 'none', colors: ['#AD1457', '#D81B60', '#EC407A', '#F48FB1', '#880E4F', '#C2185B'] },
+    mono_basic:   { name: 'Графит',    rarity: 'common', price: 800,  pattern: 'none', colors: ['#ECEFF1', '#CFD8DC', '#90A4AE', '#607D8B', '#455A64', '#263238'] },
+    acid_basic:   { name: 'Кислота',   rarity: 'common', price: 1000, pattern: 'none', colors: ['#CCFF00', '#00FF9D', '#00E5FF', '#FF00AA', '#FFE600', '#7B2CBF'] },
+
+    // === РЕДКИЕ (простые текстуры + лёгкие бафы) ===
+    polka_rare:   { name: 'Горошек',   rarity: 'rare', price: 1500, pattern: 'dots',    colors: ['#FF4081', '#FF80AB', '#F50057', '#AB47BC', '#CE93D8'], modifiers: { coinMult: 1.04 } },
+    stripe_rare:  { name: 'Полосы',    rarity: 'rare', price: 2200, pattern: 'stripes', colors: ['#2979FF', '#448AFF', '#00B0FF', '#40C4FF', '#536DFE'], modifiers: { xpMult: 1.05 } },
+    brick_rare:   { name: 'Кирпич',    rarity: 'rare', price: 3000, pattern: 'bricks',  colors: ['#8D6E63', '#795548', '#6D4C41', '#A1887F', '#5D4037'], modifiers: { scoreMult: 1.05 } },
+    wave_rare:    { name: 'Прибой',    rarity: 'rare', price: 4000, pattern: 'waves',   colors: ['#0288D1', '#03A9F4', '#26C6DA', '#00ACC1', '#00838F'], modifiers: { coinMult: 1.06, xpMult: 1.04 } },
+    grid_rare:    { name: 'Пиксель',   rarity: 'rare', price: 5000, pattern: 'grid',    colors: ['#00E676', '#00C853', '#69F0AE', '#1DE9B6', '#00BFA5'], modifiers: { scoreMult: 1.06, coinMult: 1.04 } },
+    frost_rare:   { name: 'Иней',      rarity: 'rare', price: 6000, pattern: 'frost',   colors: ['#E0F7FA', '#B2EBF2', '#80DEEA', '#4DD0E1', '#26C6DA'], modifiers: { speedMult: 0.95, xpMult: 1.08 } },
+
+    // === ЭПИЧЕСКИЕ (сложные текстуры + ~20% бафы) ===
+    emerald_epic: { name: 'Изумруд',   rarity: 'epic', price: 8000,  pattern: 'gem',     effect: 'ice',         colors: ['#004D40', '#00695C', '#00897B', '#26A69A', '#4DB6AC'], modifiers: { coinMult: 1.18, xpMult: 1.10 } },
+    magma_epic:   { name: 'Магма',     rarity: 'epic', price: 9500,  pattern: 'magma',   effect: 'fire',        colors: ['#3E0000', '#8E0000', '#D50000', '#FF3D00', '#FF9100'], modifiers: { scoreMult: 1.20, coinMult: 1.10 } },
+    cyber_epic:   { name: 'Киберпанк', rarity: 'epic', price: 11500, pattern: 'circuit', effect: 'neon',        colors: ['#F72585', '#B5179E', '#7209B7', '#4361EE', '#4CC9F0'], modifiers: { coinMult: 1.22, xpMult: 1.15 } },
+    galaxy_epic:  { name: 'Галактика', rarity: 'epic', price: 13000, pattern: 'stars',   effect: 'stars',       colors: ['#10002B', '#240046', '#3C096C', '#7B2CBF', '#C77DFF'], modifiers: { xpMult: 1.25, scoreMult: 1.15 } },
+    aurora_epic:  { name: 'Сияние',    rarity: 'epic', price: 15000, pattern: 'holo',    effect: 'holographic', colors: ['#00F5D4', '#00BBF9', '#9B5DE5', '#F15BB5', '#FEE440'], modifiers: { coinMult: 1.22, scoreMult: 1.18, xpMult: 1.15 } },
+
+    // === ЛЕГЕНДАРНЫЕ (только Колесо удачи — 2% шанс) ===
+    midas_leg:    { name: 'Король Мидас', rarity: 'legendary', price: 0, notBuyable: true, wheelOnly: true, pattern: 'royal',   effect: 'holographic', colors: ['#FFF3B0', '#FFE066', '#FFD700', '#FFB703', '#FB8500'], modifiers: { coinMult: 1.45, scoreMult: 1.25 } },
+    phoenix_leg:  { name: 'Феникс',       rarity: 'legendary', price: 0, notBuyable: true, wheelOnly: true, pattern: 'phoenix', effect: 'fire',        colors: ['#FFD600', '#FFAB00', '#FF6D00', '#DD2C00', '#B71C1C'], modifiers: { scoreMult: 1.40, xpMult: 1.35 } },
+    chrono_leg:   { name: 'Хронос',       rarity: 'legendary', price: 0, notBuyable: true, wheelOnly: true, pattern: 'chrono',  effect: 'ice',         colors: ['#E0F7FA', '#80DEEA', '#00E5FF', '#00B0FF', '#2962FF'], modifiers: { speedMult: 0.85, scoreMult: 1.30, coinMult: 1.30 } },
+    astral_leg:   { name: 'Астрал',       rarity: 'legendary', price: 0, notBuyable: true, wheelOnly: true, pattern: 'astral',  effect: 'stars',       colors: ['#1A0033', '#4A0080', '#7B2CBF', '#E0AAFF', '#00F5D4'], modifiers: { coinMult: 1.35, scoreMult: 1.35, xpMult: 1.40 } },
+
+    // Наградной скин за коллекцию + престиж и события
+    legend: { name: 'Легенда', rarity: 'legendary', price: 999999, notBuyable: true, pattern: 'royal', effect: 'holographic', colors: ['#FFD700', '#FFA000', '#FF6F00', '#F57C00', '#FFEB3B'], modifiers: { coinMult: 1.40, scoreMult: 1.40, xpMult: 1.40 } },
     ...PRESTIGE_SKINS,
     ...EVENT_SKINS,
 };
-
 export const PALETTES = {
     standard: { name: 'Классика', price: 0, colors: BASE_COLORS },
     pastel: { name: 'Пастель', price: 150, colors: ['#FFB3BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF', '#E0BBE4', '#FFC8DD', '#CDEAC0'] },
