@@ -19,6 +19,7 @@ import { initAtmosphereLayers, updateAtmosphereLayers, disposeAtmosphereLayers }
 
 setupGlobalErrorHandler();
 
+// Безопасные дефолты на случай отсутствующих ключей в constants.js
 const CFG = {
     BLOCK_SIZE: GAME_CONFIG?.BLOCK_SIZE ?? 4,
     BLOCK_HEIGHT: GAME_CONFIG?.BLOCK_HEIGHT ?? 0.6,
@@ -42,7 +43,7 @@ const CFG = {
 };
 
 // ============ TELEGRAM & HAPTICS ============
-const TELEGRAM_APP_URL = 'https://t.me/YOUR_BOT_USERNAME/app'; // замени на реальную ссылку на Mini App
+const TELEGRAM_APP_URL = 'https://t.me/TowerGameeee_bot/app';
 const tg = window.Telegram?.WebApp;
 
 if (tg) {
@@ -60,7 +61,6 @@ function syncTelegramSafeAreas() {
     let contentTop = tg?.contentSafeAreaInset?.top || 0;
     const safeBottom = tg?.safeAreaInset?.bottom || 0;
 
-    // Подстраховка для iOS / Swiftgram в полноэкранном режиме, если клиент не прислал contentSafeAreaInset
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || tg?.platform === 'ios';
     if (tg && contentTop === 0 && (tg.isFullscreen || isIOS)) {
         contentTop = 48;
@@ -557,7 +557,6 @@ let dailyRewardPending = false, dailyRewardAmount = 0;
 let leaderboard = validateArray(safeGetItem(STORAGE_KEYS.LEADERBOARD, []), []);
 function saveLeaderboard() { safeSetItem(STORAGE_KEYS.LEADERBOARD, leaderboard); }
 
-// Переносим прошлые рекорды из leaderboard в stats.modeMax для достижений по режимам
 leaderboard.forEach(e => {
     if (e.mode && e.score > (stats.modeMax[e.mode] || 0)) {
         stats.modeMax[e.mode] = e.score;
@@ -568,7 +567,6 @@ let ownedPowerups = {
     ...DEFAULTS.POWERUPS,
     ...validateObject(safeGetItem(STORAGE_KEYS.POWERUPS, null), {})
 };
-// Конвертация старых способностей, если они были у игрока
 if (ownedPowerups.magnet || ownedPowerups.freeze || ownedPowerups.ghost) {
     ownedPowerups.foundation = (ownedPowerups.foundation || 0) + (ownedPowerups.magnet || 0);
     ownedPowerups.focus = (ownedPowerups.focus || 0) + (ownedPowerups.freeze || 0);
@@ -595,7 +593,6 @@ function saveChests() { safeSetItem(STORAGE_KEYS.CHESTS, chests); scheduleCloudS
 
 let currentMusicPhase = 1;
 
-// Миссии, события и мини-игры
 let missions = [];
 let missionsTimerInterval = null;
 let currentEvent = null;
@@ -839,7 +836,7 @@ function updateComboIndicator() {
     }
 }
 
-// ============ МОНЕТЫ (с пулом DOM-элементов) ============
+// ============ МОНЕТЫ ============
 let coinPopupAnchor = { x: window.innerWidth / 2, y: 120 };
 const COIN_POPUP_POOL = [];
 const COIN_POPUP_POOL_SIZE = 6;
@@ -887,25 +884,19 @@ function showCoinPopup(amount) {
             const el = document.createElement('div');
             el.className = 'coin-popup';
             el.style.display = 'none';
-            el.addEventListener('animationend', () => {
-                el.style.display = 'none';
-            });
+            el.addEventListener('animationend', () => { el.style.display = 'none'; });
             document.body.appendChild(el);
             COIN_POPUP_POOL.push(el);
         }
     }
-
     const popup = COIN_POPUP_POOL[coinPopupPoolIdx];
     coinPopupPoolIdx = (coinPopupPoolIdx + 1) % COIN_POPUP_POOL_SIZE;
-
     popup.textContent = `+${amount} 🪙`;
     popup.style.left = coinPopupAnchor.x + 'px';
     popup.style.top = coinPopupAnchor.y + 'px';
     popup.style.animation = 'none';
     popup.style.display = 'block';
-    requestAnimationFrame(() => {
-        popup.style.animation = '';
-    });
+    requestAnimationFrame(() => { popup.style.animation = ''; });
 }
 
 // ============ XP & LEVEL ============
@@ -1499,7 +1490,6 @@ function switchMenuTab(tabName) {
     document.querySelectorAll('.tab-pane').forEach(pane => {
         pane.classList.toggle('active', pane.id === `tab-${tabName}`);
     });
-
     const viewport = $('tab-viewport');
     if (viewport) viewport.scrollTop = 0;
 
@@ -1558,7 +1548,6 @@ function renderUpgrades() {
         const isMax = lvl >= MAX_UPGRADE_LEVEL;
         const price = getUpgradePrice(u);
         const canBuy = !isMax && coins >= price;
-
         const pips = Array.from({ length: MAX_UPGRADE_LEVEL }, (_, i) =>
             `<span class="upgrade-pip${i < lvl ? ' filled' : ''}"></span>`
         ).join('');
@@ -1832,8 +1821,10 @@ function applyBackground() {
         if (lowPerfMode) {
             removeEnvironmentParticles(scene);
         } else {
-            const particleType = getParticlesForBackground(currentBackground);
-            createEnvironmentParticles(scene, particleType, { density: IS_MOBILE ? 0.45 : 0.85 });
+            try {
+                const particleType = getParticlesForBackground(currentBackground);
+                createEnvironmentParticles(scene, particleType, { density: IS_MOBILE ? 0.45 : 0.85 });
+            } catch (e) {}
         }
     }
 }
@@ -2318,10 +2309,7 @@ function showMilestoneNotification(milestoneLevel) {
 
 // ============ СОБЫТИЯ ============
 function initEvents() {
-    if (!isEventsSystemActive()) {
-        console.log('[Events] System not yet active (starts 1.11.2026)');
-        return;
-    }
+    if (!isEventsSystemActive()) return;
     currentEvent = getCurrentEvent();
     renderEventBanner();
     if (eventNotificationInterval) clearInterval(eventNotificationInterval);
@@ -2763,7 +2751,6 @@ function createTexture(colorHex, type = BLOCK_TYPES.NORMAL) {
             ctx.textBaseline = 'middle';
             ctx.fillText('💎', 64, 66);
         } else {
-            // Базовый объёмный градиент
             const grad = ctx.createLinearGradient(0, 0, 0, 128);
             grad.addColorStop(0, 'rgba(255,255,255,0.22)');
             grad.addColorStop(0.5, 'rgba(255,255,255,0)');
@@ -2771,7 +2758,6 @@ function createTexture(colorHex, type = BLOCK_TYPES.NORMAL) {
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, 128, 128);
 
-            // Уникальный процедурный рисунок под выбранный облик
             if (currentSkin === 'pixel' || currentSkin === 'retro') {
                 ctx.fillStyle = 'rgba(0,0,0,0.16)';
                 for (let x = 0; x < 128; x += 16) ctx.fillRect(x, 0, 2, 128);
@@ -3145,7 +3131,7 @@ function clearScene() {
         scene.remove(w);
     });
     disposeRecordLine();
-    disposeAtmosphereLayers(scene);
+    try { disposeAtmosphereLayers(scene); } catch (e) {}
     if (currentBlock) { disposeMesh(currentBlock); currentBlock = null; }
     blocks = [];
     debris = [];
@@ -3236,7 +3222,6 @@ function spawnNewBlock(overrideSize = null) {
     nextBlockData = generateNextBlockData();
     updateNextBlockPreview(nextBlockData.type, nextBlockData.color);
 
-    // После «Второго шанса» гарантированно даём безопасный блок
     if (overrideSize && (type === BLOCK_TYPES.BOMB || type === BLOCK_TYPES.CRUMBLE)) {
         type = BLOCK_TYPES.NORMAL;
         color = getBlockVisuals(BLOCK_TYPES.NORMAL).color;
@@ -3354,16 +3339,16 @@ function startGame(mode = gameMode) {
         tutorialEl.style.display = showTutorialHint ? 'block' : 'none';
     }
 
+    createBaseBlock();
+    createRecordLine();
+    try { initAtmosphereLayers(scene, BLOCK_HEIGHT, lowPerfMode); } catch (e) {}
+    nextBlockData = generateNextBlockData();
+    spawnNewBlock();
+
     initAudio();
     startMusic();
     startWindSystem();
     startRenderLoop();
-
-    createBaseBlock();
-    createRecordLine();
-    initAtmosphereLayers(scene, BLOCK_HEIGHT, lowPerfMode);
-    nextBlockData = generateNextBlockData();
-    spawnNewBlock();
 
     stats.totalGames = (stats.totalGames || 0) + 1;
     stats.modeGames[gameMode] = (stats.modeGames[gameMode] || 0) + 1;
@@ -3561,7 +3546,6 @@ function acceptSecondChance() {
     combo = 0;
     updateComboIndicator();
 
-    // Новый блок на 50–60% меньше начального (40–50% от currentBaseSize)
     const rescueScale = 0.4 + Math.random() * 0.1;
     const rescueSize = currentBaseSize * rescueScale;
     spawnNewBlock({ w: rescueSize, d: rescueSize });
@@ -3811,7 +3795,6 @@ function dropBlock() {
             }
         }
 
-        // Восстановление ширины каждые 5 идеалов подряд
         if (combo > 0 && combo % 5 === 0 && (sizeX < currentBaseSize - 0.05 || sizeZ < currentBaseSize - 0.05)) {
             const newW = Math.min(currentBaseSize, sizeX + 0.35);
             const newD = Math.min(currentBaseSize, sizeZ + 0.35);
@@ -3909,7 +3892,6 @@ function dropBlock() {
         updateQuest('cut', 1);
     }
 
-    // Расчёт очков
     let pointsGain = basePoints;
     if (pointsGain > 0) {
         pointsGain = applyComboMultiplier(pointsGain, combo);
@@ -3930,7 +3912,6 @@ function dropBlock() {
         requestAnimationFrame(() => scoreEl.classList.add('score-pop'));
     }
 
-    // Пробитие 3D-линии рекорда
     if (!recordLinePassed && recordLineGroup && (score > highScore || (blocks.length - 1) > bestHeight)) {
         recordLinePassed = true;
         if (recordLineGroup.userData?.ringMat) {
@@ -4102,8 +4083,8 @@ function animate() {
             lowFpsStrikes++;
             if (lowFpsStrikes >= 2 && !lowPerfMode) {
                 lowPerfMode = true;
-                removeEnvironmentParticles(scene);
-                disposeAtmosphereLayers(scene);
+                try { removeEnvironmentParticles(scene); } catch (e) {}
+                try { disposeAtmosphereLayers(scene); } catch (e) {}
                 renderer.setPixelRatio(1);
             }
         } else {
@@ -4205,8 +4186,8 @@ function animate() {
     }
 
     if (!lowPerfMode) {
-        updateEnvironmentParticles(rawDelta);
-        updateAtmosphereLayers(rawDelta, Math.max(0, blocks.length - 1), BLOCK_HEIGHT);
+        try { updateEnvironmentParticles(rawDelta); } catch (e) {}
+        try { updateAtmosphereLayers(rawDelta, Math.max(0, blocks.length - 1), BLOCK_HEIGHT); } catch (e) {}
     }
 
     updateCamera(dt);
@@ -4297,17 +4278,14 @@ function shareChallenge() {
 }
 
 function bindEvents() {
-    // Навигация по 4 вкладкам
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         safeClick(btn, () => switchMenuTab(btn.dataset.menuTab));
     });
 
-    // Вкладки магазина
     document.querySelectorAll('.shop-tab').forEach(tab => {
         safeClick(tab, () => switchShopTab(tab.dataset.tab));
     });
 
-    // Вкладки таблицы рекордов
     document.querySelectorAll('.lb-mode-tab').forEach(tab => {
         safeClick(tab, () => {
             currentLbMode = tab.dataset.mode;
@@ -4315,7 +4293,6 @@ function bindEvents() {
         });
     });
 
-    // Вкладки достижений
     document.querySelectorAll('.ach-tab').forEach(tab => {
         safeClick(tab, () => {
             currentAchCategory = tab.dataset.achCat;
@@ -4323,7 +4300,6 @@ function bindEvents() {
         });
     });
 
-    // Режимы игры
     safeClick($('btn-classic'), () => showPowerupSelection(GAME_MODES.CLASSIC));
     safeClick($('btn-time'), () => showPowerupSelection(GAME_MODES.TIME));
     document.querySelectorAll('.mini-mode-btn').forEach(btn => {
@@ -4334,7 +4310,6 @@ function bindEvents() {
     });
     safeClick(dailyPlayBtn, startDailyChallenge);
 
-    // Игровые контролы
     safeClick(pauseBtn, togglePause);
     safeClick(menuToggleBtn, goToMenu);
     safeClick(muteBtn, () => {
@@ -4347,7 +4322,6 @@ function bindEvents() {
         else stopMusic();
     });
 
-    // Game Over & Второй шанс & Пауза
     safeClick(restartPowerupsBtn, restartWithSamePowerups);
     safeClick($('restart-btn'), () => {
         activePowerups = { ...DEFAULTS.ACTIVE_POWERUPS };
@@ -4361,14 +4335,12 @@ function bindEvents() {
     safeClick($('pause-resume'), togglePause);
     safeClick($('pause-menu'), goToMenu);
 
-    // Способности
     safeClick($('start-with-powerups'), startGameWithPowerups);
     safeClick($('close-powerups'), () => {
         pendingGameMode = null;
         hideModal(powerupsScreen);
     });
 
-    // Профиль и модалки
     safeClick($('ach-btn'), () => { renderAchievements(); showModal(achScreen); });
     safeClick($('close-achievements'), () => hideModal(achScreen));
 
@@ -4406,7 +4378,6 @@ function bindEvents() {
         triggerHaptic('success');
     });
 
-    // Ежедневная награда
     safeClick($('claim-daily'), () => {
         if (dailyRewardPending) {
             dailyRewardPending = false;
@@ -4417,26 +4388,21 @@ function bindEvents() {
         hideModal(dailyScreen);
     });
 
-    // Сундуки
     safeClick($('chest-btn'), showChestOpening);
     safeClick($('open-chest-btn'), openChest);
     safeClick($('close-chest'), () => hideModal(chestScreen));
 
-    // Престиж
     safeClick(prestigeActivateBtnEl, showPrestigeConfirm);
     safeClick(prestigeConfirmBtn, activatePrestige);
     safeClick(prestigeCancelBtn, () => hideModal(prestigeConfirmScreen));
     safeClick(openPrestigeChestBtn, openPrestigeChest);
     safeClick(closePrestigeChestBtn, () => hideModal(prestigeChestScreen));
 
-    // События
     safeClick(eventBannerEl, showEventDetails);
     safeClick($('close-event'), () => hideModal(eventScreen));
 
-    // Реролл миссий дня
     safeClick(rerollMissionsBtn, handleRerollMissions);
 
-    // Колесо удачи
     safeClick($('wheel-btn'), openWheelModal);
     safeClick($('close-wheel'), closeWheelModal);
     safeClick(wheelSpinBtn, () => {
@@ -4446,7 +4412,6 @@ function bindEvents() {
         wheelController.spin();
     });
 
-    // Мини-игры
     safeClick($('minigames-btn'), () => {
         renderMinigamesList();
         showModal(minigamesScreen);
