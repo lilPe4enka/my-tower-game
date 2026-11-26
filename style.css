@@ -1206,3 +1206,205 @@ SPLASH SCREEN И БЫСТРЫЙ ПОВТОР СО СПОСОБНОСТЯМИ
     text-shadow: none;
     cursor: not-allowed;
 }
+/* =========================================
+ПОСТОЯННЫЕ АПГРЕЙДЫ
+========================================= */
+.upgrades-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+.upgrade-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #F8F6FA;
+    padding: 10px 12px;
+    border-radius: 14px;
+    transition: background 0.2s;
+}
+.upgrade-item:hover { background: #F0ECF5; }
+.upgrade-item.maxed {
+    background: linear-gradient(135deg, #FFF8E1, #FFECB3);
+    border: 1.5px solid #FFD54F;
+}
+.upgrade-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: white;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+}
+.upgrade-info {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+}
+.upgrade-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.upgrade-name {
+    font-weight: 900;
+    font-size: clamp(12px, 3vw, 14px);
+    color: var(--text-primary);
+}
+.upgrade-bonus {
+    font-size: 10px;
+    font-weight: 900;
+    color: var(--mint-dark);
+    background: var(--mint-light);
+    padding: 1px 6px;
+    border-radius: 6px;
+}
+.upgrade-desc {
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-top: 2px;
+    display: block;
+}
+.upgrade-pips {
+    display: flex;
+    gap: 4px;
+    margin-top: 5px;
+}
+.upgrade-pip {
+    width: 14px;
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(74, 68, 88, 0.14);
+}
+.upgrade-pip.filled {
+    background: linear-gradient(90deg, var(--mint), var(--blue));
+}
+.upgrade-item.maxed .upgrade-pip.filled {
+    background: linear-gradient(90deg, var(--yellow), var(--orange));
+}
+.upgrade-buy-btn {
+    padding: 8px 11px;
+    border-radius: 10px;
+    font-weight: 900;
+    font-size: 11px;
+    background: linear-gradient(135deg, var(--mint), var(--mint-dark));
+    color: white;
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+.upgrade-buy-btn.locked {
+    background: rgba(74, 68, 88, 0.15);
+    color: var(--text-muted);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+.upgrade-buy-btn.maxed {
+    background: linear-gradient(135deg, var(--yellow), var(--orange));
+    color: white;
+    cursor: default;
+}
+
+/* =========================================
+КОЛЕСО УДАЧИ
+========================================= */
+.wheel-banner-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+    border: 2px solid #FFCC80;
+    box-shadow: var(--shadow-sm);
+    text-align: left;
+    position: relative;
+}
+.wheel-banner-title {
+    font-size: 15px;
+    font-weight: 900;
+    color: #E65100;
+}
+.wheel-banner-dot {
+    background: var(--red);
+    color: white;
+    font-size: 11px;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: badgePulse 1s infinite;
+}
+.wheel-banner-dot.hidden { display: none; }
+
+.wheel-modal-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.wheel-status {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: #F8F6FA;
+    padding: 6px 14px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+.wheel-stage {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 6px 0 12px 0;
+}
+.wheel-pointer {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 26px;
+    line-height: 1;
+    color: var(--red);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    z-index: 4;
+    pointer-events: none;
+}
+canvas.wheel-canvas {
+    position: relative;
+    top: auto;
+    left: auto;
+    z-index: 2;
+    width: 270px;
+    height: 270px;
+    max-width: 78vw;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    display: block;
+}
+.wheel-result {
+    min-height: 24px;
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--orange);
+    margin-bottom: 10px;
+}
+.wheel-spin-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+}
+.wheel-spin-btn:disabled {
+    background: rgba(74, 68, 88, 0.16);
+    color: var(--text-muted);
+    box-shadow: none;
+    cursor: not-allowed;
+}
