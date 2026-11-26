@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=22">
+    <link rel="stylesheet" href="style.css?v=24">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         // Снимаем старый Service Worker и кэш, если они остались в WebView
@@ -144,76 +144,55 @@
     </div>
 
     <!-- Rules -->
-    <div id="rules-screen" class="screen modal" role="dialog" aria-labelledby="rules-title">
-        <div class="modal-content">
-            <h2 id="rules-title">📖 ПРАВИЛА ИГРЫ</h2>
-            <div class="rules-content">
-                <div class="rules-section-title">🏗️ Основы</div>
-                <p><strong>Цель:</strong> Построй как можно более высокую башню из движущихся блоков.</p>
-                <p><strong>Управление:</strong> Нажми на экран (или <strong>Пробел / Enter</strong> на ПК), когда блок окажется ровно над башней. Пауза — <strong>P / Esc</strong>.</p>
-                <p><strong>Обрезка и идеал:</strong> Неточное попадание срезает лишнюю часть блока. Полный промах — конец игры. Точное попадание сохраняет ширину, увеличивает серию и даёт бонусные очки и монеты.</p>
-                <p><strong>💖 Второй шанс:</strong> При промахе (от 15 очков или рядом с рекордом) можно 1 раз за игру продолжить за монеты.</p>
-
-                <div class="rules-section-title">🎮 Режимы игры</div>
-                <div class="rule-block">
-                    <span class="rule-icon">🎮</span>
-                    <div><strong>Классика</strong> — строительство без таймера с плавным ускорением. Перед стартом можно выбрать способности.</div>
-                </div>
-                <div class="rule-block">
-                    <span class="rule-icon">⏱</span>
-                    <div><strong>На время</strong> — даётся 60 секунд. Каждое идеальное попадание добавляет <strong>+2 сек</strong> к таймеру. Доступны способности.</div>
-                </div>
-                <div class="rule-block">
-                    <span class="rule-icon">🎯</span>
-                    <div><strong>Точность</strong> — хардкор без обрезки. Любое неидеальное попадание сразу завершает игру.</div>
-                </div>
-                <div class="rule-block">
-                    <span class="rule-icon">🌪</span>
-                    <div><strong>Шторм</strong> — ветер сносит блок в сторону, а порывы усиливаются с высотой башни. Скорость выше на 10%, но идеальные попадания ослабляют ветер.</div>
-                </div>
-                <div class="rule-block">
-                    <span class="rule-icon">♾️</span>
-                    <div><strong>Бесконечный</strong> — после среза блок частично восстанавливает ширину, позволяя строить дольше, но ускорение в 2 раза выше и выше максимальная скорость.</div>
-                </div>
-                <div class="rule-block">
-                    <span class="rule-icon">🪞</span>
-                    <div><strong>Зеркальный</strong> — блоки стартуют с обратной стороны, а базовая скорость увеличена на 15%.</div>
-                </div>
-                <div class="rule-block">
-                    <span class="rule-icon">📅</span>
-                    <div><strong>Испытание дня</strong> — 1 попытка в день с уникальными правилами (турбо, только бомбы, x3 очки, один шанс и др.).</div>
-                </div>
-                <div class="rule-block">
-                    <span class="rule-icon">🎲</span>
-                    <div><strong>Мини-игры</strong> — 5 аркад (Взлом сейфа, Охота за золотом, Звёздный дождь, Пары блоков, Идеальный тайминг) для заработка монет и опыта. До 10 игр в день, перезарядка 5 минут.</div>
+    <div id="rules-screen" class="screen modal">
+        <div class="modal-content rules-modal">
+            <h2>📖 Правила и справка</h2>
+            <div class="rules-scroll">
+                <div class="rules-section">
+                    <h3>🏗️ Основы и серии</h3>
+                    <p>• Тапай вовремя, чтобы поставить блок точно на предыдущий — всё лишнее срезается.</p>
+                    <p>• <b>Идеальное попадание</b> даёт серию (комбо) и множитель очков. Каждые 5 идеалов подряд слегка расширяют блок.</p>
+                    <p>• <b>Ярость (x5 серия)</b> — на 3 блока замедляет скорость и удваивает все очки.</p>
+                    <p>• <b>Второй шанс</b> — при промахе на высокой башне можно продолжиться за монеты.</p>
                 </div>
 
-                <div class="rules-section-title">🧱 Типы блоков</div>
-                <div class="rule-block"><div class="rule-swatch" style="background:linear-gradient(135deg,#FF1744,#D50000)"></div><div><strong>Обычный</strong> — +1 очко.</div></div>
-                <div class="rule-block"><div class="rule-swatch" style="background:linear-gradient(135deg,#FFE082,#FFC107)"></div><div><strong>Золотой</strong> — +3 очка и бонусные монеты за идеал.</div></div>
-                <div class="rule-block"><div class="rule-swatch" style="background:repeating-linear-gradient(45deg,#111,#111 4px,#FF1744 4px,#FF1744 8px)"></div><div><strong>Бомба</strong> — идеал: +2 очка; обрезка: взрыв и -1 очко.</div></div>
-                <div class="rule-block"><div class="rule-swatch" style="background:linear-gradient(135deg,#00E5FF,#4FC3F7)"></div><div><strong>Лёд</strong> — движется на 45% быстрее. Идеал: +2 очка.</div></div>
-                <div class="rule-block"><div class="rule-swatch" style="background:repeating-linear-gradient(45deg,#5D4037,#5D4037 3px,#3E2723 3px,#3E2723 6px)"></div><div><strong>Хрупкий</strong> — появляется после 15 очков. <strong>НЕ ставь идеально</strong> — он разрушится! Нужна обрезка.</div></div>
+                <div class="rules-section">
+                    <h3>🧱 Особые блоки</h3>
+                    <p>• <b>👑 Золотой</b> — x3 очки и +5 🪙 за идеальное попадание.</p>
+                    <p>• <b>❄️ Ледяной</b> — движется быстрее (+45%), но даёт x2 очки за идеал.</p>
+                    <p>• <b>💣 Бомба</b> — при срезе взрывается (-1 очко), при идеале обезвреживается (+2 очка).</p>
+                    <p>• <b>🧱 Хрупкий</b> — от идеального удара рассыпается! Его нужно <b>аккуратно срезать</b>.</p>
+                    <p>• <b>🌈 Радужный / 🐉 Дракон / 💎 Алмаз</b> — ультраредкие секретные блоки (+5…+10 очков, монеты, авто-идеал у Алмаза).</p>
+                </div>
 
-                <div class="rules-section-title">🌟 Секретные блоки</div>
-                <div class="rule-block"><span class="rule-icon">🌈</span><div><strong>Радужный</strong> — +10 очков и бонус монет.</div></div>
-                <div class="rule-block"><span class="rule-icon">🐉</span><div><strong>Дракон</strong> — +10 очков и огненный взрыв.</div></div>
-                <div class="rule-block"><span class="rule-icon">💎</span><div><strong>Алмаз</strong> — автоматически выравнивается идеально и даёт +5 очков.</div></div>
+                <div class="rules-section">
+                    <h3>🎮 Режимы игры</h3>
+                    <p>• <b>Классика</b> — строй башню как можно выше, скорость плавно растёт.</p>
+                    <p>• <b>⏱ На время</b> — 60 секунд на старт, каждый идеал добавляет +2 сек.</p>
+                    <p>• <b>🎯 Точность</b> — только идеальные попадания, любой срез завершает игру.</p>
+                    <p>• <b>🌪 Шторм</b> — порывы ветра сдувают летящий блок, идеалы ослабляют ветер.</p>
+                    <p>• <b>♾️ Бесконечный</b> — срез частично восстанавливается, но ускорение в 2 раза выше.</p>
+                    <p>• <b>🪞 Зеркальный</b> — блоки вылетают с противоположной стороны.</p>
+                    <p>• <b>🪐 Антигравитация</b> — каждые 15 этажей камера плавно разворачивается на 90° и меняет направление полёта.</p>
+                </div>
 
-                <div class="rules-section-title">🔥 Комбо и Ярость</div>
-                <p><strong>Серии идеалов</strong> умножают очки: x2 (от 5), x3 (от 10), x5 (от 15), x8 (от 20), x12 (от 25), x20 (от 30).</p>
-                <p><strong>🔥 Ярость</strong> включается на 5-м идеале подряд на 3 блока: скорость падает на 40%, а все очки удваиваются.</p>
-                <p><strong>✨ Восстановление ширины:</strong> Каждые 5 идеальных попаданий подряд слегка расширяют блок (вплоть до стартового размера).</p>
+                <div class="rules-section">
+                    <h3>🎨 Редкости обликов и бафы</h3>
+                    <p>• <b>Обычный</b> (200–1 000 🪙) — стильные цветовые палитры без бафов.</p>
+                    <p>• <b>Редкий</b> (1 500–6 000 🪙) — простые узоры и лёгкие бафы (+4%…+8% к монетам, опыту, очкам или замедление скорости).</p>
+                    <p>• <b>Эпический</b> (8 000–15 000 🪙) — сложные текстуры, эффекты и сильные бафы (~18%–25%).</p>
+                    <p>• <b>👑 Легендарный</b> — падает <b>только в Колесе удачи (шанс 2%)</b>. Даёт максимальные бафы до +45% к монетам, +40% к очкам/опыту и -15% к скорости.</p>
+                </div>
 
-                <div class="rules-section-title">⚡ Способности и апгрейды</div>
-                <p>🧱 <strong>Фундамент</strong> — стартовый блок шире на 35%.<br>🎯 <strong>Точный глаз</strong> — зона идеального попадания шире в 3.5 раза.<br>🍀 <strong>Удача</strong> — x2 шанс золотых и секретных блоков, бомбы и хрупкие блоки отключены.<br>💰 <strong>Множитель</strong> — x2 монет за всю игру.<br>🔧 <strong>Апгрейды</strong> (в Магазине) — постоянные улучшения монет, опыта, базы, зоны идеала и других параметров.</p>
-
-                <div class="rules-section-title">🏆 Прогресс и награды</div>
-                <p><strong>🏅 Уровни и сундуки:</strong> За игры начисляется опыт. Каждый уровень даёт +50 🪙, а каждые 5 уровней — редкий сундук.</p>
-                <p><strong>⭐ Престиж:</strong> На 100 уровне можно переродиться — уровень и рекорды сбросятся, но ты получишь постоянные множители к монетам, опыту и очкам, а также престиж-сундуки.</p>
-                <p><strong>🎡 Колесо удачи, миссии и события:</strong> Крути бесплатное Колесо удачи каждый день, выполняй миссии во вкладке «Задания» и забирай сезонные награды каждые 5 дней.</p>
+                <div class="rules-section">
+                    <h3>⚡ Бусты, Контракты и Прогресс</h3>
+                    <p>• <b>Способности перед игрой</b>: 🧱 Фундамент (+35% ширины), 🎯 Точный глаз (идеал x3.5), 🍀 Удача (x2 редких, без бомб и хрупких), 💰 Множитель (x2 монет).</p>
+                    <p>• <b>📜 Контракты</b> — ставка монет на условие забега. Выполнил — забираешь куш, провалил — ставка сгорает.</p>
+                    <p>• <b>🔧 Апгрейды</b> — постоянные улучшения в Магазине (ширина, точность, удача, время, скидка на Второй шанс).</p>
+                    <p>• <b>⭐ Престиж</b> — сброс прогресса на высоком уровне ради вечных множителей и уникальных сундуков.</p>
+                </div>
             </div>
-            <button id="close-rules" class="close-modal-btn">ПОНЯТНО</button>
+            <button id="close-rules" class="btn-primary">ПОНЯТНО</button>
         </div>
     </div>
 
@@ -649,6 +628,6 @@
     <!-- Mute Button (только в игре) -->
     <button id="mute-btn" class="floating-settings" style="top:auto;bottom:max(calc(var(--safe-bottom) + 16px), 20px);" aria-label="Звук">🔊</button>
 
-    <script type="module" src="game.js?v=20"></script>
+    <script type="module" src="game.js?v=24"></script>
 </body>
 </html>
