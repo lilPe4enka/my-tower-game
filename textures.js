@@ -136,7 +136,7 @@ export function createBlockTexture(colorHex, type = BLOCK_TYPES.NORMAL, skin = '
         // === РЕДКИЕ: простые узоры ===
         if (pattern === 'dots') {
             ctx.fillStyle = 'rgba(255,255,255,0.28)';
-            [[26,26],[96,26],[64,64],[26,102],[96,102]].forEach(([x,y]) => {
+            [[26, 26], [96, 26], [64, 64], [26, 102], [96, 102]].forEach(([x, y]) => {
                 ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.fill();
             });
         } else if (pattern === 'stripes') {
@@ -200,7 +200,7 @@ export function createBlockTexture(colorHex, type = BLOCK_TYPES.NORMAL, skin = '
             neb.addColorStop(0, 'rgba(190, 130, 255, 0.42)'); neb.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = neb; ctx.fillRect(0, 0, 128, 128);
             ctx.fillStyle = '#FFFFFF';
-            [[18,22,2.5],[98,28,2],[42,76,1.8],[108,94,2.8],[26,106,1.6],[74,48,2.2],[62,108,1.5]].forEach(([x,y,r]) => {
+            [[18, 22, 2.5], [98, 28, 2], [42, 76, 1.8], [108, 94, 2.8], [26, 106, 1.6], [74, 48, 2.2], [62, 108, 1.5]].forEach(([x, y, r]) => {
                 ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
             });
         } else if (pattern === 'holo') {
@@ -283,6 +283,7 @@ export function createBlockTexture(colorHex, type = BLOCK_TYPES.NORMAL, skin = '
             [[24, 24, 3], [104, 24, 3], [24, 104, 3], [104, 104, 3]].forEach(([x, y, r]) => {
                 ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
             });
+        }
 
         if (pattern !== 'none') {
             ctx.strokeStyle = 'rgba(255,255,255,0.24)';
@@ -337,8 +338,6 @@ export function createBlockMesh(w, h, d, color, type = BLOCK_TYPES.NORMAL, { ski
             const baseGlow = pattern === 'first_wipe' ? 0.24 : pattern === 'none' ? 0.08 : 0.14;
             sideOpts.emissive = new THREE.Color(color); sideOpts.emissiveIntensity = baseGlow;
             topOpts.emissive = new THREE.Color(color); topOpts.emissiveIntensity = baseGlow;
-            sideOpts.emissive = new THREE.Color(color); sideOpts.emissiveIntensity = pattern === 'none' ? 0.08 : 0.14;
-            topOpts.emissive = new THREE.Color(color); topOpts.emissiveIntensity = pattern === 'none' ? 0.08 : 0.14;
             if (redTheme) { sideOpts.emissive = new THREE.Color(0xFF4444); sideOpts.emissiveIntensity = 0.2; }
         }
         const side = new THREE.MeshLambertMaterial(sideOpts);
