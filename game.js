@@ -5,7 +5,7 @@ import { safeGetItem, safeSetItem, safeParseInt, PARTICLE_LIMITS, enforceParticl
 import { GAME_CONFIG, LIMITS, GAME_MODES, GAME_STATES, GAME_MODE_NAMES, BLOCK_TYPES, BLOCK_COLORS, STORAGE_KEYS, DEFAULTS, xpForNextLevel, getAdaptiveD, CONFETTI_COLORS, FEATURE_NAMES } from './constants.js?v=18';
 import { getComboTier, applyComboMultiplier, checkTierUpgrade, formatComboDisplay } from './combo-system.js?v=18';
 import { applyTransition, getTransitionForScreen, staggerElements, flashTransition } from './transitions.js?v=18';
-import { loadMissions, updateMissionProgress, claimMissionReward, getMissionsStats, formatMissionReward, getMissionProgress, getMissionRerollCost, rerollDailyMissions } from './missions.js?v=18';
+import { loadMissions, updateMissionProgress, claimMissionReward, getMissionsStats, formatMissionReward, getMissionProgress, getMissionRerollCost, rerollDailyMissions } from './missions.js?v=23';
 import { getPrestigeCount, getPrestigeBonus, setPrestigeBonus, canPrestige, getPrestigeProgress, performPrestige, resetProgressForPrestige, rollPrestigeChestReward, applyPrestigeReward, formatPrestigeBonus, PRESTIGE_CONFIG, checkNewMilestones } from './prestige.js?v=18';
 import { throttle, updateDOMText, updateDOMStyle, updateFpsCounter, getCurrentFps } from './performance.js?v=18';
 import { saveLastFocus, restoreLastFocus, trapFocus, releaseFocusTrap, setupEscapeKeyHandler, removeEscapeKeyHandler, updateAriaAttributes, announceToScreenReader, addDecorativeStars, normalizeFontSizes, addCloseButtonToModal } from './accessibility.js?v=18';
@@ -17,8 +17,8 @@ import { UPGRADES, MAX_UPGRADE_LEVEL, loadUpgrades, getUpgradeLevel, getUpgradeP
 import { canSpinWheel, getTimeUntilNextSpin, createWheelController } from './wheel.js?v=18';
 import { initAtmosphereLayers, updateAtmosphereLayers, disposeAtmosphereLayers } from './atmosphere.js?v=18';
 
-// Новые вынесенные модули (v=22)
-import { BASE_COLORS, SKINS, PALETTES, BACKGROUNDS, SEASONS, DAILY_CHALLENGES, POWERUP_DEFS, QUESTS_POOL, getHeightComparison } from './game-data.js?v=22';
+// Вынесенные модули
+import { BASE_COLORS, SKINS, PALETTES, BACKGROUNDS, SEASONS, DAILY_CHALLENGES, POWERUP_DEFS, QUESTS_POOL, getHeightComparison } from './game-data.js?v=23';
 import { configureAudio, isAudioRunning, setMusicTempo, setWindVolume, initAudio, playSound, startMusic, stopMusic } from './audio.js?v=22';
 import { SHARED_UNIT_BOX_GEO, PARTICLE_GEOS, getParticleMaterial, getDebrisMaterial, clearVisualCaches, createGlowTexture, createPerfectWaveTexture, createBlockMesh, disposeMesh } from './textures.js?v=22';
 import { getContractById, getContractsForMode, createContractTracker, updateContractTracker, formatContractHUD } from './contracts.js?v=22';
@@ -288,6 +288,7 @@ let bgStarsGroup = null;
 let blocks = [], debris = [], confetti = [], perfectWaves = [];
 let currentBlock, nextBlockData, direction = 1;
 let score = 0, combo = 0, runPerfects = 0;
+let runStartPerfects = 0, runStartBroken = false;
 
 let cameraAngle = Math.PI / 4;
 let targetCameraAngle = Math.PI / 4;
@@ -1063,6 +1064,11 @@ function startGameWithPowerups() {
     for (const key in activePowerups) {
         if (activePowerups[key]) ownedPowerups[key] = Math.max(0, (ownedPowerups[key] || 0) - 1);
     }
+    const usedPuCount = Object.values(activePowerups).filter(Boolean).length;
+    if (usedPuCount > 0) {
+        updateQuest('powerup_use', usedPuCount);
+        updateMissionProgress(missions, 'powerup_use', usedPuCount);
+    }
     savePowerups();
     lastUsedPowerups = { ...activePowerups };
 
@@ -1109,6 +1115,11 @@ function restartWithSamePowerups() {
     info.keys.forEach(k => { if ((ownedPowerups[k] || 0) > 0) ownedPowerups[k]--; });
     savePowerups(); updateCoinUI();
     activePowerups = { ...lastUsedPowerups };
+    const usedPuCount = Object.values(activePowerups).filter(Boolean).length;
+    if (usedPuCount > 0) {
+        updateQuest('powerup_use', usedPuCount);
+        updateMissionProgress(missions, 'powerup_use', usedPuCount);
+    }
     activeContract = null;
     hideModal(gameOverEl, { restoreMenu: false });
     startGame(gameMode);
@@ -1505,6 +1516,7 @@ function startMinigame(gameId) {
     minigamesStatusEl.textContent = `${gameDef.icon} ${gameDef.name}`;
     activeMinigame = createMinigame(gameId, minigameStageEl, (result) => {
         activeMinigame = null; recordMinigamePlay();
+        updateMissionProgress(missions, 'minigame_play', 1);
         const reward = calculateMinigameReward(gameDef, result);
         if (reward.coins > 0) addCoins(reward.coins);
         if (reward.xp > 0) addXP(reward.xp);
@@ -1788,7 +1800,9 @@ function startGame(mode = gameMode) {
     if (dailyModifiers.forcePalette && !savedPaletteBeforeDaily) { savedPaletteBeforeDaily = currentPalette; currentPalette = dailyModifiers.forcePalette; }
 
     clearScene();
-    score = 0; combo = 0; runPerfects = 0; sessionCoins = 0; sessionXP = 0;
+    score = 0; combo = 0; runPerfects = 0;
+    runStartPerfects = 0; runStartBroken = false;
+    sessionCoins = 0; sessionXP = 0;
     direction = 1; isFury = false; furyBlocksLeft = 0;
     secondChanceUsed = false; secondChanceActive = false;
     overviewActive = false; overviewSkipped = false;
@@ -2050,7 +2064,7 @@ function triggerGameOver() {
     updateTelegramBackButton();
 }
 
-// ============ DROP BLOCK (с защитой от NaN, Антигравитацией и Контрактами) ============
+// ============ DROP BLOCK (все триггеры миссий, квестов, Антигравитация и Контракты) ============
 function dropBlock() {
     if (gameState !== GAME_STATES.PLAYING || !currentBlock || !currentBlock.userData.moving) return;
     if (showTutorialHint) { showTutorialHint = false; safeSetItem(STORAGE_KEYS.TUTORIAL_SHOWN, true); if (tutorialEl) tutorialEl.style.display = 'none'; }
@@ -2093,6 +2107,14 @@ function dropBlock() {
     if (isPerfect) {
         currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z; currentBlock.userData.squash = 0;
         runPerfects++;
+        updateQuest('perfect_run', runPerfects, true);
+        updateMissionProgress(missions, 'perfect_run', runPerfects, true);
+        if (!runStartBroken) {
+            runStartPerfects++;
+            updateQuest('perfect_start', runStartPerfects, true);
+            updateMissionProgress(missions, 'perfect_start', runStartPerfects, true);
+        }
+
         if (!dailyModifiers.noCombo) {
             const oldCombo = combo; combo++;
             if (combo > (stats.maxCombo || 0)) stats.maxCombo = combo;
@@ -2106,15 +2128,17 @@ function dropBlock() {
             const grown = makeBlock(nw, BLOCK_HEIGHT, nd, prevColor, bType);
             grown.position.copy(pos); Object.assign(grown.userData, { w: nw, d: nd, color: prevColor, blockType: bType, squash: 0 });
             scene.add(grown); currentBlock = grown; showPopup(bonusText, '✨ ШИРИНА +', 900);
+            updateQuest('width_grow', 1);
+            updateMissionProgress(missions, 'width_grow', 1);
         }
         if (combo === CFG.FURY_THRESHOLD && !isFury) activateFury();
 
-        if (bType === BLOCK_TYPES.GOLDEN) { basePoints = 3; addCoins(5); stats.totalGolden = (stats.totalGolden || 0) + 1; updateQuest('golden', 1); }
-        else if (bType === BLOCK_TYPES.BOMB) { basePoints = 2; stats.totalBomb = (stats.totalBomb || 0) + 1; updateQuest('bomb', 1); }
-        else if (bType === BLOCK_TYPES.ICE) { basePoints = 2; stats.totalIce = (stats.totalIce || 0) + 1; updateQuest('ice', 1); }
-        else if (bType === BLOCK_TYPES.RAINBOW) { basePoints = 10; addCoins(15); playSound('secret'); stats.totalSecret = (stats.totalSecret || 0) + 1; updateQuest('secret', 1); }
-        else if (bType === BLOCK_TYPES.DRAGON) { basePoints = 10; spawnConfetti(20); playSound('secret'); stats.totalSecret = (stats.totalSecret || 0) + 1; updateQuest('secret', 1); }
-        else if (bType === BLOCK_TYPES.DIAMOND) { basePoints = 5; addCoins(8); playSound('secret'); stats.totalSecret = (stats.totalSecret || 0) + 1; updateQuest('secret', 1); }
+        if (bType === BLOCK_TYPES.GOLDEN) { basePoints = 3; addCoins(5); stats.totalGolden = (stats.totalGolden || 0) + 1; updateQuest('golden', 1); updateMissionProgress(missions, 'golden', 1); }
+        else if (bType === BLOCK_TYPES.BOMB) { basePoints = 2; stats.totalBomb = (stats.totalBomb || 0) + 1; updateQuest('bomb', 1); updateMissionProgress(missions, 'bomb', 1); }
+        else if (bType === BLOCK_TYPES.ICE) { basePoints = 2; stats.totalIce = (stats.totalIce || 0) + 1; updateQuest('ice', 1); updateMissionProgress(missions, 'ice', 1); }
+        else if (bType === BLOCK_TYPES.RAINBOW) { basePoints = 10; addCoins(15); playSound('secret'); stats.totalSecret = (stats.totalSecret || 0) + 1; updateQuest('secret', 1); updateMissionProgress(missions, 'secret', 1); }
+        else if (bType === BLOCK_TYPES.DRAGON) { basePoints = 10; spawnConfetti(20); playSound('secret'); stats.totalSecret = (stats.totalSecret || 0) + 1; updateQuest('secret', 1); updateMissionProgress(missions, 'secret', 1); }
+        else if (bType === BLOCK_TYPES.DIAMOND) { basePoints = 5; addCoins(8); playSound('secret'); stats.totalSecret = (stats.totalSecret || 0) + 1; updateQuest('secret', 1); updateMissionProgress(missions, 'secret', 1); }
         else addCoins(2);
 
         if (gameMode === GAME_MODES.TIME && timerEl) { timeLeft += 2; timerEl.innerText = `⏱ ${timeLeft}`; }
@@ -2129,6 +2153,7 @@ function dropBlock() {
         updateMissionProgress(missions, 'perfect', 1); updateMissionProgress(missions, 'combo', combo, true);
     } else {
         combo = 0;
+        runStartBroken = true;
         if (isFury) { isFury = false; furyBlocksLeft = 0; document.body.classList.remove('fury-active'); }
         const newW = movingAxis === 'x' ? sizeX - absDiffX : sizeX;
         const newD = movingAxis === 'z' ? sizeZ - absDiffZ : sizeZ;
@@ -2150,6 +2175,11 @@ function dropBlock() {
         if (bType === BLOCK_TYPES.BOMB) { basePoints = -1; playSound('bomb'); spawnBombParticles(); triggerHaptic('error'); showPopup(bonusText, '💥 ВЗРЫВ! -1', 900); }
         else { playSound('drop'); triggerHaptic('light'); shakeIntensity = Math.max(shakeIntensity, 0.14); addCoins(1); }
         updateQuest('cut', 1);
+        updateMissionProgress(missions, 'cut', 1);
+        if (bType === BLOCK_TYPES.CRUMBLE) {
+            updateQuest('crumble_cut', 1);
+            updateMissionProgress(missions, 'crumble_cut', 1);
+        }
     }
 
     // Защищённый расчёт очков (без NaN)
@@ -2180,6 +2210,18 @@ function dropBlock() {
     score = Math.max(0, prevScore + (Number.isFinite(pointsGain) ? pointsGain : 0));
     if (scoreEl) { scoreEl.innerText = score; scoreEl.classList.remove('score-pop'); requestAnimationFrame(() => scoreEl.classList.add('score-pop')); }
 
+    // Прогресс квестов и миссий по очкам и режимам
+    updateQuest('score_run', score, true);
+    if (!Object.values(activePowerups).some(Boolean)) {
+        updateQuest('clean_score', score, true);
+        updateMissionProgress(missions, 'clean_score', score, true);
+    }
+    if (gameMode === GAME_MODES.STORM) { updateQuest('storm_score', score, true); updateMissionProgress(missions, 'storm_score', score, true); }
+    else if (gameMode === GAME_MODES.TIME) { updateMissionProgress(missions, 'time_score', score, true); }
+    else if (gameMode === GAME_MODES.PRECISION) { updateQuest('precision_score', score, true); updateMissionProgress(missions, 'precision_score', score, true); }
+    else if (gameMode === GAME_MODES.MIRROR) { updateQuest('mirror_score', score, true); updateMissionProgress(missions, 'mirror_score', score, true); }
+    else if (gameMode === MODE_ANTIGRAVITY) { updateMissionProgress(missions, 'antigrav_score', score, true); }
+
     // Режим «Антигравитация»: плавный разворот камеры на 90° каждые 15 этажей
     const floors = blocks.length - 1;
     if (gameMode === MODE_ANTIGRAVITY && floors > 0 && floors % 15 === 0) {
@@ -2187,6 +2229,8 @@ function dropBlock() {
         showPopup(bonusText, '🪐 ПОВОРОТ КАМЕРЫ 90°!', 1200);
         playSound('gust');
         triggerHaptic('medium');
+        updateQuest('antigrav_rot', 1);
+        updateMissionProgress(missions, 'antigrav_rot', 1);
     }
 
     // Проверка активного контракта
@@ -2198,6 +2242,8 @@ function dropBlock() {
             saveStats();
             playSound('victory'); triggerHaptic('success');
             showPopup(milestoneText, `📜 КОНТРАКТ! +${cRes.reward} 🪙`, 1700);
+            updateQuest('contract_win', 1);
+            updateMissionProgress(missions, 'contract_win', 1);
             checkAchievements();
         }
         updateContractHUD();
