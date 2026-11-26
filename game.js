@@ -14,13 +14,13 @@ import { createEnvironmentParticles, updateEnvironmentParticles, getParticlesFor
 import { MINIGAMES, canPlayMinigame, recordMinigamePlay, getCooldownRemaining, getRemainingDailyPlays, formatCooldown, createMinigame, calculateMinigameReward } from './minigames.js?v=18';
 import { initCloudSync, scheduleCloudSave, flushCloudSave, getCloudStatus, isCloudStorageAvailable } from './cloud-storage.js?v=18';
 import { UPGRADES, MAX_UPGRADE_LEVEL, loadUpgrades, getUpgradeLevel, getUpgradePrice, buyUpgrade, getUpgradeBonuses, getUpgradesProgress } from './upgrades.js?v=18';
-import { canSpinWheel, getTimeUntilNextSpin, createWheelController } from './wheel.js?v=18';
+import { canSpinWheel, getTimeUntilNextSpin, createWheelController } from './wheel.js?v=24';
 import { initAtmosphereLayers, updateAtmosphereLayers, disposeAtmosphereLayers } from './atmosphere.js?v=18';
 
 // Вынесенные модули
-import { BASE_COLORS, SKINS, PALETTES, BACKGROUNDS, SEASONS, DAILY_CHALLENGES, POWERUP_DEFS, QUESTS_POOL, getHeightComparison } from './game-data.js?v=23';
+import { BASE_COLORS, SKINS, SKIN_RARITIES, PALETTES, BACKGROUNDS, SEASONS, DAILY_CHALLENGES, POWERUP_DEFS, QUESTS_POOL, getHeightComparison } from './game-data.js?v=24';
 import { configureAudio, isAudioRunning, setMusicTempo, setWindVolume, initAudio, playSound, startMusic, stopMusic } from './audio.js?v=22';
-import { SHARED_UNIT_BOX_GEO, PARTICLE_GEOS, getParticleMaterial, getDebrisMaterial, clearVisualCaches, createGlowTexture, createPerfectWaveTexture, createBlockMesh, disposeMesh } from './textures.js?v=22';
+import { SHARED_UNIT_BOX_GEO, PARTICLE_GEOS, getParticleMaterial, getDebrisMaterial, clearVisualCaches, createGlowTexture, createPerfectWaveTexture, createBlockMesh, disposeMesh } from './textures.js?v=24';
 import { getContractById, getContractsForMode, createContractTracker, updateContractTracker, formatContractHUD } from './contracts.js?v=22';
 
 setupGlobalErrorHandler();
@@ -59,7 +59,7 @@ function safeGetAdaptiveD(aspect) {
 }
 
 // ============ TELEGRAM & HAPTICS ============
-const TELEGRAM_APP_URL = 'https://t.me/YOUR_BOT_USERNAME/app';
+const TELEGRAM_APP_URL = 'https://t.me/TowerGameeee_bot/app';
 const tg = window.Telegram?.WebApp;
 
 if (tg) {
@@ -256,7 +256,7 @@ const ACHIEVEMENTS = [
     { id: 'skins_3', category: 'progress', name: 'Коллекционер', desc: 'Открой 3 облика', icon: '🎨', reward: 40, check: () => unlockedSkins.length >= 3 },
     { id: 'skins_10', category: 'progress', name: 'Модник', desc: 'Открой 10 обликов', icon: '🧥', reward: 120, check: () => unlockedSkins.length >= 10 },
     { id: 'skins_all', category: 'progress', name: 'Все облики', desc: 'Собери все основные облики', icon: '🏆', reward: 500, special: 'legend', check: () => {
-        const buyable = Object.keys(SKINS).filter(k => k !== 'legend' && !SKINS[k].notBuyable && !SKINS[k].prestigeOnly && !SKINS[k].eventOnly);
+        const buyable = Object.keys(SKINS).filter(k => k !== 'legend' && !SKINS[k].notBuyable && !SKINS[k].wheelOnly && !SKINS[k].prestigeOnly && !SKINS[k].eventOnly);
         return buyable.every(k => unlockedSkins.includes(k));
     }},
     { id: 'rich_500', category: 'progress', name: 'Богач', desc: 'Накопи 500 монет', icon: '💰', reward: 50, check: () => coins >= 500 },
@@ -303,6 +303,7 @@ let bestHeight = safeParseInt(safeGetItem('towerBestHeight', String(highScore)),
 let recordLineGroup = null, recordLinePassed = false;
 
 let currentSkin = (typeof safeGetItem(STORAGE_KEYS.SKIN, 'default') === 'string') ? safeGetItem(STORAGE_KEYS.SKIN, 'default') : 'default';
+if (!SKINS[currentSkin]) currentSkin = 'default';
 let unlockedSkins = validateArray(safeGetItem(STORAGE_KEYS.SKINS, ['default']), ['default']);
 let currentPalette = (typeof safeGetItem(STORAGE_KEYS.PALETTE, 'standard') === 'string') ? safeGetItem(STORAGE_KEYS.PALETTE, 'standard') : 'standard';
 let unlockedPalettes = validateArray(safeGetItem(STORAGE_KEYS.PALETTES, ['standard']), ['standard']);
@@ -825,15 +826,32 @@ function openWheelModal() {
         wheelController = createWheelController(wheelCanvas, {
             onTick: () => playSound('ui_click'),
             onFinish: (seg) => {
-                if (seg.type === 'coins') { addCoins(seg.value); if (wheelResultEl) wheelResultEl.textContent = seg.jackpot ? `💎 ДЖЕКПОТ! +${seg.value} 🪙` : `Выигрыш: +${seg.value} 🪙!`; }
-                else if (seg.type === 'xp') { addXP(seg.value); if (wheelResultEl) wheelResultEl.textContent = `Выигрыш: +${seg.value} опыта!`; }
-                else if (seg.type === 'powerup') {
+                if (seg.type === 'coins') {
+                    addCoins(seg.value);
+                    if (wheelResultEl) wheelResultEl.textContent = seg.jackpot ? `💎 ДЖЕКПОТ! +${seg.value} 🪙` : `Выигрыш: +${seg.value} 🪙!`;
+                } else if (seg.type === 'xp') {
+                    addXP(seg.value);
+                    if (wheelResultEl) wheelResultEl.textContent = `Выигрыш: +${seg.value} опыта!`;
+                } else if (seg.type === 'powerup') {
                     const keys = Object.keys(POWERUP_DEFS), pk = keys[Math.floor(Math.random() * keys.length)];
                     ownedPowerups[pk] = (ownedPowerups[pk] || 0) + seg.value; savePowerups();
                     if (wheelResultEl) wheelResultEl.textContent = `Выигрыш: ${POWERUP_DEFS[pk].icon} ${POWERUP_DEFS[pk].name}!`;
                 } else if (seg.type === 'chest') {
                     addChest('wheel', { rare: Boolean(seg.rare) });
                     if (wheelResultEl) wheelResultEl.textContent = seg.rare ? '✨ Выигрыш: РЕДКИЙ СУНДУК!' : '📦 Выигрыш: СУНДУК!';
+                } else if (seg.type === 'legendary_skin') {
+                    const lockedLegs = Object.keys(SKINS).filter(k => SKINS[k].wheelOnly && !unlockedSkins.includes(k));
+                    if (lockedLegs.length > 0) {
+                        const winKey = lockedLegs[Math.floor(Math.random() * lockedLegs.length)];
+                        unlockedSkins.push(winKey);
+                        safeSetItem(STORAGE_KEYS.SKINS, unlockedSkins);
+                        scheduleCloudSave();
+                        if (wheelResultEl) wheelResultEl.textContent = `👑 ЛЕГЕНДА! Облик «${SKINS[winKey].name}»!`;
+                    } else {
+                        addCoins(2500, { raw: true });
+                        addChest('wheel', { rare: true });
+                        if (wheelResultEl) wheelResultEl.textContent = '👑 ВСЕ ЛЕГЕНДЫ СОБРАНЫ! +2500 🪙 и Редкий сундук!';
+                    }
                 }
                 stats.wheelSpins = (stats.wheelSpins || 0) + 1; saveStats();
                 playSound(seg.jackpot || seg.rare ? 'victory' : 'chest'); triggerHaptic('success');
@@ -851,18 +869,52 @@ function closeWheelModal() { if (wheelTimerInterval) { clearInterval(wheelTimerI
 function renderShop() {
     if (!skinListEl) return;
     skinListEl.innerHTML = '';
-    for (const [key, skin] of Object.entries(SKINS)) {
-        if (key === 'legend' && !unlockedSkins.includes('legend')) continue;
-        if ((skin.prestigeOnly || skin.eventOnly) && !unlockedSkins.includes(key)) continue;
-        const isUnlocked = unlockedSkins.includes(key), isEquipped = currentSkin === key, canBuy = coins >= skin.price && !skin.notBuyable;
-        const btnHtml = isEquipped ? `<button class="equipped">ВЫБРАНО</button>` : isUnlocked ? `<button class="equip" data-skin="${key}">ВЫБРАТЬ</button>` : skin.notBuyable ? `<button class="buy locked" disabled>🏆</button>` : canBuy ? `<button class="buy" data-skin="${key}" data-price="${skin.price}">${skin.price} 🪙</button>` : `<button class="buy locked" disabled>${skin.price} 🪙</button>`;
+
+    const entries = Object.entries(SKINS)
+        .filter(([key, skin]) => {
+            if (key === 'legend' && !unlockedSkins.includes('legend')) return false;
+            if ((skin.prestigeOnly || skin.eventOnly) && !unlockedSkins.includes(key)) return false;
+            return true;
+        })
+        .sort(([, a], [, b]) => {
+            const oa = SKIN_RARITIES[a.rarity || 'common']?.order ?? 0;
+            const ob = SKIN_RARITIES[b.rarity || 'common']?.order ?? 0;
+            return oa !== ob ? oa - ob : (a.price || 0) - (b.price || 0);
+        });
+
+    let lastRarity = null;
+    for (const [key, skin] of entries) {
+        const rarityKey = skin.rarity || 'common';
+        const rarity = SKIN_RARITIES[rarityKey] || SKIN_RARITIES.common;
+
+        if (rarityKey !== lastRarity) {
+            lastRarity = rarityKey;
+            const sep = document.createElement('div');
+            sep.className = `shop-rarity-header rarity-${rarityKey}`;
+            sep.textContent = rarityKey === 'legendary' ? `👑 ${rarity.label} · Колесо 2%` : rarity.label;
+            skinListEl.appendChild(sep);
+        }
+
+        const isUnlocked = unlockedSkins.includes(key);
+        const isEquipped = currentSkin === key;
+        const canBuy = coins >= skin.price && !skin.notBuyable;
+
+        let btnHtml = '';
+        if (isEquipped) btnHtml = `<button class="equipped">ВЫБРАНО</button>`;
+        else if (isUnlocked) btnHtml = `<button class="equip" data-skin="${key}">ВЫБРАТЬ</button>`;
+        else if (skin.wheelOnly) btnHtml = `<button class="buy wheel-only" disabled>🎡 2%</button>`;
+        else if (skin.notBuyable) btnHtml = `<button class="buy locked" disabled>🏆</button>`;
+        else if (canBuy) btnHtml = `<button class="buy" data-skin="${key}" data-price="${skin.price}">${skin.price} 🪙</button>`;
+        else btnHtml = `<button class="buy locked" disabled>${skin.price} 🪙</button>`;
+
         const colorDots = skin.colors.slice(0, 5).map(c => `<span style="background:${c}"></span>`).join('');
         const effectBadge = skin.effect ? `<span class="skin-effect-badge">${getEffectIcon(skin.effect)}</span>` : '';
         const div = document.createElement('div');
-        div.className = 'skin-item';
-        div.innerHTML = `<div class="skin-info"><span class="skin-preview ${skin.effect || ''}" style="background:linear-gradient(135deg,${skin.colors[0]},${skin.colors[1] || skin.colors[0]});border-radius:8px;padding:4px;position:relative;">${effectBadge}</span><div class="skin-details"><span class="skin-name">${skin.name}</span>${formatSkinModifiers(skin.modifiers)}<div class="skin-colors">${colorDots}</div></div></div>${btnHtml}`;
+        div.className = `skin-item rarity-card-${rarityKey}`;
+        div.innerHTML = `<div class="skin-info"><span class="skin-preview ${skin.effect || ''}" style="background:linear-gradient(135deg,${skin.colors[0]},${skin.colors[1] || skin.colors[0]});border-radius:8px;padding:4px;position:relative;">${effectBadge}</span><div class="skin-details"><div class="skin-name-row"><span class="skin-name">${skin.name}</span><span class="rarity-pill rarity-${rarityKey}">${rarity.label}</span></div>${formatSkinModifiers(skin.modifiers)}<div class="skin-colors">${colorDots}</div></div></div>${btnHtml}`;
         skinListEl.appendChild(div);
     }
+
     skinListEl.querySelectorAll('button.equip').forEach(btn => safeClick(btn, () => { currentSkin = btn.dataset.skin; safeSetItem(STORAGE_KEYS.SKIN, currentSkin); scheduleCloudSave(); applySkinEffect(); renderShop(); }));
     skinListEl.querySelectorAll('button.buy').forEach(btn => {
         if (btn.disabled) return;
@@ -931,9 +983,9 @@ function switchShopTab(tab) {
     if (backgroundsListEl) backgroundsListEl.style.display = tab === 'backgrounds' ? 'flex' : 'none';
     if (!shopProgressEl) return;
     if (tab === 'skins') {
-        const buyable = Object.keys(SKINS).filter(k => !SKINS[k].notBuyable).length;
-        const unlocked = unlockedSkins.filter(k => !SKINS[k] || !SKINS[k].notBuyable).length;
-        shopProgressEl.innerText = `Открыто: ${unlocked}/${buyable}`;
+        const totalVisible = Object.keys(SKINS).filter(k => k !== 'legend' && !SKINS[k].prestigeOnly && !SKINS[k].eventOnly).length;
+        const unlockedVisible = unlockedSkins.filter(k => SKINS[k] && k !== 'legend' && !SKINS[k].prestigeOnly && !SKINS[k].eventOnly).length;
+        shopProgressEl.innerText = `Открыто: ${unlockedVisible}/${totalVisible}`;
     } else if (tab === 'upgrades') {
         const p = getUpgradesProgress(); shopProgressEl.innerText = `Улучшено: ${p.current}/${p.total}`;
     } else if (tab === 'colors') shopProgressEl.innerText = `Открыто палитр: ${unlockedPalettes.length}/${Object.keys(PALETTES).length}`;
@@ -1159,7 +1211,7 @@ function updateChestUI() {
 
 function rollChestReward(isRare = false) {
     const mult = isRare ? 3 : 1, r = Math.random();
-    const lockedSkins = Object.keys(SKINS).filter(s => !unlockedSkins.includes(s) && !SKINS[s].notBuyable);
+    const lockedSkins = Object.keys(SKINS).filter(s => !unlockedSkins.includes(s) && !SKINS[s].notBuyable && !SKINS[s].wheelOnly);
     if (lockedSkins.length === 0 || r < 0.55) {
         const amount = [50, 80, 100, 150, 200][Math.floor(Math.random() * 5)] * mult;
         return { type: 'coins', amount, text: `+${amount} 🪙${isRare ? ' ✨' : ''}` };
@@ -1556,6 +1608,7 @@ function reloadFromLocalAfterCloudMerge() {
     streak = safeParseInt(safeGetItem(STORAGE_KEYS.STREAK, '0'), 0);
     lastVisitDate = safeGetItem(STORAGE_KEYS.LAST_VISIT, '') || '';
     currentSkin = typeof safeGetItem(STORAGE_KEYS.SKIN, 'default') === 'string' ? safeGetItem(STORAGE_KEYS.SKIN, 'default') : 'default';
+    if (!SKINS[currentSkin]) currentSkin = 'default';
     unlockedSkins = validateArray(safeGetItem(STORAGE_KEYS.SKINS, ['default']), ['default']);
     currentPalette = typeof safeGetItem(STORAGE_KEYS.PALETTE, 'standard') === 'string' ? safeGetItem(STORAGE_KEYS.PALETTE, 'standard') : 'standard';
     unlockedPalettes = validateArray(safeGetItem(STORAGE_KEYS.PALETTES, ['standard']), ['standard']);
@@ -1582,6 +1635,7 @@ function reloadFromLocalAfterCloudMerge() {
 function makeBlock(w, h, d, color, type = BLOCK_TYPES.NORMAL) {
     return createBlockMesh(w, h, d, color, type, {
         skin: currentSkin,
+        pattern: SKINS[currentSkin]?.pattern || 'none',
         redTheme: Boolean(unlockedFeatures.redTheme),
         glowTexture,
     });
@@ -2064,7 +2118,7 @@ function triggerGameOver() {
     updateTelegramBackButton();
 }
 
-// ============ DROP BLOCK (все триггеры миссий, квестов, Антигравитация и Контракты) ============
+// ============ DROP BLOCK ============
 function dropBlock() {
     if (gameState !== GAME_STATES.PLAYING || !currentBlock || !currentBlock.userData.moving) return;
     if (showTutorialHint) { showTutorialHint = false; safeSetItem(STORAGE_KEYS.TUTORIAL_SHOWN, true); if (tutorialEl) tutorialEl.style.display = 'none'; }
