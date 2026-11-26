@@ -1,23 +1,26 @@
 import * as THREE from 'three';
 
 // ============ ИМПОРТЫ МОДУЛЕЙ ============
-import { safeGetItem, safeSetItem, safeParseInt, PARTICLE_LIMITS, enforceParticleLimits, showModalSafe, hideModalSafe, isAnyModalOpen, setupGlobalErrorHandler, validateArray, validateObject } from './utils.js?v=16';
-import { GAME_CONFIG, LIMITS, GAME_MODES, GAME_STATES, GAME_MODE_NAMES, BLOCK_TYPES, BLOCK_COLORS, BLOCK_GLOW_COLORS, STORAGE_KEYS, DEFAULTS, xpForNextLevel, getAdaptiveD, CONFETTI_COLORS, MILESTONE_COLORS, LEAD_NOTES, FEATURE_NAMES } from './constants.js?v=16';
-import { getComboTier, applyComboMultiplier, checkTierUpgrade, formatComboDisplay } from './combo-system.js?v=16';
-import { applyTransition, getTransitionForScreen, staggerElements, flashTransition } from './transitions.js?v=16';
-import { loadMissions, updateMissionProgress, claimMissionReward, getMissionsStats, formatMissionReward, getMissionProgress } from './missions.js?v=16';
-import { getPrestigeCount, getPrestigeBonus, setPrestigeBonus, canPrestige, getPrestigeProgress, performPrestige, resetProgressForPrestige, rollPrestigeChestReward, applyPrestigeReward, formatPrestigeBonus, PRESTIGE_SKINS, PRESTIGE_CONFIG, checkNewMilestones } from './prestige.js?v=16';
-import { getCachedTexture, clearTextureCache, throttle, updateDOMText, updateDOMStyle, updateDOMClass, updateFpsCounter, getCurrentFps } from './performance.js?v=16';
-import { saveLastFocus, restoreLastFocus, trapFocus, releaseFocusTrap, setupEscapeKeyHandler, removeEscapeKeyHandler, updateAriaAttributes, announceToScreenReader, addDecorativeStars, normalizeFontSizes, animateElementsSequentially, addCloseButtonToModal } from './accessibility.js?v=16';
-import { getCurrentEvent, getEventProgress, getAvailableRewards, claimEventReward, getEventStats, formatEventDate, isEventsSystemActive, getEventDay, EVENT_SKINS } from './seasonal-events.js?v=16';
-import { createEnvironmentParticles, updateEnvironmentParticles, getParticlesForBackground, removeEnvironmentParticles } from './environment-particles.js?v=16';
-import { MINIGAMES, canPlayMinigame, recordMinigamePlay, getCooldownRemaining, getRemainingDailyPlays, formatCooldown, createMinigame, calculateMinigameReward } from './minigames.js?v=16';
-import { initCloudSync, scheduleCloudSave, flushCloudSave, getCloudStatus, isCloudStorageAvailable } from './cloud-storage.js?v=16';
+import { safeGetItem, safeSetItem, safeParseInt, PARTICLE_LIMITS, enforceParticleLimits, showModalSafe, hideModalSafe, isAnyModalOpen, setupGlobalErrorHandler, validateArray, validateObject } from './utils.js?v=18';
+import { GAME_CONFIG, LIMITS, GAME_MODES, GAME_STATES, GAME_MODE_NAMES, BLOCK_TYPES, BLOCK_COLORS, BLOCK_GLOW_COLORS, STORAGE_KEYS, DEFAULTS, xpForNextLevel, getAdaptiveD, CONFETTI_COLORS, MILESTONE_COLORS, LEAD_NOTES, FEATURE_NAMES } from './constants.js?v=18';
+import { getComboTier, applyComboMultiplier, checkTierUpgrade, formatComboDisplay } from './combo-system.js?v=18';
+import { applyTransition, getTransitionForScreen, staggerElements, flashTransition } from './transitions.js?v=18';
+import { loadMissions, updateMissionProgress, claimMissionReward, getMissionsStats, formatMissionReward, getMissionProgress, getMissionRerollCost, rerollDailyMissions } from './missions.js?v=18';
+import { getPrestigeCount, getPrestigeBonus, setPrestigeBonus, canPrestige, getPrestigeProgress, performPrestige, resetProgressForPrestige, rollPrestigeChestReward, applyPrestigeReward, formatPrestigeBonus, PRESTIGE_SKINS, PRESTIGE_CONFIG, checkNewMilestones } from './prestige.js?v=18';
+import { getCachedTexture, clearTextureCache, throttle, updateDOMText, updateDOMStyle, updateDOMClass, updateFpsCounter, getCurrentFps } from './performance.js?v=18';
+import { saveLastFocus, restoreLastFocus, trapFocus, releaseFocusTrap, setupEscapeKeyHandler, removeEscapeKeyHandler, updateAriaAttributes, announceToScreenReader, addDecorativeStars, normalizeFontSizes, animateElementsSequentially, addCloseButtonToModal } from './accessibility.js?v=18';
+import { getCurrentEvent, getEventProgress, getAvailableRewards, claimEventReward, getEventStats, formatEventDate, isEventsSystemActive, getEventDay, EVENT_SKINS } from './seasonal-events.js?v=18';
+import { createEnvironmentParticles, updateEnvironmentParticles, getParticlesForBackground, removeEnvironmentParticles } from './environment-particles.js?v=18';
+import { MINIGAMES, canPlayMinigame, recordMinigamePlay, getCooldownRemaining, getRemainingDailyPlays, formatCooldown, createMinigame, calculateMinigameReward } from './minigames.js?v=18';
+import { initCloudSync, scheduleCloudSave, flushCloudSave, getCloudStatus, isCloudStorageAvailable } from './cloud-storage.js?v=18';
+import { UPGRADES, MAX_UPGRADE_LEVEL, loadUpgrades, getUpgradeLevel, getUpgradePrice, buyUpgrade, getUpgradeBonuses, getUpgradesProgress } from './upgrades.js?v=18';
+import { canSpinWheel, getTimeUntilNextSpin, createWheelController } from './wheel.js?v=18';
+import { initAtmosphereLayers, updateAtmosphereLayers, disposeAtmosphereLayers } from './atmosphere.js?v=18';
 
 setupGlobalErrorHandler();
 
 // ============ TELEGRAM & HAPTICS ============
-const TELEGRAM_APP_URL = 'https://t.me/TowerGameeee_bot/app'; // замени на реальную ссылку на Mini App
+const TELEGRAM_APP_URL = 'https://t.me/YOUR_BOT_USERNAME/app'; // замени на реальную ссылку на Mini App
 const tg = window.Telegram?.WebApp;
 
 if (tg) {
@@ -138,6 +141,9 @@ function handleModalDismiss(el) {
     if (el === minigamesScreen) {
         stopActiveMinigame();
         stopMinigamesCooldownTimer();
+    }
+    if (el === wheelScreen) {
+        if (wheelTimerInterval) { clearInterval(wheelTimerInterval); wheelTimerInterval = null; }
     }
     hideModal(el);
 }
@@ -343,37 +349,81 @@ const POWERUP_DEFS = {
     multiplier: { icon: '💰', name: 'Множитель',   desc: 'x2 монет за всю игру',          price: 200 }
 };
 
+let currentAchCategory = 'all';
+
 const ACHIEVEMENTS = [
-    { id: 'first_tower', name: 'Первая башня', desc: 'Построй 5 этажей', icon: '🏗️', check: () => stats.maxScore >= 5 },
-    { id: 'score_10', name: 'Новичок', desc: '10 очков в игре', icon: '🌱', check: () => stats.maxScore >= 10 },
-    { id: 'score_25', name: 'Строитель', desc: '25 очков в игре', icon: '🏠', check: () => stats.maxScore >= 25 },
-    { id: 'score_50', name: 'Мастер', desc: '50 очков в игре', icon: '🏰', check: () => stats.maxScore >= 50 },
-    { id: 'score_100', name: 'Легенда', desc: '100 очков в игре', icon: '👑', check: () => stats.maxScore >= 100 },
-    { id: 'combo_3', name: 'Мастер серий', desc: 'Серия x3', icon: '🔥', check: () => stats.maxCombo >= 3 },
-    { id: 'combo_5', name: 'Огненный', desc: 'Серия x5', icon: '💥', check: () => stats.maxCombo >= 5 },
-    { id: 'perfect_50', name: 'Снайпер', desc: '50 идеалов', icon: '🎯', check: () => stats.totalPerfect >= 50, reward: 50 },
-    { id: 'perfect_200', name: 'Точность', desc: '200 идеалов → золотой след', icon: '🎪', check: () => stats.totalPerfect >= 200, reward: 200, feature: 'goldenTrail' },
-    { id: 'games_10', name: 'Игрок', desc: '10 игр', icon: '🎮', check: () => stats.totalGames >= 10 },
-    { id: 'games_50', name: 'Заядлый', desc: '50 игр', icon: '🎲', check: () => stats.totalGames >= 50 },
-    { id: 'fury_1', name: 'В ярости', desc: 'Активируй ярость', icon: '😡', check: () => stats.totalFury >= 1 },
-    { id: 'fury_10', name: 'Берсерк', desc: '10 яростей → красная тема', icon: '👹', check: () => stats.totalFury >= 10, reward: 150, feature: 'redTheme' },
-    { id: 'golden_5', name: 'Король золота', desc: '5 идеальных золотых', icon: '💎', check: () => stats.totalGolden >= 5 },
-    { id: 'bomb_5', name: 'Сапёр', desc: '5 идеальных бомб', icon: '💣', check: () => stats.totalBomb >= 5 },
-    { id: 'ice_5', name: 'Ледокол', desc: '5 идеальных льдов', icon: '❄️', check: () => stats.totalIce >= 5 },
-    { id: 'secret_1', name: 'Тайна', desc: 'Поймай секретный блок', icon: '🌟', check: () => stats.totalSecret >= 1 },
-    { id: 'secret_10', name: 'Охотник', desc: '10 секретных блоков', icon: '🔮', check: () => stats.totalSecret >= 10 },
-    { id: 'skins_3', name: 'Коллекционер', desc: '3 облика', icon: '🎨', check: () => unlockedSkins.length >= 3 },
-    { id: 'skins_all', name: 'Все облики', desc: 'Собери все основные облики', icon: '🏆', reward: 500, special: 'legend', check: () => {
+    // === ОБЩИЕ (general) ===
+    { id: 'first_tower', category: 'general', name: 'Первая башня', desc: 'Построй 5 этажей', icon: '🏗️', reward: 20, check: () => stats.maxScore >= 5 },
+    { id: 'score_10', category: 'general', name: 'Новичок', desc: '10 очков в любой игре', icon: '🌱', reward: 25, check: () => stats.maxScore >= 10 },
+    { id: 'score_25', category: 'general', name: 'Строитель', desc: '25 очков в любой игре', icon: '🏠', reward: 40, check: () => stats.maxScore >= 25 },
+    { id: 'score_50', category: 'general', name: 'Мастер', desc: '50 очков в любой игре', icon: '🏰', reward: 80, check: () => stats.maxScore >= 50 },
+    { id: 'score_100', category: 'general', name: 'Легенда', desc: '100 очков в любой игре', icon: '👑', reward: 150, check: () => stats.maxScore >= 100 },
+    { id: 'score_200', category: 'general', name: 'Небоскрёб', desc: '200 очков в любой игре', icon: '🌆', reward: 300, check: () => stats.maxScore >= 200 },
+    { id: 'combo_3', category: 'general', name: 'Мастер серий', desc: 'Серия x3', icon: '🔥', reward: 25, check: () => stats.maxCombo >= 3 },
+    { id: 'combo_5', category: 'general', name: 'Огненный', desc: 'Серия x5', icon: '💥', reward: 50, check: () => stats.maxCombo >= 5 },
+    { id: 'combo_10', category: 'general', name: 'Метроном', desc: 'Серия x10 подряд', icon: '⚡', reward: 120, check: () => stats.maxCombo >= 10 },
+    { id: 'combo_20', category: 'general', name: 'Киборг', desc: 'Серия x20 подряд', icon: '🤖', reward: 250, check: () => stats.maxCombo >= 20 },
+    { id: 'perfect_50', category: 'general', name: 'Снайпер', desc: '50 идеальных попаданий', icon: '🎯', reward: 50, check: () => stats.totalPerfect >= 50 },
+    { id: 'perfect_200', category: 'general', name: 'Точность', desc: '200 идеалов → золотой след', icon: '🎪', reward: 200, feature: 'goldenTrail', check: () => stats.totalPerfect >= 200 },
+    { id: 'games_10', category: 'general', name: 'Игрок', desc: 'Сыграй 10 игр', icon: '🎮', reward: 30, check: () => stats.totalGames >= 10 },
+    { id: 'games_50', category: 'general', name: 'Заядлый', desc: 'Сыграй 50 игр', icon: '🎲', reward: 100, check: () => stats.totalGames >= 50 },
+    { id: 'fury_1', category: 'general', name: 'В ярости', desc: 'Активируй ярость', icon: '😡', reward: 30, check: () => stats.totalFury >= 1 },
+    { id: 'fury_10', category: 'general', name: 'Берсерк', desc: '10 яростей → красная тема', icon: '👹', reward: 150, feature: 'redTheme', check: () => stats.totalFury >= 10 },
+    { id: 'golden_5', category: 'general', name: 'Король золота', desc: '5 идеальных золотых блоков', icon: '💎', reward: 40, check: () => stats.totalGolden >= 5 },
+    { id: 'bomb_5', category: 'general', name: 'Сапёр', desc: '5 идеальных бомб', icon: '💣', reward: 50, check: () => stats.totalBomb >= 5 },
+    { id: 'ice_5', category: 'general', name: 'Ледокол', desc: '5 идеальных льдов', icon: '❄️', reward: 40, check: () => stats.totalIce >= 5 },
+    { id: 'secret_1', category: 'general', name: 'Тайна', desc: 'Поймай секретный блок', icon: '🌟', reward: 40, check: () => stats.totalSecret >= 1 },
+    { id: 'secret_10', category: 'general', name: 'Охотник', desc: '10 секретных блоков', icon: '🔮', reward: 120, check: () => stats.totalSecret >= 10 },
+
+    // === КЛАССИКА (classic) ===
+    { id: 'classic_20', category: 'classic', name: 'Классик', desc: '20 очков в «Классике»', icon: '🎮', reward: 40, check: () => (stats.modeMax?.classic || 0) >= 20 },
+    { id: 'classic_50', category: 'classic', name: 'Архитектор', desc: '50 очков в «Классике»', icon: '🏛️', reward: 90, check: () => (stats.modeMax?.classic || 0) >= 50 },
+    { id: 'classic_100', category: 'classic', name: 'Гранд-архитектор', desc: '100 очков в «Классике»', icon: '🗼', reward: 200, check: () => (stats.modeMax?.classic || 0) >= 100 },
+
+    // === НА ВРЕМЯ (time) ===
+    { id: 'time_20', category: 'time', name: 'Спринтер', desc: '20 очков в режиме «На время»', icon: '⏱', reward: 40, check: () => (stats.modeMax?.time || 0) >= 20 },
+    { id: 'time_45', category: 'time', name: 'Молния', desc: '45 очков в режиме «На время»', icon: '⚡', reward: 100, check: () => (stats.modeMax?.time || 0) >= 45 },
+    { id: 'time_80', category: 'time', name: 'Повелитель секунд', desc: '80 очков в режиме «На время»', icon: '⏳', reward: 220, check: () => (stats.modeMax?.time || 0) >= 80 },
+
+    // === ТОЧНОСТЬ (precision) ===
+    { id: 'precision_10', category: 'precision', name: 'Без права на ошибку', desc: '10 очков в «Точности»', icon: '🎯', reward: 60, check: () => (stats.modeMax?.precision || 0) >= 10 },
+    { id: 'precision_25', category: 'precision', name: 'Хирург', desc: '25 очков в «Точности»', icon: '🩺', reward: 140, check: () => (stats.modeMax?.precision || 0) >= 25 },
+    { id: 'precision_50', category: 'precision', name: 'Абсолютный лазер', desc: '50 очков в «Точности»', icon: '💎', reward: 300, check: () => (stats.modeMax?.precision || 0) >= 50 },
+
+    // === ШТОРМ (storm) ===
+    { id: 'storm_15', category: 'storm', name: 'Против ветра', desc: '15 очков в «Шторме»', icon: '🌪', reward: 50, check: () => (stats.modeMax?.storm || 0) >= 15 },
+    { id: 'storm_35', category: 'storm', name: 'Укротитель бури', desc: '35 очков в «Шторме»', icon: '🌩️', reward: 120, check: () => (stats.modeMax?.storm || 0) >= 35 },
+    { id: 'storm_70', category: 'storm', name: 'Око урагана', desc: '70 очков в «Шторме»', icon: '🌀', reward: 250, check: () => (stats.modeMax?.storm || 0) >= 70 },
+
+    // === БЕСКОНЕЧНЫЙ (endless) ===
+    { id: 'endless_30', category: 'endless', name: 'Марафонец', desc: '30 очков в «Бесконечном»', icon: '♾️', reward: 50, check: () => (stats.modeMax?.endless || 0) >= 30 },
+    { id: 'endless_75', category: 'endless', name: 'Стальной ритм', desc: '75 очков в «Бесконечном»', icon: '🚀', reward: 140, check: () => (stats.modeMax?.endless || 0) >= 75 },
+    { id: 'endless_150', category: 'endless', name: 'За гранью скорости', desc: '150 очков в «Бесконечном»', icon: '🌌', reward: 300, check: () => (stats.modeMax?.endless || 0) >= 150 },
+
+    // === ЗЕРКАЛЬНЫЙ (mirror) ===
+    { id: 'mirror_15', category: 'mirror', name: 'Зазеркалье', desc: '15 очков в «Зеркальном»', icon: '🪞', reward: 50, check: () => (stats.modeMax?.mirror || 0) >= 15 },
+    { id: 'mirror_35', category: 'mirror', name: 'Мастер отражений', desc: '35 очков в «Зеркальном»', icon: '✨', reward: 120, check: () => (stats.modeMax?.mirror || 0) >= 35 },
+    { id: 'mirror_65', category: 'mirror', name: 'Король зеркал', desc: '65 очков в «Зеркальном»', icon: '👑', reward: 240, check: () => (stats.modeMax?.mirror || 0) >= 65 },
+
+    // === ПРОГРЕСС И АКТИВНОСТИ (progress) ===
+    { id: 'skins_3', category: 'progress', name: 'Коллекционер', desc: 'Открой 3 облика', icon: '🎨', reward: 40, check: () => unlockedSkins.length >= 3 },
+    { id: 'skins_10', category: 'progress', name: 'Модник', desc: 'Открой 10 обликов', icon: '🧥', reward: 120, check: () => unlockedSkins.length >= 10 },
+    { id: 'skins_all', category: 'progress', name: 'Все облики', desc: 'Собери все основные облики', icon: '🏆', reward: 500, special: 'legend', check: () => {
         const buyable = Object.keys(SKINS).filter(k => k !== 'legend' && !SKINS[k].notBuyable && !SKINS[k].prestigeOnly && !SKINS[k].eventOnly);
         return buyable.every(k => unlockedSkins.includes(k));
     }},
-    { id: 'rich_500', name: 'Богач', desc: '500 монет', icon: '💰', check: () => coins >= 500 },
-    { id: 'level_10', name: 'Ветеран', desc: '10 уровень', icon: '🌟', check: () => level >= 10 },
-    { id: 'daily_1', name: 'Испытатель', desc: 'Пройди 1 испытание', icon: '🎯', check: () => stats.dailyCompleted >= 1 },
-    { id: 'daily_10', name: 'Мастер испытаний', desc: 'Пройди 10 испытаний', icon: '🏹', check: () => stats.dailyCompleted >= 10, reward: 100 },
-    { id: 'prestige_1', name: 'Перерождение', desc: 'Выполни 1 престиж', icon: '⭐', check: () => getPrestigeCount() >= 1, reward: 200 },
-    { id: 'missions_10', name: 'Миссионер', desc: 'Выполни 10 миссий', icon: '🎯', check: () => stats.missionsCompleted >= 10, reward: 150 },
-    { id: 'event_1', name: 'Участник', desc: 'Получи 1 награду с события', icon: '🎉', check: () => stats.eventsRewards >= 1, reward: 100 },
+    { id: 'rich_500', category: 'progress', name: 'Богач', desc: 'Накопи 500 монет', icon: '💰', reward: 50, check: () => coins >= 500 },
+    { id: 'rich_3000', category: 'progress', name: 'Магнат', desc: 'Накопи 3000 монет', icon: '🏦', reward: 200, check: () => coins >= 3000 },
+    { id: 'level_10', category: 'progress', name: 'Ветеран', desc: 'Достигни 10 уровня', icon: '🌟', reward: 80, check: () => level >= 10 },
+    { id: 'level_25', category: 'progress', name: 'Элита', desc: 'Достигни 25 уровня', icon: '🎖️', reward: 180, check: () => level >= 25 },
+    { id: 'daily_1', category: 'progress', name: 'Испытатель', desc: 'Пройди 1 испытание дня', icon: '📅', reward: 30, check: () => stats.dailyCompleted >= 1 },
+    { id: 'daily_10', category: 'progress', name: 'Мастер испытаний', desc: 'Пройди 10 испытаний дня', icon: '🏹', reward: 120, check: () => stats.dailyCompleted >= 10 },
+    { id: 'prestige_1', category: 'progress', name: 'Перерождение', desc: 'Выполни 1 престиж', icon: '⭐', reward: 250, check: () => getPrestigeCount() >= 1 },
+    { id: 'missions_10', category: 'progress', name: 'Миссионер', desc: 'Выполни 10 миссий дня', icon: '📋', reward: 150, check: () => stats.missionsCompleted >= 10 },
+    { id: 'event_1', category: 'progress', name: 'Участник', desc: 'Забери награду из события', icon: '🎉', reward: 100, check: () => stats.eventsRewards >= 1 },
+    { id: 'wheel_5', category: 'progress', name: 'Везунчик', desc: 'Крутани Колесо удачи 5 раз', icon: '🎡', reward: 100, check: () => (stats.wheelSpins || 0) >= 5 },
+    { id: 'minigames_5', category: 'progress', name: 'Аркадник', desc: 'Выиграй 5 мини-игр', icon: '🕹️', reward: 100, check: () => (stats.minigamesWon || 0) >= 5 },
+    { id: 'upgrades_5', category: 'progress', name: 'Инженер', desc: 'Купи 5 постоянных апгрейдов', icon: '🔧', reward: 120, check: () => (stats.upgradesBought || 0) >= 5 },
 ];
 
 // ============ STATE ============
@@ -443,6 +493,9 @@ let overviewTargetY = 0;
 let overviewSkipped = false;
 let overviewSkipReadyAt = 0;
 
+let wheelController = null;
+let wheelTimerInterval = null;
+
 const DEFAULT_SETTINGS = { ...DEFAULTS.SETTINGS };
 const DEFAULT_STATS = { ...DEFAULTS.STATS, missionsCompleted: 0, eventsRewards: 0 };
 
@@ -452,6 +505,11 @@ function saveSettings() { safeSetItem(STORAGE_KEYS.SETTINGS, settings); schedule
 let stats = { ...DEFAULT_STATS, ...validateObject(safeGetItem(STORAGE_KEYS.STATS, null), DEFAULT_STATS) };
 if (stats.missionsCompleted === undefined) stats.missionsCompleted = 0;
 if (stats.eventsRewards === undefined) stats.eventsRewards = 0;
+if (!stats.modeMax || typeof stats.modeMax !== 'object') stats.modeMax = {};
+if (!stats.modeGames || typeof stats.modeGames !== 'object') stats.modeGames = {};
+if (stats.wheelSpins === undefined) stats.wheelSpins = 0;
+if (stats.minigamesWon === undefined) stats.minigamesWon = 0;
+if (stats.upgradesBought === undefined) stats.upgradesBought = 0;
 function saveStats() { safeSetItem(STORAGE_KEYS.STATS, stats); scheduleCloudSave(); }
 
 let totalScoreAllTime = safeParseInt(safeGetItem(STORAGE_KEYS.TOTAL_SCORE, '0'), 0);
@@ -476,6 +534,13 @@ let lastVisitDate = safeGetItem(STORAGE_KEYS.LAST_VISIT, '') || '';
 let dailyRewardPending = false, dailyRewardAmount = 0;
 let leaderboard = validateArray(safeGetItem(STORAGE_KEYS.LEADERBOARD, []), []);
 function saveLeaderboard() { safeSetItem(STORAGE_KEYS.LEADERBOARD, leaderboard); }
+
+// Переносим прошлые рекорды из leaderboard в stats.modeMax для достижений по режимам
+leaderboard.forEach(e => {
+    if (e.mode && e.score > (stats.modeMax[e.mode] || 0)) {
+        stats.modeMax[e.mode] = e.score;
+    }
+});
 
 let ownedPowerups = {
     ...DEFAULTS.POWERUPS,
@@ -581,6 +646,15 @@ const minigamesStatusEl = $('minigames-status');
 const minigamesListEl = $('minigames-list');
 const minigameStageEl = $('minigame-stage');
 const minigameResultEl = $('minigame-result');
+const upgradesListEl = $('upgrades-list');
+const wheelScreen = $('wheel-screen');
+const wheelCanvas = $('wheel-canvas');
+const wheelStatusEl = $('wheel-status');
+const wheelResultEl = $('wheel-result');
+const wheelSpinBtn = $('wheel-spin-btn');
+const wheelBannerDescEl = $('wheel-banner-desc');
+const wheelBannerDotEl = $('wheel-banner-dot');
+const rerollMissionsBtn = $('reroll-missions-btn');
 const secondChanceOverlay = $('second-chance-overlay');
 const secondChanceSubEl = $('second-chance-sub');
 const secondChanceTimerFill = $('second-chance-timer-fill');
@@ -770,6 +844,8 @@ function addCoins(amount) {
     const prestigeBonus = getPrestigeBonus();
     if (prestigeBonus.coinMult > 0) mult *= (1 + prestigeBonus.coinMult);
     if (prestigeBonus.allMult > 0) mult *= (1 + prestigeBonus.allMult);
+    const upg = getUpgradeBonuses();
+    if (upg.coinMult > 0) mult *= (1 + upg.coinMult);
     amount = Math.round(amount * mult);
     coins += amount; sessionCoins += amount;
     safeSetItem(STORAGE_KEYS.COINS, coins);
@@ -822,6 +898,8 @@ function addXP(amount) {
     const prestigeBonus = getPrestigeBonus();
     if (prestigeBonus.xpMult > 0) mult *= (1 + prestigeBonus.xpMult);
     if (prestigeBonus.allMult > 0) mult *= (1 + prestigeBonus.allMult);
+    const upg = getUpgradeBonuses();
+    if (upg.xpMult > 0) mult *= (1 + upg.xpMult);
     amount = Math.round(amount * mult);
     xpTotal += amount; sessionXP += amount;
     updateMissionProgress(missions, 'xp', amount);
@@ -921,15 +999,29 @@ function checkAchievements() {
 
 function renderAchievements() {
     if (!achListEl) return;
+    document.querySelectorAll('.ach-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.achCat === currentAchCategory);
+    });
+    const list = currentAchCategory === 'all'
+        ? ACHIEVEMENTS
+        : ACHIEVEMENTS.filter(a => a.category === currentAchCategory);
+
     achListEl.innerHTML = '';
-    ACHIEVEMENTS.forEach(a => {
+    list.forEach(a => {
         const unlocked = unlockedAchievements.includes(a.id);
         const div = document.createElement('div');
         div.className = 'ach-item' + (unlocked ? ' unlocked' : '');
-        div.innerHTML = `<span class="ach-icon">${a.icon}</span><div class="ach-info"><span class="ach-name">${a.name}${unlocked ? ' ✓' : ''}</span><span class="ach-desc">${a.desc}</span></div>`;
+        const rewardTag = !unlocked && a.reward ? `<span class="ach-reward-tag">+${a.reward} 🪙</span>` : '';
+        div.innerHTML = `<span class="ach-icon">${a.icon}</span><div class="ach-info"><span class="ach-name">${a.name}${unlocked ? ' ✓' : ''}</span><span class="ach-desc">${a.desc}</span></div>${rewardTag}`;
         achListEl.appendChild(div);
     });
-    if (achProgressEl) achProgressEl.innerText = `${unlockedAchievements.length}/${ACHIEVEMENTS.length}`;
+
+    const unlockedInView = list.filter(a => unlockedAchievements.includes(a.id)).length;
+    if (achProgressEl) {
+        achProgressEl.innerText = currentAchCategory === 'all'
+            ? `${unlockedAchievements.length}/${ACHIEVEMENTS.length}`
+            : `${unlockedInView}/${list.length}`;
+    }
 }
 
 // ============ LEADERBOARD ============
@@ -1371,9 +1463,10 @@ function updateCoinUI() {
     const coinsText = `🪙 ${coins}`;
     updateDOMText(menuCoinsEl, coinsText);
     updateDOMText(gameCoinsEl, `🪙 ${gameState === GAME_STATES.PLAYING ? sessionCoins : coins}`);
+    updateRerollMissionsBtn();
 }
 
-// ============ ВКЛАДКИ МЕНЮ И МАГАЗИН ============
+// ============ ВКЛАДКИ МЕНЮ, МАГАЗИН, АПГРЕЙДЫ И КОЛЕСО ============
 function switchMenuTab(tabName) {
     currentMenuTab = tabName;
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
@@ -1394,6 +1487,7 @@ function switchMenuTab(tabName) {
     } else if (tabName === 'tasks') {
         renderMissions();
         updateChestUI();
+        updateWheelUI();
     } else if (tabName === 'profile') {
         updateLevelUI();
         updatePrestigeUI();
@@ -1404,6 +1498,157 @@ function switchMenuTab(tabName) {
 function getEffectIcon(effect) {
     const icons = { holographic: '🌈', fire: '🔥', ice: '❄️', neon: '💡', stars: '✨' };
     return icons[effect] || '';
+}
+
+function formatSkinModifiers(modifiers) {
+    if (!modifiers) return '';
+    const chips = [];
+    if (modifiers.coinMult && modifiers.coinMult !== 1) {
+        chips.push(`<span class="skin-mod-chip">🪙 +${Math.round((modifiers.coinMult - 1) * 100)}% монет</span>`);
+    }
+    if (modifiers.scoreMult && modifiers.scoreMult !== 1) {
+        chips.push(`<span class="skin-mod-chip">🏆 +${Math.round((modifiers.scoreMult - 1) * 100)}% очков</span>`);
+    }
+    if (modifiers.xpMult && modifiers.xpMult !== 1) {
+        chips.push(`<span class="skin-mod-chip">✨ +${Math.round((modifiers.xpMult - 1) * 100)}% опыта</span>`);
+    }
+    if (modifiers.speedMult && modifiers.speedMult !== 1) {
+        const pct = Math.round((modifiers.speedMult - 1) * 100);
+        const isFaster = pct > 0;
+        chips.push(`<span class="skin-mod-chip${isFaster ? ' warn' : ''}">${isFaster ? '⚡' : '🐢'} ${isFaster ? '+' : ''}${pct}% скорость</span>`);
+    }
+    if (modifiers.fireChance) {
+        chips.push(`<span class="skin-mod-chip warn">🔥 ${Math.round(modifiers.fireChance * 100)}% поджог</span>`);
+    }
+    return chips.length ? `<div class="skin-mods">${chips.join('')}</div>` : '';
+}
+
+function getSecondChanceCost() {
+    const { secondChanceDiscount } = getUpgradeBonuses();
+    return Math.max(10, Math.round(GAME_CONFIG.SECOND_CHANCE_COST * (1 - secondChanceDiscount)));
+}
+
+function renderUpgrades() {
+    if (!upgradesListEl) return;
+    upgradesListEl.innerHTML = '';
+    UPGRADES.forEach(u => {
+        const lvl = getUpgradeLevel(u.id);
+        const isMax = lvl >= MAX_UPGRADE_LEVEL;
+        const price = getUpgradePrice(u);
+        const canBuy = !isMax && coins >= price;
+
+        const pips = Array.from({ length: MAX_UPGRADE_LEVEL }, (_, i) =>
+            `<span class="upgrade-pip${i < lvl ? ' filled' : ''}"></span>`
+        ).join('');
+
+        let btnHtml = '';
+        if (isMax) btnHtml = `<button class="upgrade-buy-btn maxed" disabled>MAX</button>`;
+        else if (canBuy) btnHtml = `<button class="upgrade-buy-btn" data-upgrade-id="${u.id}">${price} 🪙</button>`;
+        else btnHtml = `<button class="upgrade-buy-btn locked" disabled>${price} 🪙</button>`;
+
+        const div = document.createElement('div');
+        div.className = 'upgrade-item' + (isMax ? ' maxed' : '');
+        div.innerHTML = `
+            <div class="upgrade-icon">${u.icon}</div>
+            <div class="upgrade-info">
+                <div class="upgrade-head">
+                    <span class="upgrade-name">${u.name}</span>
+                    ${lvl > 0 ? `<span class="upgrade-bonus">${u.formatBonus(lvl)}</span>` : ''}
+                </div>
+                <span class="upgrade-desc">${u.desc}</span>
+                <div class="upgrade-pips">${pips}</div>
+            </div>
+            ${btnHtml}
+        `;
+        upgradesListEl.appendChild(div);
+    });
+
+    upgradesListEl.querySelectorAll('button.upgrade-buy-btn[data-upgrade-id]').forEach(btn => {
+        safeClick(btn, () => {
+            const res = buyUpgrade(btn.dataset.upgradeId, coins);
+            if (res.success) {
+                coins -= res.price;
+                safeSetItem(STORAGE_KEYS.COINS, coins);
+                stats.upgradesBought = (stats.upgradesBought || 0) + 1;
+                saveStats();
+                scheduleCloudSave();
+                updateCoinUI();
+                renderUpgrades();
+                switchShopTab('upgrades');
+                playSound('buy');
+                triggerHaptic('success');
+                showPopup(bonusText, `${res.upgrade.icon} ${res.upgrade.name} ур. ${res.newLevel}!`, 1200);
+                checkAchievements();
+            } else {
+                triggerHaptic('error');
+            }
+        });
+    });
+}
+
+function updateWheelUI() {
+    const ready = canSpinWheel();
+    if (wheelBannerDescEl) {
+        wheelBannerDescEl.textContent = ready
+            ? 'Бесплатный спин доступен!'
+            : `Следующий спин через ${getTimeUntilNextSpin()}`;
+    }
+    if (wheelBannerDotEl) wheelBannerDotEl.classList.toggle('hidden', !ready);
+    if (wheelStatusEl) {
+        wheelStatusEl.textContent = ready
+            ? '✨ Крути бесплатно и забирай приз!'
+            : `⏳ Следующий спин через: ${getTimeUntilNextSpin()}`;
+    }
+    if (wheelSpinBtn && (!wheelController || !wheelController.isSpinning())) {
+        wheelSpinBtn.disabled = !ready;
+        wheelSpinBtn.textContent = ready ? '🎰 КРУТИТЬ БЕСПЛАТНО' : 'УЖЕ ИСПОЛЬЗОВАНО СЕГОДНЯ';
+    }
+    updateMissionsBadge();
+}
+
+function openWheelModal() {
+    if (!wheelScreen || !wheelCanvas) return;
+    if (wheelResultEl) wheelResultEl.textContent = '';
+    if (!wheelController) {
+        wheelController = createWheelController(wheelCanvas, {
+            onTick: () => playSound('ui_click'),
+            onFinish: (seg) => {
+                if (seg.type === 'coins') {
+                    addCoins(seg.value);
+                    if (wheelResultEl) wheelResultEl.textContent = seg.jackpot ? `💎 ДЖЕКПОТ! +${seg.value} 🪙` : `Выигрыш: +${seg.value} 🪙!`;
+                } else if (seg.type === 'xp') {
+                    addXP(seg.value);
+                    if (wheelResultEl) wheelResultEl.textContent = `Выигрыш: +${seg.value} опыта!`;
+                } else if (seg.type === 'powerup') {
+                    const keys = Object.keys(POWERUP_DEFS);
+                    const pk = keys[Math.floor(Math.random() * keys.length)];
+                    ownedPowerups[pk] = (ownedPowerups[pk] || 0) + seg.value;
+                    savePowerups();
+                    if (wheelResultEl) wheelResultEl.textContent = `Выигрыш: ${POWERUP_DEFS[pk].icon} ${POWERUP_DEFS[pk].name}!`;
+                } else if (seg.type === 'chest') {
+                    addChest('wheel', { rare: Boolean(seg.rare) });
+                    if (wheelResultEl) wheelResultEl.textContent = seg.rare ? '✨ Выигрыш: РЕДКИЙ СУНДУК!' : '📦 Выигрыш: СУНДУК!';
+                }
+                stats.wheelSpins = (stats.wheelSpins || 0) + 1;
+                saveStats();
+                playSound(seg.jackpot || seg.rare ? 'victory' : 'chest');
+                triggerHaptic('success');
+                updateWheelUI();
+                checkAchievements();
+            },
+        });
+    } else {
+        wheelController.draw();
+    }
+    updateWheelUI();
+    showModal(wheelScreen);
+    if (wheelTimerInterval) clearInterval(wheelTimerInterval);
+    wheelTimerInterval = setInterval(updateWheelUI, 1000);
+}
+
+function closeWheelModal() {
+    if (wheelTimerInterval) { clearInterval(wheelTimerInterval); wheelTimerInterval = null; }
+    hideModal(wheelScreen);
 }
 
 function renderShop() {
@@ -1428,8 +1673,8 @@ function renderShop() {
         else btnHtml = `<button class="buy locked" disabled>${skin.price} 🪙</button>`;
         const colorDots = skin.colors.slice(0, 5).map(c => `<span style="background:${c}"></span>`).join('');
         const effectBadge = skin.effect ? `<span class="skin-effect-badge">${getEffectIcon(skin.effect)}</span>` : '';
-        const modifierHint = skin.modifiers ? `· <span style="color:var(--mint-dark);font-size:10px;font-weight:900">${skin.modifiers.speedMult ? (skin.modifiers.speedMult > 1 ? '⚡ БЫСТРЕЕ' : '🐌 МЕДЛЕННЕЕ') : ''} ${skin.modifiers.coinMult ? '+' + Math.round((skin.modifiers.coinMult - 1) * 100) + '%🪙' : ''} ${skin.modifiers.scoreMult ? '+' + Math.round((skin.modifiers.scoreMult - 1) * 100) + '%очк' : ''} ${skin.modifiers.xpMult ? '+' + Math.round((skin.modifiers.xpMult - 1) * 100) + '%⭐' : ''} ${skin.modifiers.fireChance ? '🔥 ' + Math.round(skin.modifiers.fireChance * 100) + '%' : ''}</span>` : '';
-        div.innerHTML = `<div class="skin-info"><span class="skin-preview ${skin.effect || ''}" style="background:linear-gradient(135deg,${skin.colors[0]},${skin.colors[1] || skin.colors[0]});border-radius:8px;padding:4px;position:relative;">${effectBadge}</span><div class="skin-details"><span class="skin-name">${skin.name}${modifierHint}</span><div class="skin-colors">${colorDots}</div></div></div>${btnHtml}`;
+        const modsHtml = formatSkinModifiers(skin.modifiers);
+        div.innerHTML = `<div class="skin-info"><span class="skin-preview ${skin.effect || ''}" style="background:linear-gradient(135deg,${skin.colors[0]},${skin.colors[1] || skin.colors[0]});border-radius:8px;padding:4px;position:relative;">${effectBadge}</span><div class="skin-details"><span class="skin-name">${skin.name}</span>${modsHtml}<div class="skin-colors">${colorDots}</div></div></div>${btnHtml}`;
         skinListEl.appendChild(div);
     }
     skinListEl.querySelectorAll('button.equip').forEach(btn => {
@@ -1457,6 +1702,7 @@ function renderShop() {
             } else { triggerHaptic('error'); }
         });
     });
+    renderUpgrades();
     renderCustomize('colors');
     renderCustomize('backgrounds');
 }
@@ -1529,6 +1775,7 @@ function switchShopTab(tab) {
     currentShopTab = tab;
     document.querySelectorAll('.shop-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
     if (skinListEl) skinListEl.style.display = tab === 'skins' ? 'flex' : 'none';
+    if (upgradesListEl) upgradesListEl.style.display = tab === 'upgrades' ? 'flex' : 'none';
     if (colorsListEl) colorsListEl.style.display = tab === 'colors' ? 'flex' : 'none';
     if (backgroundsListEl) backgroundsListEl.style.display = tab === 'backgrounds' ? 'flex' : 'none';
     if (!shopProgressEl) return;
@@ -1536,6 +1783,9 @@ function switchShopTab(tab) {
         const buyableCount = Object.keys(SKINS).filter(k => !SKINS[k].notBuyable).length;
         const unlockedBuyable = unlockedSkins.filter(k => !SKINS[k] || !SKINS[k].notBuyable).length;
         shopProgressEl.innerText = `Открыто: ${unlockedBuyable}/${buyableCount}`;
+    } else if (tab === 'upgrades') {
+        const prog = getUpgradesProgress();
+        shopProgressEl.innerText = `Улучшено: ${prog.current}/${prog.total}`;
     } else if (tab === 'colors') {
         shopProgressEl.innerText = `Открыто палитр: ${unlockedPalettes.length}/${Object.keys(PALETTES).length}`;
     } else {
@@ -1791,6 +2041,41 @@ function initMissions() {
     startMissionsTimer();
 }
 
+function updateRerollMissionsBtn() {
+    if (!rerollMissionsBtn) return;
+    const cost = getMissionRerollCost();
+    rerollMissionsBtn.textContent = `🔄 Обновить миссии (${cost} 🪙)`;
+    rerollMissionsBtn.disabled = coins < cost;
+}
+
+function handleRerollMissions() {
+    const cost = getMissionRerollCost();
+    if (coins < cost) {
+        triggerHaptic('error');
+        return;
+    }
+    missions.forEach(m => {
+        if (m.completed && !m.claimed) {
+            claimMissionReward(m.id, missions, addCoins, addXP, (type, meta) => addChest(type, meta));
+            stats.missionsCompleted = (stats.missionsCompleted || 0) + 1;
+        }
+    });
+    saveStats();
+
+    coins -= cost;
+    safeSetItem(STORAGE_KEYS.COINS, coins);
+    scheduleCloudSave();
+
+    missions = rerollDailyMissions(missions);
+    renderMissions();
+    updateMissionsBadge();
+    updateCoinUI();
+    playSound('buy');
+    triggerHaptic('success');
+    showPopup(bonusText, '🔄 НОВЫЕ МИССИИ ДНЯ!', 1200);
+    checkAchievements();
+}
+
 function renderMissions() {
     if (!missionsListEl) return;
     missionsListEl.innerHTML = '';
@@ -1831,12 +2116,13 @@ function renderMissions() {
     const mStats = getMissionsStats(missions);
     if (missionsStatsTextEl) missionsStatsTextEl.textContent = `Выполнено: ${mStats.completed}/${mStats.total}`;
     if (missionsAvailableTextEl) missionsAvailableTextEl.textContent = `Доступно наград: ${mStats.available}`;
+    updateRerollMissionsBtn();
 }
 
 function updateMissionsBadge() {
     if (!missionsBadgeEl) return;
     const mStats = getMissionsStats(missions);
-    const totalPending = mStats.available + chests.length;
+    const totalPending = mStats.available + chests.length + (canSpinWheel() ? 1 : 0);
     if (totalPending > 0) {
         missionsBadgeEl.textContent = totalPending;
         missionsBadgeEl.classList.remove('hidden');
@@ -2208,6 +2494,11 @@ function startMinigame(gameId) {
 
         if (reward.coins > 0) addCoins(reward.coins);
         if (reward.xp > 0) addXP(reward.xp);
+        if (result.success) {
+            stats.minigamesWon = (stats.minigamesWon || 0) + 1;
+            saveStats();
+            checkAchievements();
+        }
 
         playSound(result.success ? 'quest' : 'drop');
         triggerHaptic(result.success ? 'success' : 'light');
@@ -2243,7 +2534,6 @@ function startMinigamesCooldownTimer() {
         }
     }, 1000);
 }
-
 // ============ ОБЛАЧНЫЕ СОХРАНЕНИЯ ============
 function updateCloudStatusUI() {
     const statusEl = $('cloud-sync-status');
@@ -2274,6 +2564,12 @@ function reloadFromLocalAfterCloudMerge() {
     unlockedFeatures = validateObject(safeGetItem(STORAGE_KEYS.FEATURES, {}), {});
     settings = { ...DEFAULT_SETTINGS, ...validateObject(safeGetItem(STORAGE_KEYS.SETTINGS, null), DEFAULT_SETTINGS) };
     stats = { ...DEFAULT_STATS, ...validateObject(safeGetItem(STORAGE_KEYS.STATS, null), DEFAULT_STATS) };
+    if (!stats.modeMax || typeof stats.modeMax !== 'object') stats.modeMax = {};
+    if (!stats.modeGames || typeof stats.modeGames !== 'object') stats.modeGames = {};
+    if (stats.wheelSpins === undefined) stats.wheelSpins = 0;
+    if (stats.minigamesWon === undefined) stats.minigamesWon = 0;
+    if (stats.upgradesBought === undefined) stats.upgradesBought = 0;
+
     unlockedAchievements = validateArray(safeGetItem(STORAGE_KEYS.ACHIEVEMENTS, []), []);
     leaderboard = validateArray(safeGetItem(STORAGE_KEYS.LEADERBOARD, []), []);
     ownedPowerups = { ...DEFAULTS.POWERUPS, ...validateObject(safeGetItem(STORAGE_KEYS.POWERUPS, null), {}) };
@@ -2281,11 +2577,14 @@ function reloadFromLocalAfterCloudMerge() {
     totalScoreAllTime = safeParseInt(safeGetItem(STORAGE_KEYS.TOTAL_SCORE, '0'), 0);
     recentScores = validateArray(safeGetItem(STORAGE_KEYS.RECENT_SCORES, []), []);
 
+    loadUpgrades();
+
     if (highScoreEl) highScoreEl.innerText = `РЕКОРД: ${highScore}`;
     updateCoinUI();
     updateLevelUI();
     updateStreakUI();
     updateChestUI();
+    updateWheelUI();
     updateSettingsUI();
     applyBackground();
     applySkinEffect();
@@ -2693,7 +2992,7 @@ function generateNextBlockData() {
     } else if (dailyModifiers.allIce) {
         type = BLOCK_TYPES.ICE;
     } else if (!dailyModifiers.noSpecials && blocks.length >= 2) {
-        const luckMult = activePowerups.luck ? 2 : 1;
+        const luckMult = (activePowerups.luck ? 2 : 1) * (1 + getUpgradeBonuses().luckMult);
         const r = Math.random();
         const secretChance = 0.015 * luckMult;
         const goldChance = dailyModifiers.noGolden ? 0 : 0.09 * luckMult;
@@ -2824,6 +3123,7 @@ function clearScene() {
         scene.remove(w);
     });
     disposeRecordLine();
+    disposeAtmosphereLayers(scene);
     if (currentBlock) { disposeMesh(currentBlock); currentBlock = null; }
     blocks = [];
     debris = [];
@@ -2851,14 +3151,14 @@ function updateWindUI() {
 function startWindSystem() {
     stopWindSystem();
     if (gameMode !== GAME_MODES.STORM) return;
-    windStrength = 0.02;
+    windStrength = 0.02 * (1 - getUpgradeBonuses().windResist);
     windDirection = Math.random() < 0.5 ? -1 : 1;
     updateWindUI();
     windGustTimer = setInterval(() => {
         if (gameState !== GAME_STATES.PLAYING) return;
         windDirection = Math.random() < 0.5 ? -1 : 1;
         const heightScale = Math.min(1, score / 45);
-        windStrength = 0.02 + Math.random() * (0.04 + heightScale * 0.025);
+        windStrength = (0.02 + Math.random() * (0.04 + heightScale * 0.025)) * (1 - getUpgradeBonuses().windResist);
         if (windStrength > 0.055) playSound('gust');
         updateWindUI();
     }, 4500);
@@ -2968,8 +3268,10 @@ function startGame(mode = gameMode) {
     shakeIntensity = 0; cameraZoomPulse = 0;
     currentBiomeIndex = 0;
 
+    const upg = getUpgradeBonuses();
     let baseSize = dailyModifiers.baseSize || BLOCK_SIZE;
     if (activePowerups.foundation) baseSize *= 1.35;
+    baseSize *= (1 + upg.baseSizeMult);
     currentBaseSize = baseSize;
 
     const skinMods = getSkinModifiers();
@@ -3007,7 +3309,7 @@ function startGame(mode = gameMode) {
     updateActivePowerupsUI();
     cacheCoinPopupAnchor();
 
-    const timeLimit = dailyModifiers.timeLimit || (gameMode === GAME_MODES.TIME ? GAME_CONFIG.DEFAULT_TIME_LIMIT : 0);
+    const timeLimit = dailyModifiers.timeLimit || (gameMode === GAME_MODES.TIME ? GAME_CONFIG.DEFAULT_TIME_LIMIT + upg.extraTime : 0);
     if (timeLimit > 0 && timerEl) {
         timeLeft = timeLimit;
         timerEl.style.display = 'block';
@@ -3037,10 +3339,12 @@ function startGame(mode = gameMode) {
 
     createBaseBlock();
     createRecordLine();
+    initAtmosphereLayers(scene, BLOCK_HEIGHT, lowPerfMode);
     nextBlockData = generateNextBlockData();
     spawnNewBlock();
 
     stats.totalGames = (stats.totalGames || 0) + 1;
+    stats.modeGames[gameMode] = (stats.modeGames[gameMode] || 0) + 1;
     saveStats();
     updateQuest('games', 1);
     if (gameMode === GAME_MODES.TIME) updateQuest('time_game', 1);
@@ -3170,7 +3474,7 @@ function triggerMilestone(points) {
 function canOfferSecondChance() {
     if (secondChanceUsed || secondChanceActive) return false;
     if (dailyChallengeActive || gameMode === GAME_MODES.PRECISION) return false;
-    if (coins < GAME_CONFIG.SECOND_CHANCE_COST) return false;
+    if (coins < getSecondChanceCost()) return false;
     const nearRecord = highScore > 0 && score >= Math.max(5, highScore - GAME_CONFIG.SECOND_CHANCE_NEAR_RECORD);
     return score >= GAME_CONFIG.SECOND_CHANCE_MIN_SCORE || nearRecord;
 }
@@ -3192,7 +3496,7 @@ function offerSecondChance(reason = 'miss') {
         }
     }
     if (secondChanceBuyBtn) {
-        secondChanceBuyBtn.textContent = `💖 ПРОДОЛЖИТЬ (${GAME_CONFIG.SECOND_CHANCE_COST} 🪙)`;
+        secondChanceBuyBtn.textContent = `💖 ПРОДОЛЖИТЬ (${getSecondChanceCost()} 🪙)`;
     }
 
     showModal(secondChanceOverlay);
@@ -3213,7 +3517,8 @@ function offerSecondChance(reason = 'miss') {
 }
 
 function acceptSecondChance() {
-    if (!secondChanceActive || coins < GAME_CONFIG.SECOND_CHANCE_COST) {
+    const cost = getSecondChanceCost();
+    if (!secondChanceActive || coins < cost) {
         declineSecondChance();
         return;
     }
@@ -3221,7 +3526,7 @@ function acceptSecondChance() {
     secondChanceUsed = true;
     if (secondChanceRaf) { cancelAnimationFrame(secondChanceRaf); secondChanceRaf = null; }
 
-    coins -= GAME_CONFIG.SECOND_CHANCE_COST;
+    coins -= cost;
     safeSetItem(STORAGE_KEYS.COINS, coins);
     scheduleCloudSave();
     updateCoinUI();
@@ -3346,6 +3651,7 @@ function triggerGameOver() {
     }
 
     if (score > (stats.maxScore || 0)) stats.maxScore = score;
+    if (score > (stats.modeMax[gameMode] || 0)) stats.modeMax[gameMode] = score;
     if (gameMode === GAME_MODES.TIME && score > (stats.maxTimeScore || 0)) stats.maxTimeScore = score;
     saveStats();
 
@@ -3426,11 +3732,13 @@ function dropBlock() {
     const precisionMode = (gameMode === GAME_MODES.PRECISION);
     const noCutActive = dailyModifiers.noCut || precisionMode;
 
+    const upg = getUpgradeBonuses();
     let perfectThreshold = dailyModifiers.tightThreshold || GAME_CONFIG.PERFECT_THRESHOLD;
     if (activePowerups.focus) {
         const activeSize = movingAxis === 'x' ? sizeX : sizeZ;
         perfectThreshold = Math.min(Math.max(perfectThreshold * 3.5, 0.55), activeSize * 0.45);
     }
+    perfectThreshold *= (1 + upg.perfectMult);
 
     const isDiamondAuto = (bType === BLOCK_TYPES.DIAMOND && !missX && !missZ);
 
@@ -3583,6 +3891,7 @@ function dropBlock() {
     let pointsGain = basePoints;
     if (pointsGain > 0) {
         pointsGain = applyComboMultiplier(pointsGain, combo);
+        if (combo >= 2 && upg.comboScoreMult > 0) pointsGain *= (1 + upg.comboScoreMult);
         if (isFury) pointsGain *= 2;
         if (dailyModifiers.scoreMult) pointsGain *= dailyModifiers.scoreMult;
         if (skinMods.scoreMult) pointsGain *= skinMods.scoreMult;
@@ -3696,6 +4005,7 @@ function goToMenu() {
     updateCoinUI();
     updateLevelUI();
     updateChestUI();
+    updateWheelUI();
     updateMissionsBadge();
     renderDailyChallenge();
     if (currentMenuTab === 'shop') renderShop();
@@ -3771,6 +4081,7 @@ function animate() {
             if (lowFpsStrikes >= 2 && !lowPerfMode) {
                 lowPerfMode = true;
                 removeEnvironmentParticles(scene);
+                disposeAtmosphereLayers(scene);
                 renderer.setPixelRatio(1);
             }
         } else {
@@ -3873,6 +4184,7 @@ function animate() {
 
     if (!lowPerfMode) {
         updateEnvironmentParticles(rawDelta);
+        updateAtmosphereLayers(rawDelta, Math.max(0, blocks.length - 1), BLOCK_HEIGHT);
     }
 
     updateCamera(dt);
@@ -3898,8 +4210,8 @@ window.addEventListener('resize', onResize);
 
 function handleInput(e) {
     const target = e.target;
-    if (target && target.closest && target.closest('button, .mode-btn, .mini-mode-btn, #top-right-controls, .modal, .powerup-item, .daily-challenge-banner, .lb-mode-tab, .event-banner')) return;
-    if (target && target.closest && target.closest('#start-screen, #game-over, #second-chance-overlay, #pause-screen, #rules-screen, #achievements-screen, #leaderboard-screen, #settings-screen, #daily-screen, #powerups-screen, #chest-screen, #prestige-confirm-screen, #prestige-chest-screen, #event-screen, #minigames-screen')) return;
+    if (target && target.closest && target.closest('button, .mode-btn, .mini-mode-btn, #top-right-controls, .modal, .powerup-item, .daily-challenge-banner, .lb-mode-tab, .event-banner, .ach-tab')) return;
+    if (target && target.closest && target.closest('#start-screen, #game-over, #second-chance-overlay, #pause-screen, #rules-screen, #achievements-screen, #leaderboard-screen, #settings-screen, #daily-screen, #powerups-screen, #chest-screen, #prestige-confirm-screen, #prestige-chest-screen, #event-screen, #minigames-screen, #wheel-screen')) return;
     if (isAnyModalOpen()) return;
     if (gameState === GAME_STATES.PLAYING) {
         if (e.type === 'touchstart') e.preventDefault();
@@ -3978,6 +4290,14 @@ function bindEvents() {
         safeClick(tab, () => {
             currentLbMode = tab.dataset.mode;
             renderLeaderboard();
+        });
+    });
+
+    // Вкладки достижений
+    document.querySelectorAll('.ach-tab').forEach(tab => {
+        safeClick(tab, () => {
+            currentAchCategory = tab.dataset.achCat;
+            renderAchievements();
         });
     });
 
@@ -4091,6 +4411,19 @@ function bindEvents() {
     safeClick(eventBannerEl, showEventDetails);
     safeClick($('close-event'), () => hideModal(eventScreen));
 
+    // Реролл миссий дня
+    safeClick(rerollMissionsBtn, handleRerollMissions);
+
+    // Колесо удачи
+    safeClick($('wheel-btn'), openWheelModal);
+    safeClick($('close-wheel'), closeWheelModal);
+    safeClick(wheelSpinBtn, () => {
+        if (!wheelController || wheelController.isSpinning() || !canSpinWheel()) return;
+        wheelSpinBtn.disabled = true;
+        wheelSpinBtn.textContent = 'КРУТИТСЯ...';
+        wheelController.spin();
+    });
+
     // Мини-игры
     safeClick($('minigames-btn'), () => {
         renderMinigamesList();
@@ -4107,6 +4440,7 @@ function bindEvents() {
 // ============ INIT ============
 function init() {
     initThree();
+    loadUpgrades();
     bindEvents();
     initSeason();
     loadQuests();
@@ -4118,6 +4452,7 @@ function init() {
     updateLevelUI();
     updateStreakUI();
     updateChestUI();
+    updateWheelUI();
     updateSettingsUI();
     normalizeFontSizes();
     syncTelegramTheme('#FFE5EC');
