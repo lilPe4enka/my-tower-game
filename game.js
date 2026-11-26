@@ -1,23 +1,23 @@
 import * as THREE from 'three';
 
 // ============ ИМПОРТЫ МОДУЛЕЙ ============
-import { safeGetItem, safeSetItem, safeParseInt, PARTICLE_LIMITS, enforceParticleLimits, showModalSafe, hideModalSafe, isAnyModalOpen, setupGlobalErrorHandler, validateArray, validateObject } from './utils.js?v=15';
-import { GAME_CONFIG, LIMITS, GAME_MODES, GAME_STATES, GAME_MODE_NAMES, BLOCK_TYPES, BLOCK_COLORS, BLOCK_GLOW_COLORS, STORAGE_KEYS, DEFAULTS, xpForNextLevel, getAdaptiveD, CONFETTI_COLORS, MILESTONE_COLORS, LEAD_NOTES, FEATURE_NAMES } from './constants.js?v=15';
-import { getComboTier, applyComboMultiplier, checkTierUpgrade, formatComboDisplay } from './combo-system.js?v=15';
-import { applyTransition, getTransitionForScreen, staggerElements, flashTransition } from './transitions.js?v=15';
-import { loadMissions, updateMissionProgress, claimMissionReward, getMissionsStats, formatMissionReward, getMissionProgress } from './missions.js?v=15';
-import { getPrestigeCount, getPrestigeBonus, setPrestigeBonus, canPrestige, getPrestigeProgress, performPrestige, resetProgressForPrestige, rollPrestigeChestReward, applyPrestigeReward, formatPrestigeBonus, PRESTIGE_SKINS, PRESTIGE_CONFIG, checkNewMilestones } from './prestige.js?v=15';
-import { getCachedTexture, clearTextureCache, throttle, updateDOMText, updateDOMStyle, updateDOMClass, updateFpsCounter, getCurrentFps } from './performance.js?v=15';
-import { saveLastFocus, restoreLastFocus, trapFocus, releaseFocusTrap, setupEscapeKeyHandler, removeEscapeKeyHandler, updateAriaAttributes, announceToScreenReader, addDecorativeStars, normalizeFontSizes, animateElementsSequentially, addCloseButtonToModal } from './accessibility.js?v=15';
-import { getCurrentEvent, getEventProgress, getAvailableRewards, claimEventReward, getEventStats, formatEventDate, isEventsSystemActive, getEventDay, EVENT_SKINS } from './seasonal-events.js?v=15';
-import { createEnvironmentParticles, updateEnvironmentParticles, getParticlesForBackground, removeEnvironmentParticles } from './environment-particles.js?v=15';
-import { MINIGAMES, canPlayMinigame, recordMinigamePlay, getCooldownRemaining, getRemainingDailyPlays, formatCooldown, createMinigame, calculateMinigameReward } from './minigames.js?v=15';
-import { initCloudSync, scheduleCloudSave, flushCloudSave, getCloudStatus, isCloudStorageAvailable } from './cloud-storage.js?v=15';
+import { safeGetItem, safeSetItem, safeParseInt, PARTICLE_LIMITS, enforceParticleLimits, showModalSafe, hideModalSafe, isAnyModalOpen, setupGlobalErrorHandler, validateArray, validateObject } from './utils.js?v=16';
+import { GAME_CONFIG, LIMITS, GAME_MODES, GAME_STATES, GAME_MODE_NAMES, BLOCK_TYPES, BLOCK_COLORS, BLOCK_GLOW_COLORS, STORAGE_KEYS, DEFAULTS, xpForNextLevel, getAdaptiveD, CONFETTI_COLORS, MILESTONE_COLORS, LEAD_NOTES, FEATURE_NAMES } from './constants.js?v=16';
+import { getComboTier, applyComboMultiplier, checkTierUpgrade, formatComboDisplay } from './combo-system.js?v=16';
+import { applyTransition, getTransitionForScreen, staggerElements, flashTransition } from './transitions.js?v=16';
+import { loadMissions, updateMissionProgress, claimMissionReward, getMissionsStats, formatMissionReward, getMissionProgress } from './missions.js?v=16';
+import { getPrestigeCount, getPrestigeBonus, setPrestigeBonus, canPrestige, getPrestigeProgress, performPrestige, resetProgressForPrestige, rollPrestigeChestReward, applyPrestigeReward, formatPrestigeBonus, PRESTIGE_SKINS, PRESTIGE_CONFIG, checkNewMilestones } from './prestige.js?v=16';
+import { getCachedTexture, clearTextureCache, throttle, updateDOMText, updateDOMStyle, updateDOMClass, updateFpsCounter, getCurrentFps } from './performance.js?v=16';
+import { saveLastFocus, restoreLastFocus, trapFocus, releaseFocusTrap, setupEscapeKeyHandler, removeEscapeKeyHandler, updateAriaAttributes, announceToScreenReader, addDecorativeStars, normalizeFontSizes, animateElementsSequentially, addCloseButtonToModal } from './accessibility.js?v=16';
+import { getCurrentEvent, getEventProgress, getAvailableRewards, claimEventReward, getEventStats, formatEventDate, isEventsSystemActive, getEventDay, EVENT_SKINS } from './seasonal-events.js?v=16';
+import { createEnvironmentParticles, updateEnvironmentParticles, getParticlesForBackground, removeEnvironmentParticles } from './environment-particles.js?v=16';
+import { MINIGAMES, canPlayMinigame, recordMinigamePlay, getCooldownRemaining, getRemainingDailyPlays, formatCooldown, createMinigame, calculateMinigameReward } from './minigames.js?v=16';
+import { initCloudSync, scheduleCloudSave, flushCloudSave, getCloudStatus, isCloudStorageAvailable } from './cloud-storage.js?v=16';
 
 setupGlobalErrorHandler();
 
 // ============ TELEGRAM & HAPTICS ============
-const TELEGRAM_APP_URL = 'https://t.me/TowerGameeee_bot/app'; // замени на реальную ссылку на Mini App
+const TELEGRAM_APP_URL = 'https://t.me/YOUR_BOT_USERNAME/app'; // замени на реальную ссылку на Mini App
 const tg = window.Telegram?.WebApp;
 
 if (tg) {
@@ -111,6 +111,7 @@ function safeClick(el, handler) {
         const now = Date.now();
         if (now - lastFire < 300) return;
         lastFire = now;
+        if (audioCtx && audioCtx.state === 'running') playSound('ui_click');
         if (e.cancelable !== false) e.stopPropagation();
         try { handler(e); } catch (err) { console.error('Handler:', err); }
     };
@@ -396,6 +397,10 @@ let score = 0, combo = 0;
 let coins = safeParseInt(safeGetItem(STORAGE_KEYS.COINS, '0'), 0);
 let sessionCoins = 0, sessionXP = 0;
 let highScore = safeParseInt(safeGetItem(STORAGE_KEYS.HIGH_SCORE, '0'), 0);
+let bestHeight = safeParseInt(safeGetItem('towerBestHeight', String(highScore)), highScore);
+let recordLineGroup = null;
+let recordLinePassed = false;
+
 let currentSkin = (typeof safeGetItem(STORAGE_KEYS.SKIN, 'default') === 'string') ? safeGetItem(STORAGE_KEYS.SKIN, 'default') : 'default';
 let unlockedSkins = validateArray(safeGetItem(STORAGE_KEYS.SKINS, ['default']), ['default']);
 let currentPalette = (typeof safeGetItem(STORAGE_KEYS.PALETTE, 'standard') === 'string') ? safeGetItem(STORAGE_KEYS.PALETTE, 'standard') : 'standard';
@@ -489,6 +494,7 @@ if (ownedPowerups.magnet || ownedPowerups.freeze || ownedPowerups.ghost) {
 function savePowerups() { safeSetItem(STORAGE_KEYS.POWERUPS, ownedPowerups); scheduleCloudSave(); }
 
 let activePowerups = { ...DEFAULTS.ACTIVE_POWERUPS };
+let lastUsedPowerups = { ...DEFAULTS.ACTIVE_POWERUPS };
 let pendingGameMode = null;
 let gameOverTimers = [];
 
@@ -559,6 +565,8 @@ const QUESTS_POOL = [
 
 // ============ DOM ============
 const $ = id => document.getElementById(id);
+const splashScreen = $('splash-screen');
+const restartPowerupsBtn = $('restart-powerups-btn');
 const scoreEl = $('score'), highScoreEl = $('high-score'), gameCoinsEl = $('game-coins');
 const gameOverEl = $('game-over'), pauseScreen = $('pause-screen');
 const rulesScreen = $('rules-screen'), startScreen = $('start-screen');
@@ -1006,9 +1014,16 @@ function updateSettingsUI() {
     updateCloudStatusUI();
 }
 
-// ============ AUDIO ============
+// ============ AUDIO (компрессор, пентатоника, эхо) ============
 let audioCtx = null, noiseBuffer = null;
+let masterSfxGain = null, sfxDelayNode = null, sfxDelayWet = null;
 let musicPlaying = false, musicBeat = 0, musicTempo = 110, musicTimeout = null;
+
+const PENTATONIC_SCALE = [
+    523.25, 587.33, 659.25, 783.99, 880.00,
+    1046.50, 1174.66, 1318.51, 1567.98, 1760.00,
+    2093.00, 2349.32, 2637.02
+];
 
 function initAudio() {
     if (!audioCtx) {
@@ -1018,11 +1033,51 @@ function initAudio() {
             noiseBuffer = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
             const data = noiseBuffer.getChannelData(0);
             for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
-            musicGain = audioCtx.createGain(); musicGain.gain.value = 0.12; musicGain.connect(audioCtx.destination);
-            windGain = audioCtx.createGain(); windGain.gain.value = 0; windGain.connect(audioCtx.destination);
-            const windOsc = audioCtx.createBufferSource(); windOsc.buffer = noiseBuffer; windOsc.loop = true;
-            const windFilter = audioCtx.createBiquadFilter(); windFilter.type = 'lowpass'; windFilter.frequency.value = 400;
-            windOsc.connect(windFilter); windFilter.connect(windGain); windOsc.start();
+
+            const compressor = audioCtx.createDynamicsCompressor();
+            compressor.threshold.value = -14;
+            compressor.knee.value = 18;
+            compressor.ratio.value = 4;
+            compressor.attack.value = 0.004;
+            compressor.release.value = 0.15;
+            compressor.connect(audioCtx.destination);
+
+            masterSfxGain = audioCtx.createGain();
+            masterSfxGain.gain.value = 0.9;
+            masterSfxGain.connect(compressor);
+
+            sfxDelayNode = audioCtx.createDelay(0.5);
+            sfxDelayNode.delayTime.value = 0.16;
+            const delayFeedback = audioCtx.createGain();
+            delayFeedback.gain.value = 0.28;
+            const delayFilter = audioCtx.createBiquadFilter();
+            delayFilter.type = 'lowpass';
+            delayFilter.frequency.value = 2400;
+            sfxDelayWet = audioCtx.createGain();
+            sfxDelayWet.gain.value = 0.22;
+
+            sfxDelayNode.connect(delayFilter);
+            delayFilter.connect(delayFeedback);
+            delayFeedback.connect(sfxDelayNode);
+            delayFilter.connect(sfxDelayWet);
+            sfxDelayWet.connect(compressor);
+
+            musicGain = audioCtx.createGain();
+            musicGain.gain.value = 0.11;
+            musicGain.connect(compressor);
+
+            windGain = audioCtx.createGain();
+            windGain.gain.value = 0;
+            windGain.connect(compressor);
+            const windOsc = audioCtx.createBufferSource();
+            windOsc.buffer = noiseBuffer;
+            windOsc.loop = true;
+            const windFilter = audioCtx.createBiquadFilter();
+            windFilter.type = 'lowpass';
+            windFilter.frequency.value = 380;
+            windOsc.connect(windFilter);
+            windFilter.connect(windGain);
+            windOsc.start();
         } catch (e) {}
     }
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
@@ -1032,58 +1087,126 @@ function playSound(type, level = 0) {
     if (!settings.sfxEnabled || !audioCtx || audioCtx.state === 'suspended') return;
     try {
         const now = audioCtx.currentTime;
-        const master = audioCtx.createGain();
-        master.connect(audioCtx.destination);
-        const tone = (freq, endFreq, wave, dur, vol, delay = 0) => {
+        const dest = masterSfxGain || audioCtx.destination;
+
+        const tone = (freq, endFreq, wave, dur, vol, delay = 0, useEcho = false, cutoff = 2800) => {
             const osc = audioCtx.createOscillator();
             const g = audioCtx.createGain();
             const filter = audioCtx.createBiquadFilter();
             osc.type = wave;
             osc.frequency.setValueAtTime(freq, now + delay);
             if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, now + delay + dur);
-            filter.type = 'lowpass'; filter.frequency.value = 2000;
-            g.gain.setValueAtTime(0, now + delay);
-            g.gain.linearRampToValueAtTime(vol, now + delay + 0.02);
-            g.gain.exponentialRampToValueAtTime(0.001, now + delay + dur);
-            osc.connect(filter); filter.connect(g); g.connect(master);
-            osc.start(now + delay); osc.stop(now + delay + dur);
+            filter.type = 'lowpass';
+            filter.frequency.value = cutoff;
+            g.gain.setValueAtTime(0.0001, now + delay);
+            g.gain.linearRampToValueAtTime(vol, now + delay + 0.012);
+            g.gain.exponentialRampToValueAtTime(0.0008, now + delay + dur);
+            osc.connect(filter);
+            filter.connect(g);
+            g.connect(dest);
+            if (useEcho && sfxDelayNode) g.connect(sfxDelayNode);
+            osc.start(now + delay);
+            osc.stop(now + delay + dur + 0.02);
         };
-        const noise = (dur, vol, delay = 0) => {
+
+        const noise = (dur, vol, delay = 0, freq = 1000, filterType = 'bandpass') => {
             const src = audioCtx.createBufferSource();
             src.buffer = noiseBuffer;
             const filter = audioCtx.createBiquadFilter();
             const g = audioCtx.createGain();
-            filter.type = 'bandpass'; filter.frequency.value = 1000;
+            filter.type = filterType;
+            filter.frequency.value = freq;
             g.gain.setValueAtTime(vol, now + delay);
-            g.gain.exponentialRampToValueAtTime(0.01, now + delay + dur);
-            src.connect(filter); filter.connect(g); g.connect(master);
+            g.gain.exponentialRampToValueAtTime(0.001, now + delay + dur);
+            src.connect(filter);
+            filter.connect(g);
+            g.connect(dest);
             src.start(now + delay);
+            src.stop(now + delay + dur + 0.02);
         };
 
-        if (type === 'drop') { tone(90, 40, 'sine', 0.15, 0.35); noise(0.08, 0.1); }
-        else if (type === 'perfect') { const mult = Math.pow(1.059, Math.min(level, 12)); tone(523.25 * mult, null, 'sine', 0.4, 0.25); tone(659.25 * mult, null, 'sine', 0.4, 0.18); }
-        else if (type === 'milestone') { [261.63, 329.63, 392.00, 523.25].forEach((f, i) => tone(f, null, 'triangle', 0.5, 0.12, i * 0.1)); }
-        else if (type === 'bomb') { noise(0.4, 0.4); tone(120, 30, 'sawtooth', 0.4, 0.3); }
-        else if (type === 'gameover') { tone(200, 80, 'triangle', 0.8, 0.25); tone(150, 60, 'triangle', 0.8, 0.18, 0.1); }
-        else if (type === 'quest') { tone(659.25, null, 'sine', 0.2, 0.2); tone(783.99, null, 'sine', 0.3, 0.2, 0.1); tone(1046.5, null, 'sine', 0.4, 0.2, 0.2); }
-        else if (type === 'fury') { tone(440, 880, 'sawtooth', 0.5, 0.15); tone(554, 1108, 'sawtooth', 0.5, 0.1); }
-        else if (type === 'secret') { [523.25, 659.25, 783.99, 1046.5, 1318.51].forEach((f, i) => tone(f, null, 'sine', 0.3, 0.2, i * 0.06)); }
-        else if (type === 'gust') { tone(200, 900, 'sawtooth', 0.7, 0.08); noise(0.5, 0.22); }
-        else if (type === 'chest') { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, null, 'triangle', 0.4, 0.2, i * 0.1)); tone(1318.51, null, 'sine', 0.6, 0.25, 0.5); }
-        else if (type === 'victory') { [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98].forEach((f, i) => tone(f, null, 'triangle', 0.5, 0.22, i * 0.1)); }
-        else if (type === 'combo_2x') { tone(523.25, null, 'sine', 0.15, 0.2); tone(659.25, null, 'sine', 0.15, 0.2, 0.08); }
-        else if (type === 'combo_3x') { tone(523.25, null, 'sine', 0.12, 0.22); tone(659.25, null, 'sine', 0.12, 0.22, 0.07); tone(783.99, null, 'sine', 0.2, 0.22, 0.14); }
-        else if (type === 'combo_5x') { tone(523.25, null, 'triangle', 0.1, 0.25); tone(659.25, null, 'triangle', 0.1, 0.25, 0.06); tone(783.99, null, 'triangle', 0.1, 0.25, 0.12); tone(1046.50, null, 'triangle', 0.25, 0.25, 0.18); }
-        else if (type === 'combo_super') { [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((f, i) => tone(f, null, 'triangle', 0.15, 0.25, i * 0.05)); noise(0.3, 0.1, 0.25); }
-        else if (type === 'combo_ultra') { [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98].forEach((f, i) => tone(f, null, 'sine', 0.12, 0.28, i * 0.04)); tone(2093, null, 'sine', 0.4, 0.2, 0.25); }
-        else if (type === 'combo_insane') { [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093].forEach((f, i) => tone(f, null, 'triangle', 0.1, 0.3, i * 0.035)); tone(2637, null, 'sine', 0.5, 0.25, 0.25); noise(0.4, 0.15, 0.3); }
-        else if (type === 'mission_complete') { [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => tone(f, null, 'triangle', 0.2, 0.25, i * 0.08)); tone(1318.51, null, 'sine', 0.4, 0.2, 0.35); }
-        else if (type === 'prestige_activate') { [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00].forEach((f, i) => tone(f, null, 'sine', 0.15, 0.25, i * 0.05)); tone(2637, null, 'triangle', 0.8, 0.3, 0.4); noise(0.5, 0.15, 0.5); }
-        else if (type === 'event_start') { [392.00, 523.25, 659.25, 783.99, 1046.50].forEach((f, i) => tone(f, null, 'triangle', 0.25, 0.22, i * 0.1)); }
-        else if (type === 'event_reward') { tone(659.25, null, 'sine', 0.15, 0.25); tone(783.99, null, 'sine', 0.15, 0.25, 0.1); tone(1046.50, null, 'sine', 0.3, 0.25, 0.2); }
-        else if (type === 'screen_transition') { tone(600, 800, 'sine', 0.1, 0.1); tone(800, 1000, 'sine', 0.1, 0.08, 0.05); }
-        else if (type === 'notification') { tone(880, null, 'sine', 0.1, 0.2); tone(1174.66, null, 'sine', 0.15, 0.2, 0.1); }
-        else if (type === 'unlock') { [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((f, i) => tone(f, null, 'sine', 0.15, 0.22, i * 0.07)); }
+        if (type === 'ui_click') {
+            tone(480, 680, 'sine', 0.04, 0.06, 0, false, 1800);
+        } else if (type === 'buy') {
+            tone(987.77, null, 'sine', 0.12, 0.18, 0, true);
+            tone(1318.51, null, 'triangle', 0.24, 0.2, 0.07, true);
+        } else if (type === 'drop') {
+            tone(155, 52, 'sine', 0.13, 0.34, 0, false, 600);
+            tone(320, 140, 'triangle', 0.06, 0.12, 0, false, 1400);
+            noise(0.055, 0.14, 0, 1600, 'bandpass');
+        } else if (type === 'perfect') {
+            const idx = Math.min(Math.max(0, level - 1), PENTATONIC_SCALE.length - 1);
+            const root = PENTATONIC_SCALE[idx];
+            tone(root, null, 'triangle', 0.34, 0.24, 0, true, 4000);
+            tone(root * 1.5, null, 'sine', 0.28, 0.11, 0.015, true, 5000);
+            tone(root * 0.5, null, 'sine', 0.18, 0.14, 0, false, 900);
+        } else if (type === 'record_break') {
+            [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98].forEach((f, i) => {
+                tone(f, null, 'triangle', 0.38, 0.22, i * 0.065, true, 5000);
+            });
+            tone(2093.00, null, 'sine', 0.55, 0.18, 0.4, true, 6000);
+        } else if (type === 'milestone') {
+            [392.00, 523.25, 659.25, 783.99].forEach((f, i) => tone(f, null, 'triangle', 0.42, 0.16, i * 0.08, true));
+        } else if (type === 'bomb') {
+            tone(110, 26, 'sawtooth', 0.45, 0.35, 0, false, 450);
+            tone(65, 22, 'sine', 0.5, 0.38, 0, false, 200);
+            noise(0.42, 0.38, 0, 650, 'lowpass');
+        } else if (type === 'gameover') {
+            [329.63, 293.66, 246.94, 196.00].forEach((f, i) => {
+                tone(f, f * 0.94, 'triangle', 0.36, 0.18, i * 0.11, true, 1600);
+            });
+        } else if (type === 'quest') {
+            tone(659.25, null, 'sine', 0.18, 0.2, 0, true);
+            tone(783.99, null, 'sine', 0.22, 0.2, 0.09, true);
+            tone(1046.5, null, 'triangle', 0.38, 0.22, 0.18, true);
+        } else if (type === 'fury') {
+            tone(220, 880, 'sawtooth', 0.45, 0.16, 0, true, 3200);
+            tone(330, 1108, 'triangle', 0.45, 0.14, 0.04, true, 3600);
+        } else if (type === 'secret') {
+            [523.25, 659.25, 783.99, 1046.5, 1318.51].forEach((f, i) => tone(f, null, 'sine', 0.32, 0.2, i * 0.055, true));
+        } else if (type === 'gust') {
+            tone(180, 720, 'sine', 0.65, 0.08, 0, false, 1200);
+            noise(0.55, 0.2, 0, 900, 'bandpass');
+        } else if (type === 'chest') {
+            [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, null, 'triangle', 0.36, 0.2, i * 0.09, true));
+            tone(1318.51, null, 'sine', 0.55, 0.24, 0.42, true);
+        } else if (type === 'victory') {
+            [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98].forEach((f, i) => tone(f, null, 'triangle', 0.48, 0.2, i * 0.085, true));
+        } else if (type === 'combo_2x') {
+            tone(523.25, null, 'triangle', 0.16, 0.2, 0, true);
+            tone(659.25, null, 'triangle', 0.2, 0.2, 0.07, true);
+        } else if (type === 'combo_3x') {
+            [523.25, 659.25, 783.99].forEach((f, i) => tone(f, null, 'triangle', 0.2, 0.21, i * 0.065, true));
+        } else if (type === 'combo_5x') {
+            [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => tone(f, null, 'triangle', 0.24, 0.23, i * 0.055, true));
+        } else if (type === 'combo_super') {
+            [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((f, i) => tone(f, null, 'triangle', 0.22, 0.24, i * 0.05, true));
+        } else if (type === 'combo_ultra') {
+            [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98].forEach((f, i) => tone(f, null, 'sine', 0.22, 0.25, i * 0.04, true));
+            tone(2093, null, 'sine', 0.45, 0.18, 0.24, true);
+        } else if (type === 'combo_insane') {
+            [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093].forEach((f, i) => tone(f, null, 'triangle', 0.2, 0.26, i * 0.035, true));
+            tone(2637, null, 'sine', 0.5, 0.22, 0.25, true);
+        } else if (type === 'mission_complete') {
+            [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => tone(f, null, 'triangle', 0.22, 0.22, i * 0.075, true));
+            tone(1318.51, null, 'sine', 0.4, 0.2, 0.32, true);
+        } else if (type === 'prestige_activate') {
+            [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00].forEach((f, i) => tone(f, null, 'sine', 0.22, 0.24, i * 0.05, true));
+            tone(2637, null, 'triangle', 0.75, 0.26, 0.38, true);
+        } else if (type === 'event_start') {
+            [392.00, 523.25, 659.25, 783.99, 1046.50].forEach((f, i) => tone(f, null, 'triangle', 0.25, 0.2, i * 0.09, true));
+        } else if (type === 'event_reward') {
+            tone(659.25, null, 'sine', 0.16, 0.22, 0, true);
+            tone(783.99, null, 'sine', 0.18, 0.22, 0.09, true);
+            tone(1046.50, null, 'triangle', 0.32, 0.22, 0.18, true);
+        } else if (type === 'screen_transition') {
+            tone(520, 740, 'sine', 0.08, 0.07, 0, false, 1800);
+        } else if (type === 'notification') {
+            tone(880, null, 'sine', 0.1, 0.18, 0, true);
+            tone(1174.66, null, 'sine', 0.16, 0.18, 0.09, true);
+        } else if (type === 'unlock') {
+            [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((f, i) => tone(f, null, 'sine', 0.18, 0.2, i * 0.065, true));
+        }
     } catch (e) {}
 }
 
@@ -1329,7 +1452,7 @@ function renderShop() {
                 currentSkin = skin; safeSetItem(STORAGE_KEYS.SKIN, currentSkin);
                 scheduleCloudSave();
                 applySkinEffect();
-                updateCoinUI(); renderShop(); triggerHaptic('success');
+                updateCoinUI(); renderShop(); playSound('buy'); triggerHaptic('success');
                 checkAchievements();
             } else { triggerHaptic('error'); }
         });
@@ -1396,7 +1519,7 @@ function renderCustomize(type) {
                 scheduleCloudSave();
                 if (type === 'colors') currentPalette = btn.dataset.key;
                 else { currentBackground = btn.dataset.key; applyBackground(); }
-                updateCoinUI(); renderCustomize(type); triggerHaptic('success');
+                updateCoinUI(); renderCustomize(type); playSound('buy'); triggerHaptic('success');
             } else { triggerHaptic('error'); }
         });
     });
@@ -1486,7 +1609,7 @@ function renderPowerupList() {
             else if (canBuy) {
                 coins -= def.price; safeSetItem(STORAGE_KEYS.COINS, coins);
                 ownedPowerups[key] = 1; savePowerups();
-                activePowerups[key] = true; updateCoinUI();
+                activePowerups[key] = true; updateCoinUI(); playSound('buy');
             } else { triggerHaptic('error'); return; }
             renderPowerupList();
         });
@@ -1499,10 +1622,56 @@ function startGameWithPowerups() {
         if (activePowerups[key]) ownedPowerups[key] = Math.max(0, (ownedPowerups[key] || 0) - 1);
     }
     savePowerups();
+    lastUsedPowerups = { ...activePowerups };
     hideModal(powerupsScreen, { restoreMenu: false });
     const mode = pendingGameMode;
     pendingGameMode = null;
     startGame(mode);
+}
+
+function getPowerupReplayInfo() {
+    const keys = Object.keys(lastUsedPowerups).filter(k => lastUsedPowerups[k] && POWERUP_DEFS[k]);
+    if (keys.length === 0) return null;
+    let totalCost = 0;
+    const icons = [];
+    keys.forEach(k => {
+        icons.push(POWERUP_DEFS[k].icon);
+        if ((ownedPowerups[k] || 0) <= 0) totalCost += POWERUP_DEFS[k].price;
+    });
+    return { keys, icons: icons.join(''), totalCost, canAfford: coins >= totalCost };
+}
+
+function updatePowerupReplayButton() {
+    if (!restartPowerupsBtn) return;
+    const supportsPowerups = (gameMode === GAME_MODES.CLASSIC || gameMode === GAME_MODES.TIME);
+    const info = supportsPowerups ? getPowerupReplayInfo() : null;
+    if (!info) {
+        restartPowerupsBtn.style.display = 'none';
+        return;
+    }
+    restartPowerupsBtn.style.display = 'block';
+    restartPowerupsBtn.disabled = !info.canAfford;
+    restartPowerupsBtn.textContent = info.totalCost > 0
+        ? `⚡ ЗАНОВО ${info.icons} (${info.totalCost} 🪙)`
+        : `⚡ ЗАНОВО С ${info.icons} (ИЗ ЗАПАСА)`;
+}
+
+function restartWithSamePowerups() {
+    const info = getPowerupReplayInfo();
+    if (!info || !info.canAfford) { triggerHaptic('error'); return; }
+    if (info.totalCost > 0) {
+        coins -= info.totalCost;
+        safeSetItem(STORAGE_KEYS.COINS, coins);
+        playSound('buy');
+    }
+    info.keys.forEach(k => {
+        if ((ownedPowerups[k] || 0) > 0) ownedPowerups[k]--;
+    });
+    savePowerups();
+    updateCoinUI();
+    activePowerups = { ...lastUsedPowerups };
+    hideModal(gameOverEl, { restoreMenu: false });
+    startGame(gameMode);
 }
 
 function updateActivePowerupsUI() {
@@ -1743,7 +1912,8 @@ function activatePrestige() {
     pendingPrestigeRewards = [];
     for (let i = 0; i < result.chestsReward; i++) pendingPrestigeRewards.push(rollPrestigeChestReward());
     resetProgressForPrestige();
-    level = 1; xpTotal = 0; highScore = 0; totalScoreAllTime = 0; recentScores = [];
+    level = 1; xpTotal = 0; highScore = 0; bestHeight = 0; totalScoreAllTime = 0; recentScores = [];
+    safeSetItem('towerBestHeight', '0');
     stats.maxScore = 0; stats.maxCombo = 0; stats.maxTimeScore = 0;
     saveLevelProgress(); saveStats(); saveTotalScore(); saveRecentScores();
     flushCloudSave();
@@ -2073,6 +2243,7 @@ function startMinigamesCooldownTimer() {
         }
     }, 1000);
 }
+
 // ============ ОБЛАЧНЫЕ СОХРАНЕНИЯ ============
 function updateCloudStatusUI() {
     const statusEl = $('cloud-sync-status');
@@ -2089,6 +2260,7 @@ function updateCloudStatusUI() {
 function reloadFromLocalAfterCloudMerge() {
     coins = safeParseInt(safeGetItem(STORAGE_KEYS.COINS, '0'), 0);
     highScore = safeParseInt(safeGetItem(STORAGE_KEYS.HIGH_SCORE, '0'), 0);
+    bestHeight = safeParseInt(safeGetItem('towerBestHeight', String(highScore)), highScore);
     level = safeParseInt(safeGetItem(STORAGE_KEYS.LEVEL, '1'), 1);
     xpTotal = safeParseInt(safeGetItem(STORAGE_KEYS.XP, '0'), 0);
     streak = safeParseInt(safeGetItem(STORAGE_KEYS.STREAK, '0'), 0);
@@ -2270,14 +2442,123 @@ function createTexture(colorHex, type = BLOCK_TYPES.NORMAL) {
             ctx.textBaseline = 'middle';
             ctx.fillText('💎', 64, 66);
         } else {
-            // Subtle highlight & bevel
+            // Базовый объёмный градиент
             const grad = ctx.createLinearGradient(0, 0, 0, 128);
             grad.addColorStop(0, 'rgba(255,255,255,0.22)');
             grad.addColorStop(0.5, 'rgba(255,255,255,0)');
-            grad.addColorStop(1, 'rgba(0,0,0,0.18)');
+            grad.addColorStop(1, 'rgba(0,0,0,0.2)');
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, 128, 128);
-            ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+
+            // Уникальный процедурный рисунок под выбранный облик
+            if (currentSkin === 'pixel' || currentSkin === 'retro') {
+                ctx.fillStyle = 'rgba(0,0,0,0.16)';
+                for (let x = 0; x < 128; x += 16) ctx.fillRect(x, 0, 2, 128);
+                for (let y = 0; y < 128; y += 16) ctx.fillRect(0, y, 128, 2);
+                ctx.fillStyle = 'rgba(255,255,255,0.38)';
+                ctx.fillRect(6, 6, 10, 10);
+                ctx.fillRect(22, 6, 6, 6);
+            } else if (currentSkin === 'cyberpunk' || currentSkin === 'neon' || currentSkin === 'neon_skin') {
+                ctx.fillStyle = 'rgba(10, 8, 24, 0.55)';
+                ctx.fillRect(8, 8, 112, 112);
+                ctx.strokeStyle = '#00F5FF';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(14, 34); ctx.lineTo(48, 34); ctx.lineTo(64, 52); ctx.lineTo(114, 52);
+                ctx.moveTo(14, 92); ctx.lineTo(74, 92); ctx.lineTo(92, 74); ctx.lineTo(114, 74);
+                ctx.stroke();
+                ctx.fillStyle = '#FF2A85';
+                ctx.beginPath();
+                ctx.arc(48, 34, 4, 0, Math.PI * 2);
+                ctx.arc(92, 74, 4, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (currentSkin === 'magma' || currentSkin === 'fire' || currentSkin === 'fire_skin') {
+                ctx.strokeStyle = 'rgba(255, 220, 60, 0.85)';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(10, 26); ctx.lineTo(46, 54); ctx.lineTo(34, 98);
+                ctx.moveTo(46, 54); ctx.lineTo(96, 36); ctx.lineTo(118, 66);
+                ctx.moveTo(72, 46); ctx.lineTo(90, 114);
+                ctx.stroke();
+            } else if (currentSkin === 'ice' || currentSkin === 'ice_skin' || currentSkin === 'crystal') {
+                ctx.fillStyle = 'rgba(255,255,255,0.28)';
+                ctx.beginPath();
+                ctx.moveTo(0, 0); ctx.lineTo(78, 0); ctx.lineTo(0, 78); ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(24, 110); ctx.lineTo(108, 24);
+                ctx.moveTo(58, 116); ctx.lineTo(118, 56);
+                ctx.stroke();
+            } else if (currentSkin === 'stone') {
+                ctx.strokeStyle = 'rgba(0,0,0,0.28)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(0, 42); ctx.lineTo(128, 42);
+                ctx.moveTo(0, 86); ctx.lineTo(128, 86);
+                ctx.moveTo(64, 0); ctx.lineTo(64, 42);
+                ctx.moveTo(32, 42); ctx.lineTo(32, 86);
+                ctx.moveTo(96, 42); ctx.lineTo(96, 86);
+                ctx.moveTo(64, 86); ctx.lineTo(64, 128);
+                ctx.stroke();
+            } else if (currentSkin === 'space' || currentSkin === 'galaxy_skin' || currentSkin === 'void') {
+                const neb = ctx.createRadialGradient(64, 64, 6, 64, 64, 58);
+                neb.addColorStop(0, 'rgba(180, 120, 255, 0.38)');
+                neb.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = neb;
+                ctx.fillRect(0, 0, 128, 128);
+                ctx.fillStyle = '#FFFFFF';
+                [[18,22,2.5],[98,28,2],[42,76,1.8],[108,94,2.8],[26,106,1.6],[74,48,2.2],[62,108,1.5]].forEach(([x,y,r]) => {
+                    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+                });
+            } else if (currentSkin === 'ocean') {
+                ctx.strokeStyle = 'rgba(255,255,255,0.34)';
+                ctx.lineWidth = 4;
+                for (let row = 28; row <= 100; row += 36) {
+                    ctx.beginPath();
+                    for (let x = 0; x <= 128; x += 8) {
+                        const y = row + Math.sin((x / 128) * Math.PI * 4) * 7;
+                        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                }
+            } else if (currentSkin === 'emerald' || currentSkin === 'ruby' || currentSkin === 'amethyst') {
+                ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(64, 14); ctx.lineTo(114, 64); ctx.lineTo(64, 114); ctx.lineTo(14, 64); ctx.closePath();
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(255,255,255,0.18)';
+                ctx.beginPath();
+                ctx.moveTo(64, 14); ctx.lineTo(114, 64); ctx.lineTo(64, 64); ctx.closePath();
+                ctx.fill();
+            } else if (currentSkin === 'holographic' || currentSkin === 'aurora_skin') {
+                const holo = ctx.createLinearGradient(0, 0, 128, 128);
+                holo.addColorStop(0, 'rgba(0,255,255,0.38)');
+                holo.addColorStop(0.33, 'rgba(255,0,255,0.32)');
+                holo.addColorStop(0.66, 'rgba(255,255,0,0.32)');
+                holo.addColorStop(1, 'rgba(0,255,150,0.38)');
+                ctx.fillStyle = holo;
+                ctx.fillRect(0, 0, 128, 128);
+            } else if (currentSkin === 'midas' || currentSkin === 'legend') {
+                ctx.strokeStyle = 'rgba(255, 250, 200, 0.85)';
+                ctx.lineWidth = 5;
+                ctx.strokeRect(10, 10, 108, 108);
+                ctx.lineWidth = 2;
+                ctx.strokeRect(20, 20, 88, 88);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+                ctx.beginPath();
+                ctx.moveTo(64, 38); ctx.lineTo(84, 64); ctx.lineTo(64, 90); ctx.lineTo(44, 64); ctx.closePath();
+                ctx.fill();
+            } else if (currentSkin === 'food' || currentSkin === 'cats' || currentSkin === 'animals') {
+                ctx.fillStyle = 'rgba(255,255,255,0.22)';
+                [[28,28],[96,32],[64,66],[30,98],[98,96]].forEach(([x,y]) => {
+                    ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.fill();
+                });
+            }
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.22)';
             ctx.lineWidth = 4;
             ctx.strokeRect(2, 2, 124, 124);
         }
@@ -2470,6 +2751,70 @@ function disposeMesh(mesh) {
     scene.remove(mesh);
 }
 
+function disposeRecordLine() {
+    if (!recordLineGroup) return;
+    recordLineGroup.traverse(obj => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+            if (obj.material.map) obj.material.map.dispose();
+            obj.material.dispose();
+        }
+    });
+    scene.remove(recordLineGroup);
+    recordLineGroup = null;
+}
+
+function createRecordLine() {
+    disposeRecordLine();
+    recordLinePassed = false;
+    const targetHeight = Math.max(bestHeight, 0);
+    if (targetHeight < 3 || highScore <= 0) return;
+
+    const group = new THREE.Group();
+    const y = targetHeight * BLOCK_HEIGHT + BLOCK_HEIGHT * 0.5;
+    group.position.set(0, y, 0);
+
+    const half = currentBaseSize * 0.5 + 0.7;
+    const pts = [
+        new THREE.Vector3(-half, 0, -half),
+        new THREE.Vector3(half, 0, -half),
+        new THREE.Vector3(half, 0, half),
+        new THREE.Vector3(-half, 0, half),
+    ];
+    const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+    const lineMat = new THREE.LineBasicMaterial({ color: 0xFFD700, transparent: true, opacity: 0.9 });
+    const ring = new THREE.LineLoop(lineGeo, lineMat);
+    group.add(ring);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.95)';
+    ctx.beginPath();
+    ctx.roundRect(6, 8, 244, 48, 24);
+    ctx.fill();
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.fillStyle = '#4A3200';
+    ctx.font = '900 24px Rubik, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`👑 РЕКОРД: ${highScore}`, 128, 33);
+
+    const spriteTex = new THREE.CanvasTexture(canvas);
+    const spriteMat = new THREE.SpriteMaterial({ map: spriteTex, transparent: true, depthTest: false });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.position.set(half + 1.8, 0.45, -half * 0.4);
+    sprite.scale.set(4.4, 1.1, 1);
+    group.add(sprite);
+
+    group.userData = { ringMat: lineMat, sprite };
+    scene.add(group);
+    recordLineGroup = group;
+}
+
 function clearScene() {
     blocks.forEach(disposeMesh);
     debris.forEach(disposeMesh);
@@ -2478,6 +2823,7 @@ function clearScene() {
         if (w.material) w.material.dispose();
         scene.remove(w);
     });
+    disposeRecordLine();
     if (currentBlock) { disposeMesh(currentBlock); currentBlock = null; }
     blocks = [];
     debris = [];
@@ -2690,6 +3036,7 @@ function startGame(mode = gameMode) {
     startRenderLoop();
 
     createBaseBlock();
+    createRecordLine();
     nextBlockData = generateNextBlockData();
     spawnNewBlock();
 
@@ -2992,6 +3339,12 @@ function triggerGameOver() {
         }
     }
 
+    const builtMeters = Math.max(0, blocks.length - 1);
+    if (builtMeters > bestHeight) {
+        bestHeight = builtMeters;
+        safeSetItem('towerBestHeight', String(bestHeight));
+    }
+
     if (score > (stats.maxScore || 0)) stats.maxScore = score;
     if (gameMode === GAME_MODES.TIME && score > (stats.maxTimeScore || 0)) stats.maxTimeScore = score;
     saveStats();
@@ -3007,7 +3360,6 @@ function triggerGameOver() {
     checkAchievements();
     flushCloudSave();
 
-    const builtMeters = Math.max(0, blocks.length - 1);
     if (finalScoreVal) finalScoreVal.innerText = score;
     if (gameCoinsEarnedEl) gameCoinsEarnedEl.innerText = `+${sessionCoins} 🪙 за игру`;
     if (gameXPEarnedEl) gameXPEarnedEl.innerText = `+${sessionXP} опыта`;
@@ -3018,6 +3370,7 @@ function triggerGameOver() {
     restoreDailyVisuals();
     dailyChallengeActive = false;
     dailyModifiers = {};
+    updatePowerupReplayButton();
 
     clearGameOverTimers();
     if (builtMeters >= 3) {
@@ -3079,7 +3432,6 @@ function dropBlock() {
         perfectThreshold = Math.min(Math.max(perfectThreshold * 3.5, 0.55), activeSize * 0.45);
     }
 
-    // Алмазный блок сам выравнивается идеально
     const isDiamondAuto = (bType === BLOCK_TYPES.DIAMOND && !missX && !missZ);
 
     if (missX || missZ) {
@@ -3196,7 +3548,6 @@ function dropBlock() {
         const diff = movingAxis === 'x' ? diffX : diffZ;
         createDebris(diff, origSize, newSize, movingAxis, top);
 
-        // В режиме «Бесконечный» блок слегка восстанавливает ширину
         const finalW = gameMode === GAME_MODES.ENDLESS ? Math.min(currentBaseSize, newW + (sizeX - newW) * 0.35) : newW;
         const finalD = gameMode === GAME_MODES.ENDLESS ? Math.min(currentBaseSize, newD + (sizeZ - newD) * 0.35) : newD;
 
@@ -3248,6 +3599,19 @@ function dropBlock() {
         requestAnimationFrame(() => scoreEl.classList.add('score-pop'));
     }
 
+    // Пробитие 3D-линии рекорда
+    if (!recordLinePassed && recordLineGroup && (score > highScore || (blocks.length - 1) > bestHeight)) {
+        recordLinePassed = true;
+        if (recordLineGroup.userData?.ringMat) {
+            recordLineGroup.userData.ringMat.color.setHex(0x00E676);
+            recordLineGroup.userData.ringMat.opacity = 0.45;
+        }
+        playSound('record_break');
+        spawnConfetti(28, recordLineGroup.position);
+        showPopup(milestoneText, '👑 РЕКОРД ПОБИТ!', 1500);
+        triggerHaptic('success');
+    }
+
     if (isFury) {
         furyBlocksLeft--;
         if (furyBlocksLeft <= 0) {
@@ -3264,12 +3628,10 @@ function dropBlock() {
     updateQuest('stack', blocks.length - 1, true);
     updateMissionProgress(missions, 'blocks', 1);
 
-    // Оптимизация: скрываем глубоко нижние блоки
     if (blocks.length > 32) {
         blocks[blocks.length - 33].visible = false;
     }
 
-    // Ускорение
     let accel = GAME_CONFIG.SPEED_INCREMENT * (dailyModifiers.accelMult || 1);
     if (gameMode === GAME_MODES.ENDLESS) accel *= 2;
     currentSpeed = Math.min(dynamicMaxSpeed, currentSpeed + accel);
@@ -3505,6 +3867,10 @@ function animate() {
         }
     }
 
+    if (recordLineGroup && !recordLinePassed && recordLineGroup.userData?.sprite) {
+        recordLineGroup.userData.sprite.position.y = 0.45 + Math.sin(now * 0.004) * 0.16;
+    }
+
     if (!lowPerfMode) {
         updateEnvironmentParticles(rawDelta);
     }
@@ -3640,6 +4006,7 @@ function bindEvents() {
     });
 
     // Game Over & Второй шанс & Пауза
+    safeClick(restartPowerupsBtn, restartWithSamePowerups);
     safeClick($('restart-btn'), () => {
         activePowerups = { ...DEFAULTS.ACTIVE_POWERUPS };
         hideModal(gameOverEl, { restoreMenu: false });
@@ -3757,6 +4124,13 @@ function init() {
 
     if (renderer && scene && camera) {
         renderer.render(scene, camera);
+    }
+
+    if (splashScreen) {
+        requestAnimationFrame(() => {
+            splashScreen.classList.add('splash-hidden');
+            setTimeout(() => splashScreen.remove(), 450);
+        });
     }
 
     if (dailyRewardPending) {
