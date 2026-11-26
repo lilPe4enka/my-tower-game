@@ -19,6 +19,28 @@ import { initAtmosphereLayers, updateAtmosphereLayers, disposeAtmosphereLayers }
 
 setupGlobalErrorHandler();
 
+const CFG = {
+    BLOCK_SIZE: GAME_CONFIG?.BLOCK_SIZE ?? 4,
+    BLOCK_HEIGHT: GAME_CONFIG?.BLOCK_HEIGHT ?? 0.6,
+    BASE_SPEED: GAME_CONFIG?.BASE_SPEED ?? 0.12,
+    DEFAULT_MAX_SPEED: GAME_CONFIG?.DEFAULT_MAX_SPEED ?? 0.34,
+    ENDLESS_MAX_SPEED: GAME_CONFIG?.ENDLESS_MAX_SPEED ?? 0.48,
+    MOVE_RANGE: GAME_CONFIG?.MOVE_RANGE ?? GAME_CONFIG?.SPAWN_DISTANCE ?? 6.5,
+    SPEED_INCREMENT: GAME_CONFIG?.SPEED_INCREMENT ?? 0.004,
+    PERFECT_THRESHOLD: GAME_CONFIG?.PERFECT_THRESHOLD ?? 0.15,
+    FURY_THRESHOLD: GAME_CONFIG?.FURY_THRESHOLD ?? 5,
+    FURY_BLOCKS: GAME_CONFIG?.FURY_BLOCKS ?? 3,
+    DEFAULT_TIME_LIMIT: GAME_CONFIG?.DEFAULT_TIME_LIMIT ?? 60,
+    COINS_LEVEL_UP: GAME_CONFIG?.COINS_LEVEL_UP ?? 50,
+    MUSIC_BASE_TEMPO: GAME_CONFIG?.MUSIC_BASE_TEMPO ?? 110,
+    MUSIC_PHASE_2_SCORE: GAME_CONFIG?.MUSIC_PHASE_2_SCORE ?? 15,
+    MUSIC_PHASE_3_SCORE: GAME_CONFIG?.MUSIC_PHASE_3_SCORE ?? 35,
+    SECOND_CHANCE_COST: GAME_CONFIG?.SECOND_CHANCE_COST ?? 50,
+    SECOND_CHANCE_MIN_SCORE: GAME_CONFIG?.SECOND_CHANCE_MIN_SCORE ?? 15,
+    SECOND_CHANCE_NEAR_RECORD: GAME_CONFIG?.SECOND_CHANCE_NEAR_RECORD ?? 5,
+    SECOND_CHANCE_DURATION: GAME_CONFIG?.SECOND_CHANCE_DURATION ?? 5000,
+};
+
 // ============ TELEGRAM & HAPTICS ============
 const TELEGRAM_APP_URL = 'https://t.me/YOUR_BOT_USERNAME/app'; // замени на реальную ссылку на Mini App
 const tg = window.Telegram?.WebApp;
@@ -433,11 +455,11 @@ let lastPerfCheck = 0;
 let lowFpsStrikes = 0;
 let rafId = null;
 
-const BLOCK_SIZE = GAME_CONFIG.BLOCK_SIZE;
-const BLOCK_HEIGHT = GAME_CONFIG.BLOCK_HEIGHT;
-const BASE_SPEED = GAME_CONFIG.BASE_SPEED;
+const BLOCK_SIZE = CFG.BLOCK_SIZE;
+const BLOCK_HEIGHT = CFG.BLOCK_HEIGHT;
+const BASE_SPEED = CFG.BASE_SPEED;
 
-let dynamicMaxSpeed = GAME_CONFIG.DEFAULT_MAX_SPEED;
+let dynamicMaxSpeed = CFG.DEFAULT_MAX_SPEED;
 let scene, camera, renderer, musicGain, windGain;
 let bgStarsGroup = null;
 let blocks = [], debris = [], confetti = [];
@@ -469,7 +491,7 @@ let perfectWaves = [];
 let perfectWaveTexture = null;
 let currentBiomeIndex = 0, targetBgColor = new THREE.Color(BACKGROUNDS.default.colors[0]), shakeIntensity = 0;
 let cameraZoomPulse = 0;
-let timeLeft = GAME_CONFIG.DEFAULT_TIME_LIMIT, timeAttackTimer = null;
+let timeLeft = CFG.DEFAULT_TIME_LIMIT, timeAttackTimer = null;
 let showTutorialHint = !safeGetItem(STORAGE_KEYS.TUTORIAL_SHOWN, false);
 let clock = new THREE.Clock();
 let newQuestsTimeout = null, quests = [];
@@ -583,8 +605,8 @@ let minigamesCooldownInterval = null;
 
 function getMusicPhase() {
     if (isFury) return 4;
-    if (score >= GAME_CONFIG.MUSIC_PHASE_3_SCORE) return 3;
-    if (score >= GAME_CONFIG.MUSIC_PHASE_2_SCORE) return 2;
+    if (score >= CFG.MUSIC_PHASE_3_SCORE) return 3;
+    if (score >= CFG.MUSIC_PHASE_2_SCORE) return 2;
     return 1;
 }
 
@@ -907,8 +929,8 @@ function addXP(amount) {
     while (xpTotal >= xpForNextLevel(level) && level < LIMITS.MAX_LEVEL) {
         xpTotal -= xpForNextLevel(level);
         level++;
-        addCoins(GAME_CONFIG.COINS_LEVEL_UP);
-        showPopup(levelupPopup, `🏅 УРОВЕНЬ ${level}! +${GAME_CONFIG.COINS_LEVEL_UP} 🪙`, 2000);
+        addCoins(CFG.COINS_LEVEL_UP);
+        showPopup(levelupPopup, `🏅 УРОВЕНЬ ${level}! +${CFG.COINS_LEVEL_UP} 🪙`, 2000);
         playSound('milestone');
         triggerHaptic('success');
         checkAchievements();
@@ -1395,7 +1417,7 @@ function musicTick() {
 function startMusic() {
     if (musicPlaying || !settings.musicEnabled) return;
     initAudio(); if (!audioCtx) return;
-    musicPlaying = true; musicBeat = 0; musicTempo = GAME_CONFIG.MUSIC_BASE_TEMPO;
+    musicPlaying = true; musicBeat = 0; musicTempo = CFG.MUSIC_BASE_TEMPO;
     musicTick();
 }
 
@@ -1525,7 +1547,7 @@ function formatSkinModifiers(modifiers) {
 
 function getSecondChanceCost() {
     const { secondChanceDiscount } = getUpgradeBonuses();
-    return Math.max(10, Math.round(GAME_CONFIG.SECOND_CHANCE_COST * (1 - secondChanceDiscount)));
+    return Math.max(10, Math.round(CFG.SECOND_CHANCE_COST * (1 - secondChanceDiscount)));
 }
 
 function renderUpgrades() {
@@ -3224,8 +3246,8 @@ function spawnNewBlock(overrideSize = null) {
     const d = overrideSize ? overrideSize.d : top.userData.d;
     const mirrorSign = gameMode === GAME_MODES.MIRROR ? -1 : 1;
     let sx = top.position.x, sz = top.position.z;
-    if (movingAxis === 'x') sx = (direction === 1 ? -GAME_CONFIG.MOVE_RANGE : GAME_CONFIG.MOVE_RANGE) * mirrorSign;
-    else sz = (direction === 1 ? -GAME_CONFIG.MOVE_RANGE : GAME_CONFIG.MOVE_RANGE) * mirrorSign;
+    if (movingAxis === 'x') sx = (direction === 1 ? -CFG.MOVE_RANGE : CFG.MOVE_RANGE) * mirrorSign;
+    else sz = (direction === 1 ? -CFG.MOVE_RANGE : CFG.MOVE_RANGE) * mirrorSign;
 
     currentBlock = createBlockMesh(w, BLOCK_HEIGHT, d, color, type);
     currentBlock.position.set(sx, top.position.y + BLOCK_HEIGHT, sz);
@@ -3283,8 +3305,8 @@ function startGame(mode = gameMode) {
     if (skinMods.speedMult) startSpeed *= skinMods.speedMult;
     currentSpeed = startSpeed * smartMult;
     dynamicMaxSpeed = gameMode === GAME_MODES.ENDLESS
-        ? GAME_CONFIG.ENDLESS_MAX_SPEED
-        : GAME_CONFIG.DEFAULT_MAX_SPEED;
+        ? CFG.ENDLESS_MAX_SPEED
+        : CFG.DEFAULT_MAX_SPEED;
 
     const bgColors = getBgColors();
     targetBgColor.set(bgColors[0]);
@@ -3309,7 +3331,7 @@ function startGame(mode = gameMode) {
     updateActivePowerupsUI();
     cacheCoinPopupAnchor();
 
-    const timeLimit = dailyModifiers.timeLimit || (gameMode === GAME_MODES.TIME ? GAME_CONFIG.DEFAULT_TIME_LIMIT + upg.extraTime : 0);
+    const timeLimit = dailyModifiers.timeLimit || (gameMode === GAME_MODES.TIME ? CFG.DEFAULT_TIME_LIMIT + upg.extraTime : 0);
     if (timeLimit > 0 && timerEl) {
         timeLeft = timeLimit;
         timerEl.style.display = 'block';
@@ -3443,7 +3465,7 @@ function spawnBombParticles() {
 function activateFury() {
     if (dailyModifiers.noFury) return;
     isFury = true;
-    furyBlocksLeft = GAME_CONFIG.FURY_BLOCKS;
+    furyBlocksLeft = CFG.FURY_BLOCKS;
     document.body.classList.add('fury-active');
     showPopup(comboText, '🔥 РЕЖИМ ЯРОСТИ! x2 ОЧКИ', 1400);
     playSound('fury');
@@ -3475,8 +3497,8 @@ function canOfferSecondChance() {
     if (secondChanceUsed || secondChanceActive) return false;
     if (dailyChallengeActive || gameMode === GAME_MODES.PRECISION) return false;
     if (coins < getSecondChanceCost()) return false;
-    const nearRecord = highScore > 0 && score >= Math.max(5, highScore - GAME_CONFIG.SECOND_CHANCE_NEAR_RECORD);
-    return score >= GAME_CONFIG.SECOND_CHANCE_MIN_SCORE || nearRecord;
+    const nearRecord = highScore > 0 && score >= Math.max(5, highScore - CFG.SECOND_CHANCE_NEAR_RECORD);
+    return score >= CFG.SECOND_CHANCE_MIN_SCORE || nearRecord;
 }
 
 function offerSecondChance(reason = 'miss') {
@@ -3490,7 +3512,7 @@ function offerSecondChance(reason = 'miss') {
             secondChanceSubEl.textContent = '🧱 Хрупкий блок разрушился от идеала! Продолжить с этого места?';
         } else {
             const diff = highScore - score;
-            secondChanceSubEl.textContent = (highScore > 0 && diff > 0 && diff <= GAME_CONFIG.SECOND_CHANCE_NEAR_RECORD)
+            secondChanceSubEl.textContent = (highScore > 0 && diff > 0 && diff <= CFG.SECOND_CHANCE_NEAR_RECORD)
                 ? `Промах! До рекорда всего ${diff} — продолжи с этого места!`
                 : `Промах! Отличная башня (${score} очк.) — продолжить?`;
         }
@@ -3500,12 +3522,12 @@ function offerSecondChance(reason = 'miss') {
     }
 
     showModal(secondChanceOverlay);
-    secondChanceEndTime = performance.now() + GAME_CONFIG.SECOND_CHANCE_DURATION;
+    secondChanceEndTime = performance.now() + CFG.SECOND_CHANCE_DURATION;
 
     function tickTimer(now) {
         if (!secondChanceActive) return;
         const left = Math.max(0, secondChanceEndTime - now);
-        const pct = left / GAME_CONFIG.SECOND_CHANCE_DURATION;
+        const pct = left / CFG.SECOND_CHANCE_DURATION;
         if (secondChanceTimerFill) secondChanceTimerFill.style.transform = `scaleX(${pct})`;
         if (left <= 0) {
             declineSecondChance();
@@ -3733,7 +3755,7 @@ function dropBlock() {
     const noCutActive = dailyModifiers.noCut || precisionMode;
 
     const upg = getUpgradeBonuses();
-    let perfectThreshold = dailyModifiers.tightThreshold || GAME_CONFIG.PERFECT_THRESHOLD;
+    let perfectThreshold = dailyModifiers.tightThreshold || CFG.PERFECT_THRESHOLD;
     if (activePowerups.focus) {
         const activeSize = movingAxis === 'x' ? sizeX : sizeZ;
         perfectThreshold = Math.min(Math.max(perfectThreshold * 3.5, 0.55), activeSize * 0.45);
@@ -3803,7 +3825,7 @@ function dropBlock() {
             showPopup(bonusText, '✨ ШИРИНА +', 900);
         }
 
-        if (combo === GAME_CONFIG.FURY_THRESHOLD && !isFury) activateFury();
+        if (combo === CFG.FURY_THRESHOLD && !isFury) activateFury();
 
         if (bType === BLOCK_TYPES.GOLDEN) { basePoints = 3; addCoins(5); stats.totalGolden = (stats.totalGolden || 0) + 1; updateQuest('golden', 1); }
         else if (bType === BLOCK_TYPES.BOMB) { basePoints = 2; stats.totalBomb = (stats.totalBomb || 0) + 1; updateQuest('bomb', 1); }
@@ -3941,10 +3963,10 @@ function dropBlock() {
         blocks[blocks.length - 33].visible = false;
     }
 
-    let accel = GAME_CONFIG.SPEED_INCREMENT * (dailyModifiers.accelMult || 1);
+    let accel = CFG.SPEED_INCREMENT * (dailyModifiers.accelMult || 1);
     if (gameMode === GAME_MODES.ENDLESS) accel *= 2;
     currentSpeed = Math.min(dynamicMaxSpeed, currentSpeed + accel);
-    musicTempo = Math.min(155, GAME_CONFIG.MUSIC_BASE_TEMPO + score * 0.45);
+    musicTempo = Math.min(155, CFG.MUSIC_BASE_TEMPO + score * 0.45);
 
     direction *= -1;
     spawnNewBlock();
@@ -4103,20 +4125,20 @@ function animate() {
 
         if (movingAxis === 'x') {
             currentBlock.position.x += step + windPush;
-            if (currentBlock.position.x > GAME_CONFIG.MOVE_RANGE) {
-                currentBlock.position.x = GAME_CONFIG.MOVE_RANGE;
+            if (currentBlock.position.x > CFG.MOVE_RANGE) {
+                currentBlock.position.x = CFG.MOVE_RANGE;
                 direction = -1;
-            } else if (currentBlock.position.x < -GAME_CONFIG.MOVE_RANGE) {
-                currentBlock.position.x = -GAME_CONFIG.MOVE_RANGE;
+            } else if (currentBlock.position.x < -CFG.MOVE_RANGE) {
+                currentBlock.position.x = -CFG.MOVE_RANGE;
                 direction = 1;
             }
         } else {
             currentBlock.position.z += step + windPush;
-            if (currentBlock.position.z > GAME_CONFIG.MOVE_RANGE) {
-                currentBlock.position.z = GAME_CONFIG.MOVE_RANGE;
+            if (currentBlock.position.z > CFG.MOVE_RANGE) {
+                currentBlock.position.z = CFG.MOVE_RANGE;
                 direction = -1;
-            } else if (currentBlock.position.z < -GAME_CONFIG.MOVE_RANGE) {
-                currentBlock.position.z = -GAME_CONFIG.MOVE_RANGE;
+            } else if (currentBlock.position.z < -CFG.MOVE_RANGE) {
+                currentBlock.position.z = -CFG.MOVE_RANGE;
                 direction = 1;
             }
         }
