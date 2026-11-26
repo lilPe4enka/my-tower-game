@@ -1408,3 +1408,93 @@ canvas.wheel-canvas {
     box-shadow: none;
     cursor: not-allowed;
 }
+/* =========================================
+УНИФИЦИРОВАННЫЕ БОНУСЫ СКИНОВ
+========================================= */
+.skin-mods {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 3px;
+}
+.skin-mod-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--mint-dark);
+    background: var(--mint-light);
+    padding: 2px 6px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+.skin-mod-chip.warn {
+    color: #C2410C;
+    background: #FFEDD5;
+}
+
+/* =========================================
+КНОПКА ОБНОВЛЕНИЯ МИССИЙ ДНЯ
+========================================= */
+.reroll-missions-btn {
+    margin-top: 12px;
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 12px;
+    font-weight: 900;
+    font-size: 12px;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    color: white;
+    box-shadow: 0 4px 14px rgba(79, 172, 254, 0.3);
+}
+.reroll-missions-btn:disabled {
+    background: rgba(74, 68, 88, 0.14);
+    color: var(--text-muted);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* =========================================
+ВКЛАДКИ ДОСТИЖЕНИЙ ПО РЕЖИМАМ
+========================================= */
+.ach-tabs {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 4px;
+    background: #F0ECF5;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.ach-tabs::-webkit-scrollbar { display: none; }
+.ach-tab {
+    padding: 7px 11px;
+    border-radius: 8px;
+    font-family: 'Rubik', sans-serif;
+    font-weight: 900;
+    font-size: 11px;
+    background: transparent;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+.ach-tab.active {
+    background: white;
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(74, 68, 88, 0.1);
+}
+.ach-reward-tag {
+    font-size: 10px;
+    font-weight: 900;
+    color: var(--orange);
+    background: #FFF8E1;
+    border: 1px solid #FFE082;
+    padding: 2px 7px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
