@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=15">
+    <link rel="stylesheet" href="style.css?v=16">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         // Снимаем старый Service Worker и кэш, если они остались в WebView
@@ -31,6 +31,13 @@
     </script>
 </head>
 <body>
+    <!-- Экран загрузки -->
+    <div id="splash-screen" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#FFE5EC 0%,#E0F7F5 50%,#FFE5EC 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity 0.4s ease, visibility 0.4s ease;">
+        <div class="splash-logo">🏗️</div>
+        <div class="splash-title">БАШНЯ ХАЙПА</div>
+        <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+    </div>
+
     <!-- UI в игре -->
     <div id="ui-layer" aria-label="Игровой интерфейс">
         <div id="score-container">
@@ -97,6 +104,7 @@
             <div id="game-coins-earned">+0 🪙 за игру</div>
             <div id="game-xp-earned">+0 опыта</div>
             <div class="btn-group">
+                <button id="restart-powerups-btn" class="btn-powerup-replay" style="display:none;"></button>
                 <button id="challenge-btn" class="btn-secondary">📣 ВЫЗВАТЬ ДРУГА</button>
                 <div class="btn-row">
                     <button id="restart-btn" class="btn-primary">🔄 ЗАНОВО</button>
@@ -593,6 +601,6 @@
     <!-- Mute Button (только в игре) -->
     <button id="mute-btn" class="floating-settings" style="top:auto;bottom:max(calc(var(--safe-bottom) + 16px), 20px);" aria-label="Звук">🔊</button>
 
-    <script type="module" src="game.js?v=15"></script>
+    <script type="module" src="game.js?v=16"></script>
 </body>
 </html>
