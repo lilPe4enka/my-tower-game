@@ -117,10 +117,8 @@ export const SEASONS = [
 export const DAILY_CHALLENGES = [
     { id: 'golden_only', name: 'Золотой дождь', desc: 'Только золотые блоки', icon: '👑', modifiers: { onlyType: 'golden' } },
     { id: 'bomb_only', name: 'Минное поле', desc: 'Только бомбы', icon: '💣', modifiers: { onlyType: 'bomb' } },
-    { id: 'ice_only', name: 'Гололёд', desc: 'Только лёд', icon: '❄️', modifiers: { onlyType: 'ice' } },
     { id: 'rainbow_only', name: 'Радуга', desc: 'Только радужные', icon: '🌈', modifiers: { onlyType: 'rainbow' } },
     { id: 'normal_only', name: 'Обыденность', desc: 'Только обычные', icon: '🍕', modifiers: { onlyType: 'normal' } },
-    { id: 'crumble_only', name: 'Хрупкий мир', desc: 'Только хрупкие', icon: '🧱', modifiers: { onlyType: 'crumble' } },
     { id: 'fast_1_5', name: 'Турбо', desc: 'Скорость x1.5', icon: '⚡', modifiers: { speedMult: 1.5 } },
     { id: 'fast_2', name: 'Гипер-турбо', desc: 'Скорость x2', icon: '💨', modifiers: { speedMult: 2.0 } },
     { id: 'slow_0_7', name: 'Медитация', desc: 'Скорость x0.7', icon: '🧘', modifiers: { speedMult: 0.7 } },
@@ -158,7 +156,6 @@ export const DAILY_CHALLENGES = [
     { id: 'tiny_blocks', name: 'Крохи', desc: 'Блоки 1.5', icon: '🐜', modifiers: { baseSize: 1.5 } },
     { id: 'huge_blocks', name: 'Мастодонт', desc: 'Блоки 8', icon: '🐘', modifiers: { baseSize: 8 } },
     { id: 'turbo_1_8', name: 'Форсаж', desc: 'Скорость x1.8', icon: '🏎️', modifiers: { speedMult: 1.8 } },
-    { id: 'ice_skate', name: 'Скольжение', desc: 'Все блоки как лёд', icon: '⛸️', modifiers: { allIce: true } },
     { id: 'tight_perfect', name: 'Строгий идеал', desc: 'Идеал 0.05 вместо 0.15', icon: '🔍', modifiers: { tightThreshold: 0.05 } },
     { id: 'ultra_soft', name: 'Прощает', desc: 'Идеал 0.4 (легче)', icon: '🎈', modifiers: { tightThreshold: 0.4 } },
     { id: 'night_mode', name: 'Ночной', desc: 'Тёмный фон', icon: '🌙', modifiers: { forceBg: 'night' } },
@@ -169,7 +166,7 @@ export const DAILY_CHALLENGES = [
 export const POWERUP_DEFS = {
     foundation: { icon: '🧱', name: 'Фундамент',   desc: 'Стартовый блок шире на 35%',    price: 120 },
     focus:      { icon: '🎯', name: 'Точный глаз', desc: 'Зона идеала в 3.5 раза шире',   price: 150 },
-    luck:       { icon: '🍀', name: 'Удача',       desc: 'x2 редких, без бомб и хрупких', price: 180 },
+    luck:       { icon: '🍀', name: 'Удача',       desc: 'x2 редких, без бомб', price: 180 },
     multiplier: { icon: '💰', name: 'Множитель',   desc: 'x2 монет за всю игру',          price: 200 }
 };
 
@@ -209,10 +206,6 @@ export const QUESTS_POOL = [
     { type: 'golden', target: 3, text: '👑 3 золотых',         reward: 50 },
     { type: 'bomb', target: 1,   text: '💣 1 бомба',           reward: 25 },
     { type: 'bomb', target: 3,   text: '💣 3 бомбы',           reward: 65 },
-    { type: 'ice', target: 1,    text: '❄️ 1 лёд',             reward: 20 },
-    { type: 'ice', target: 3,    text: '❄️ 3 льда',            reward: 55 },
-    { type: 'crumble_cut', target: 1, text: '🧱 Срежь хрупкий',   reward: 35 },
-    { type: 'crumble_cut', target: 3, text: '🧱 Срежь 3 хрупких', reward: 80 },
     { type: 'width_grow', target: 1,  text: '✨ Расширь блок',    reward: 40 },
     { type: 'width_grow', target: 2,  text: '✨ Расширь блок x2', reward: 75 },
     { type: 'fury', target: 1,   text: '💥 1 ярость',          reward: 40 },
