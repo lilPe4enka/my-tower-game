@@ -5,7 +5,7 @@ import { safeGetItem, safeSetItem, safeParseInt, PARTICLE_LIMITS, enforceParticl
 import { GAME_CONFIG, LIMITS, GAME_MODES, GAME_STATES, GAME_MODE_NAMES, BLOCK_TYPES, BLOCK_COLORS, STORAGE_KEYS, DEFAULTS, xpForNextLevel, getAdaptiveD, CONFETTI_COLORS, FEATURE_NAMES } from './constants.js?v=18';
 import { getComboTier, applyComboMultiplier, checkTierUpgrade, formatComboDisplay } from './combo-system.js?v=18';
 import { applyTransition, getTransitionForScreen, staggerElements, flashTransition } from './transitions.js?v=18';
-import { loadMissions, updateMissionProgress, claimMissionReward, getMissionsStats, formatMissionReward, getMissionProgress, getMissionRerollCost, rerollDailyMissions } from './missions.js?v=23';
+import { loadMissions, updateMissionProgress, claimMissionReward, getMissionsStats, formatMissionReward, getMissionProgress, getMissionRerollCost, rerollDailyMissions } from './missions.js?v=26';
 import { getPrestigeCount, getPrestigeBonus, setPrestigeBonus, canPrestige, getPrestigeProgress, performPrestige, resetProgressForPrestige, rollPrestigeChestReward, applyPrestigeReward, formatPrestigeBonus, PRESTIGE_CONFIG, checkNewMilestones } from './prestige.js?v=18';
 import { throttle, updateDOMText, updateDOMStyle, updateFpsCounter, getCurrentFps } from './performance.js?v=18';
 import { saveLastFocus, restoreLastFocus, trapFocus, releaseFocusTrap, setupEscapeKeyHandler, removeEscapeKeyHandler, updateAriaAttributes, announceToScreenReader, addDecorativeStars, normalizeFontSizes, addCloseButtonToModal } from './accessibility.js?v=18';
@@ -18,9 +18,9 @@ import { canSpinWheel, getTimeUntilNextSpin, createWheelController } from './whe
 import { initAtmosphereLayers, updateAtmosphereLayers, disposeAtmosphereLayers } from './atmosphere.js?v=18';
 
 // Вынесенные модули
-import { BASE_COLORS, SKINS, SKIN_RARITIES, PALETTES, BACKGROUNDS, SEASONS, DAILY_CHALLENGES, POWERUP_DEFS, QUESTS_POOL, getHeightComparison } from './game-data.js?v=25';
+import { BASE_COLORS, SKINS, SKIN_RARITIES, PALETTES, BACKGROUNDS, SEASONS, DAILY_CHALLENGES, POWERUP_DEFS, QUESTS_POOL, getHeightComparison } from './game-data.js?v=26';
 import { configureAudio, isAudioRunning, setMusicTempo, setWindVolume, initAudio, playSound, startMusic, stopMusic } from './audio.js?v=22';
-import { SHARED_UNIT_BOX_GEO, PARTICLE_GEOS, getParticleMaterial, getDebrisMaterial, clearVisualCaches, createGlowTexture, createPerfectWaveTexture, createBlockMesh, disposeMesh } from './textures.js?v=25';
+import { SHARED_UNIT_BOX_GEO, PARTICLE_GEOS, getParticleMaterial, getDebrisMaterial, clearVisualCaches, createGlowTexture, createPerfectWaveTexture, createBlockMesh, disposeMesh } from './textures.js?v=26';
 import { getContractById, getContractsForMode, createContractTracker, updateContractTracker, formatContractHUD } from './contracts.js?v=22';
 
 setupGlobalErrorHandler();
@@ -220,7 +220,6 @@ const ACHIEVEMENTS = [
     { id: 'fury_10', category: 'general', name: 'Берсерк', desc: '10 яростей → красная тема', icon: '👹', reward: 150, feature: 'redTheme', check: () => stats.totalFury >= 10 },
     { id: 'golden_5', category: 'general', name: 'Король золота', desc: '5 идеальных золотых блоков', icon: '💎', reward: 40, check: () => stats.totalGolden >= 5 },
     { id: 'bomb_5', category: 'general', name: 'Сапёр', desc: '5 идеальных бомб', icon: '💣', reward: 50, check: () => stats.totalBomb >= 5 },
-    { id: 'ice_5', category: 'general', name: 'Ледокол', desc: '5 идеальных льдов', icon: '❄️', reward: 40, check: () => stats.totalIce >= 5 },
     { id: 'secret_1', category: 'general', name: 'Тайна', desc: 'Поймай секретный блок', icon: '🌟', reward: 40, check: () => stats.totalSecret >= 1 },
     { id: 'secret_10', category: 'general', name: 'Охотник', desc: '10 секретных блоков', icon: '🔮', reward: 120, check: () => stats.totalSecret >= 10 },
 
@@ -1676,20 +1675,15 @@ function getBlockVisuals(type, stepIndex = blocks.length) {
 function generateNextBlockData() {
     let type = BLOCK_TYPES.NORMAL;
     if (dailyModifiers.onlyType) type = dailyModifiers.onlyType;
-    else if (dailyModifiers.allIce) type = BLOCK_TYPES.ICE;
     else if (!dailyModifiers.noSpecials && blocks.length >= 2) {
         const luckMult = (activePowerups.luck ? 2 : 1) * (1 + getUpgradeBonuses().luckMult);
         const r = Math.random();
         const secretChance = 0.015 * luckMult;
         const goldChance = dailyModifiers.noGolden ? 0 : 0.09 * luckMult;
-        const iceChance = 0.08;
         const bombChance = (dailyModifiers.noBombs || activePowerups.luck) ? 0 : 0.07;
-        const crumbleChance = (score >= 15 && !activePowerups.luck && !dailyModifiers.noBombs) ? 0.06 : 0;
         if (r < secretChance) type = [BLOCK_TYPES.RAINBOW, BLOCK_TYPES.DRAGON, BLOCK_TYPES.DIAMOND][Math.floor(Math.random() * 3)];
         else if (r < secretChance + goldChance) type = BLOCK_TYPES.GOLDEN;
-        else if (r < secretChance + goldChance + iceChance) type = BLOCK_TYPES.ICE;
-        else if (r < secretChance + goldChance + iceChance + bombChance) type = BLOCK_TYPES.BOMB;
-        else if (r < secretChance + goldChance + iceChance + bombChance + crumbleChance) type = BLOCK_TYPES.CRUMBLE;
+        else if (r < secretChance + goldChance + bombChance) type = BLOCK_TYPES.BOMB;
     }
     return { type, color: getBlockVisuals(type, blocks.length + 1).color };
 }
@@ -1699,7 +1693,7 @@ function updateNextBlockPreview(type, color) {
     if (!preview) return;
     preview.style.background = color;
     preview.style.display = 'flex'; preview.style.alignItems = 'center'; preview.style.justifyContent = 'center'; preview.style.fontSize = '18px';
-    preview.textContent = ({ bomb: '💣', golden: '👑', ice: '❄️', crumble: '🧱', rainbow: '🌈', dragon: '🐉', diamond: '💎' })[type] || '';
+    preview.textContent = ({ bomb: '💣', golden: '👑', rainbow: '🌈', dragon: '🐉', diamond: '💎' })[type] || '';
 }
 
 function disposeRecordLine() {
@@ -1820,15 +1814,23 @@ function spawnNewBlock(overrideSize = null) {
     let { type, color } = nextBlockData;
     nextBlockData = generateNextBlockData();
     updateNextBlockPreview(nextBlockData.type, nextBlockData.color);
-    if (overrideSize && (type === BLOCK_TYPES.BOMB || type === BLOCK_TYPES.CRUMBLE)) {
-        type = BLOCK_TYPES.NORMAL; color = getBlockVisuals(BLOCK_TYPES.NORMAL).color;
+
+    if (overrideSize && type === BLOCK_TYPES.BOMB) {
+        type = BLOCK_TYPES.NORMAL;
+        color = getBlockVisuals(BLOCK_TYPES.NORMAL).color;
     }
+
     const w = overrideSize ? overrideSize.w : top.userData.w;
     const d = overrideSize ? overrideSize.d : top.userData.d;
-    const mirrorSign = (gameMode === GAME_MODES.MIRROR || (gameMode === MODE_ANTIGRAVITY && Math.floor((blocks.length - 1) / 15) % 2 === 1)) ? -1 : 1;
+
+    const isReversed = gameMode === GAME_MODES.MIRROR ||
+        (gameMode === MODE_ANTIGRAVITY && Math.floor((blocks.length - 1) / 15) % 2 === 1);
+    direction = isReversed ? -1 : 1;
+
     let sx = top.position.x, sz = top.position.z;
-    if (movingAxis === 'x') sx = (direction === 1 ? -CFG.MOVE_RANGE : CFG.MOVE_RANGE) * mirrorSign;
-    else sz = (direction === 1 ? -CFG.MOVE_RANGE : CFG.MOVE_RANGE) * mirrorSign;
+    if (movingAxis === 'x') sx = -CFG.MOVE_RANGE * direction;
+    else sz = -CFG.MOVE_RANGE * direction;
+
     currentBlock = makeBlock(w, BLOCK_HEIGHT, d, color, type);
     currentBlock.position.set(sx, top.position.y + BLOCK_HEIGHT, sz);
     Object.assign(currentBlock.userData, { w, d, moving: true, color, blockType: type, squash: 1 });
@@ -2002,7 +2004,7 @@ function canOfferSecondChance() {
 function offerSecondChance(reason = 'miss') {
     secondChanceActive = true; gameState = GAME_STATES.PAUSED; document.body.classList.remove('in-game');
     if (timeAttackTimer) { clearInterval(timeAttackTimer); timeAttackTimer = null; }
-    if (secondChanceSubEl) secondChanceSubEl.textContent = reason === 'crumble' ? '🧱 Хрупкий блок разрушился от идеала! Продолжить?' : `Промах! Отличная башня (${score} очк.) — продолжить?`;
+    if (secondChanceSubEl) secondChanceSubEl.textContent = `Промах! Отличная башня (${score} очк.) — продолжить?`;
     if (secondChanceBuyBtn) secondChanceBuyBtn.textContent = `💖 ПРОДОЛЖИТЬ (${getSecondChanceCost()} 🪙)`;
     showModal(secondChanceOverlay);
     secondChanceEndTime = performance.now() + CFG.SECOND_CHANCE_DURATION;
@@ -2148,12 +2150,6 @@ function dropBlock() {
         triggerGameOver(); return;
     }
     if (noCutActive && !isDiamondAuto && maxDiff >= perfectThreshold) { currentBlock.userData.falling = true; triggerGameOver(); return; }
-    if (bType === BLOCK_TYPES.CRUMBLE && maxDiff < perfectThreshold) {
-        currentBlock.position.x = top.position.x; currentBlock.position.z = top.position.z;
-        playSound('bomb'); spawnBombParticles();
-        if (canOfferSecondChance()) { offerSecondChance('crumble'); return; }
-        triggerGameOver(); return;
-    }
 
     const isPerfect = isDiamondAuto || maxDiff < perfectThreshold;
     const skinMods = getSkinModifiers(), prestigeBonus = getPrestigeBonus();
@@ -2190,7 +2186,6 @@ function dropBlock() {
 
         if (bType === BLOCK_TYPES.GOLDEN) { basePoints = 3; addCoins(5); stats.totalGolden = (stats.totalGolden || 0) + 1; updateQuest('golden', 1); updateMissionProgress(missions, 'golden', 1); }
         else if (bType === BLOCK_TYPES.BOMB) { basePoints = 2; stats.totalBomb = (stats.totalBomb || 0) + 1; updateQuest('bomb', 1); updateMissionProgress(missions, 'bomb', 1); }
-        else if (bType === BLOCK_TYPES.ICE) { basePoints = 2; stats.totalIce = (stats.totalIce || 0) + 1; updateQuest('ice', 1); updateMissionProgress(missions, 'ice', 1); }
         else if (bType === BLOCK_TYPES.RAINBOW) { basePoints = 10; addCoins(15); playSound('secret'); stats.totalSecret = (stats.totalSecret || 0) + 1; updateQuest('secret', 1); updateMissionProgress(missions, 'secret', 1); }
         else if (bType === BLOCK_TYPES.DRAGON) { basePoints = 10; spawnConfetti(20); playSound('secret'); stats.totalSecret = (stats.totalSecret || 0) + 1; updateQuest('secret', 1); updateMissionProgress(missions, 'secret', 1); }
         else if (bType === BLOCK_TYPES.DIAMOND) { basePoints = 5; addCoins(8); playSound('secret'); stats.totalSecret = (stats.totalSecret || 0) + 1; updateQuest('secret', 1); updateMissionProgress(missions, 'secret', 1); }
@@ -2231,10 +2226,6 @@ function dropBlock() {
         else { playSound('drop'); triggerHaptic('light'); shakeIntensity = Math.max(shakeIntensity, 0.14); addCoins(1); }
         updateQuest('cut', 1);
         updateMissionProgress(missions, 'cut', 1);
-        if (bType === BLOCK_TYPES.CRUMBLE) {
-            updateQuest('crumble_cut', 1);
-            updateMissionProgress(missions, 'crumble_cut', 1);
-        }
     }
 
     // Защищённый расчёт очков (без NaN)
@@ -2323,7 +2314,6 @@ function dropBlock() {
     currentSpeed = Math.min(dynamicMaxSpeed, currentSpeed + accel);
     setMusicTempo(Math.min(155, CFG.MUSIC_BASE_TEMPO + score * 0.45));
 
-    direction *= -1;
     spawnNewBlock();
 }
 
@@ -2415,7 +2405,6 @@ function animate() {
 
         if (gameState === GAME_STATES.PLAYING && currentBlock?.userData.moving) {
             let speed = currentSpeed;
-            if (currentBlock.userData.blockType === BLOCK_TYPES.ICE) speed *= 1.45;
             if (isFury) speed *= 0.6;
             const step = speed * direction * dt + (gameMode === GAME_MODES.STORM ? windStrength * windDirection * dt : 0);
             if (movingAxis === 'x') {
