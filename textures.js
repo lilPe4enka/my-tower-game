@@ -98,18 +98,7 @@ export function createBlockTexture(colorHex, type = BLOCK_TYPES.NORMAL, skin = '
         g.addColorStop(0, '#FFF59D'); g.addColorStop(0.5, '#FFD54F'); g.addColorStop(1, '#FFB300');
         ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128);
         ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 8; ctx.strokeRect(8, 8, 112, 112);
-    } else if (type === BLOCK_TYPES.ICE) {
-        const g = ctx.createLinearGradient(0, 0, 128, 128);
-        g.addColorStop(0, '#E0F7FA'); g.addColorStop(1, '#00B8D4');
-        ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128);
-        ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.moveTo(16, 30); ctx.lineTo(112, 18); ctx.moveTo(20, 92); ctx.lineTo(104, 72); ctx.stroke();
-    } else if (type === BLOCK_TYPES.CRUMBLE) {
-        ctx.fillStyle = '#5D4037'; ctx.fillRect(0, 0, 128, 128);
-        ctx.strokeStyle = '#3E2723'; ctx.lineWidth = 5;
-        ctx.beginPath(); ctx.moveTo(12, 18); ctx.lineTo(54, 62); ctx.lineTo(36, 110);
-        ctx.moveTo(54, 62); ctx.lineTo(108, 44); ctx.moveTo(76, 60); ctx.lineTo(116, 108); ctx.stroke();
-    } else if (type === BLOCK_TYPES.RAINBOW) {
+    }  else if (type === BLOCK_TYPES.RAINBOW) {
         const g = ctx.createLinearGradient(0, 0, 128, 0);
         g.addColorStop(0, '#FF1744'); g.addColorStop(0.25, '#FFEA00'); g.addColorStop(0.5, '#00E676'); g.addColorStop(0.75, '#00B0FF'); g.addColorStop(1, '#D500F9');
         ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128);
@@ -314,15 +303,7 @@ export function createBlockMesh(w, h, d, color, type = BLOCK_TYPES.NORMAL, { ski
             sideOpts.emissive = new THREE.Color(0xFF0000); sideOpts.emissiveIntensity = 0.6;
             topOpts.emissive = new THREE.Color(0xFF0000); topOpts.emissiveIntensity = 0.6;
             topOpts.color = new THREE.Color(0x330000);
-        } else if (type === BLOCK_TYPES.ICE) {
-            sideOpts.transparent = true; sideOpts.opacity = 0.9;
-            topOpts.transparent = true; topOpts.opacity = 0.9;
-            sideOpts.emissive = new THREE.Color(0x00E5FF); sideOpts.emissiveIntensity = 0.5;
-            topOpts.emissive = new THREE.Color(0x00E5FF); topOpts.emissiveIntensity = 0.5;
-        } else if (type === BLOCK_TYPES.CRUMBLE) {
-            sideOpts.emissive = new THREE.Color(0x5D4037); sideOpts.emissiveIntensity = 0.3;
-            topOpts.emissive = new THREE.Color(0x5D4037); topOpts.emissiveIntensity = 0.3;
-        } else if (type === BLOCK_TYPES.RAINBOW) {
+        }  else if (type === BLOCK_TYPES.RAINBOW) {
             sideOpts.emissive = new THREE.Color(0xFF00FF); sideOpts.emissiveIntensity = 0.5;
             topOpts.emissive = new THREE.Color(0xFF00FF); topOpts.emissiveIntensity = 0.5;
             topOpts.color = new THREE.Color(0xFF00FF);
